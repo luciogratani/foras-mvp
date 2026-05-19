@@ -42,3 +42,12 @@ Il task **"deploy preview Vercel"** del backlog Sprint 0 resta a carico del mast
 ## Ordine di esecuzione
 
 Esecuzione sequenziale, un sub-task per volta. Dopo ogni sub-task: commit + push + aggiornamento [[backlog]].
+
+---
+
+## Lesson learned (vincoli permanenti per scaffolding Next.js)
+
+Da rispettare in **ogni** prompt che scaffolda un'app Next.js (`apps/web`, `apps/admin`, future app):
+
+- Nel `tsconfig.json` locale dell'app, **dichiarare esplicitamente** `"strict": true` e `"allowJs": false` dentro `compilerOptions`, anche se già presenti nel `tsconfig.base.json` ereditato via `extends`. Motivo: `next dev` esegue `writeConfigurationDefaults` al primo avvio e, se non vede `strict` esplicito nel file locale, lo considera "non impostato" e lo tratta come `false` (avviso "Strict-mode is set to false by default"); inoltre aggiunge `allowJs: true` come suggested. Esplicitare le due chiavi blocca entrambi gli override.
+- `esModuleInterop: true` lasciarlo esplicito (Next lo forza comunque come "mandatory" per SWC, ma metterlo evita warning).
