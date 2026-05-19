@@ -1,0 +1,58 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Next.js ---
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Env files (sensibili) ---
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# --- Vercel ---
+.vercel/
+
+# --- Supabase ---
+supabase/.branches/
+supabase/.temp/
+
+# --- Test coverage ---
+coverage/
+.nyc_output/
+
+# --- Logs e cache ---
+*.log
+.cache/
+.turbo/
+.eslintcache
+
+# --- Obsidian (cartella docs come vault locale) ---
+.obsidian/
+docs/.obsidian/
+
+# --- Misc ---
+.history/
+.tmp/
+tmp/

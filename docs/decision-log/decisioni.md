@@ -1,0 +1,165 @@
+# Decision log
+
+Log delle decisioni architetturali e di prodotto chiuse. Per ogni voce: contesto, opzioni considerate, decisione presa, rationale.
+
+Le voci sono ordinate per tema. Le decisioni recuperate dall'archive non avevano timestamp — i placeholder `[data: ?]` vanno sostituiti con la data effettiva appena ricordata o ricostruita dal git log. Le nuove decisioni vanno aggiunte con data precisa nel formato `YYYY-MM-DD`.
+
+---
+
+### [data: ?] — Multi-tenancy — schema separation su Supabase
+
+**Contesto:** serve isolare i dati di ogni cliente bar su una singola istanza Supabase.
+
+**Opzioni considerate:**
+- Schema PostgreSQL separato per tenant (schema-per-tenant)
+- Row-level isolation con colonna `tenant_id` su schema `public`
+- Istanze Supabase separate per cliente
+
+**Decisione:** schema PostgreSQL separato per ogni cliente, con un singolo progetto Supabase condiviso.
+
+**Rationale:** lo schema-per-tenant offre isolamento netto senza il rischio di leak cross-tenant tipico del row-level isolation. Le istanze separate costerebbero molto di più e andrebbero gestite individualmente. Le Supabase client libraries supportano nativamente lo schema custom via `createClient(URL, KEY, { db: { schema: 'nome_schema' } })`.
+
+**Limitazione nota:** Auth e Storage rimangono su `public` — la separazione per schema vale solo per CRUD via PostgREST. Per Storage si usa una convenzione di path nei bucket.
+
+---
+
+### [data: ?] — Rate limiting prenotazioni
+
+**Contesto:** evitare prenotazioni duplicate dallo stesso utente per lo stesso turno.
+
+**Opzioni considerate:**
+- Logica applicativa lato server
+- Edge function dedicata con controllo
+- Unique constraint a livello DB
+
+**Decisione:** `UNIQUE (email, time_slot_id, date)` direttamente su PostgreSQL.
+
+**Rationale:** Postgres rifiuta i duplicati a livello di DB. Copre il 95% dei casi reali (un utente che prenota due volte per errore). Un attacco coordinato con email diverse è un problema che un bar locale non avrà mai. Soluzione senza logica applicativa aggiuntiva.
+
+---
+
+### [data: ?] — Migrazioni schema post-freeze
+
+**Contesto:** come gestire le modifiche allo schema dopo il congelamento del template, con più clienti che hanno il proprio schema.
+
+**Opzioni considerate:**
+- Tool automatici (Flyway, Supabase migrations)
+- Script numerati manuali
+
+**Decisione:** script numerati in `/migrations`, flusso manuale documentato.
+
+**Rationale:** per la scala del progetto (pochi clienti, modifiche rare) un tool automatico aggiunge complessità senza benefici reali. Il flusso manuale con script numerati è sufficiente e leggibile. Trigger per riconsiderare: numero di clienti oltre 5-6.
+
+---
+
+### [data: ?] — RLS multi-schema — propagazione modifiche
+
+**Contesto:** le RLS policies sono identiche su tutti gli schemi ma vanno configurate manualmente su ognuno al momento dell'onboarding. Una correzione a una policy va replicata su tutti gli schemi esistenti.
+
+**Decisione:** ogni modifica a una RLS policy viene trattata come una migrazione. Va scritta in uno script numerato (`/migrations/003_fix_rls_bookings.sql`) e applicata a tutti gli schemi uno per uno.
+
+**Rationale:** stesso flusso delle migrazioni schema, stessa tracciabilità. Evita la deriva tra schemi dove alcuni hanno policy corrette e altri no.
+
+---
+
+### [data: ?] — Edge Functions — validazione schema
+
+**Contesto:** le Edge Functions ricevono il nome dello schema nel body della chiamata. Senza validazione, un client potrebbe richiedere uno schema arbitrario e accedere a dati di altri tenant.
+
+**Decisione:** doppio controllo — whitelist (`public.tenants`) + verifica owner tramite `auth.uid()`.
+
+**Rationale:** la whitelist blocca schemi inesistenti o inventati. La verifica owner garantisce che l'utente autenticato sia effettivamente l'admin di quello schema. La `service_role` key viene usata solo server-side nelle Edge Functions, mai esposta al client.
+
+---
+
+### [data: ?] — Storage — separazione per tenant
+
+**Contesto:** Auth e Storage rimangono su `public` e non supportano la separazione per schema.
+
+**Decisione:** bucket condiviso `bar-assets` con path convention `/{schema}/...` e Storage RLS policies basate su `user_metadata.schema`.
+
+**Rationale:** Supabase Storage non supporta separazione per schema. La convenzione di path con RLS policies offre lo stesso livello di isolamento senza infrastruttura aggiuntiva. La funzione helper `storageAssetPath()` in `/packages/supabase` centralizza la costruzione dei path.
+
+---
+
+### [data: ?] — Variabili d'ambiente — sicurezza
+
+**Contesto:** `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` vengono esposte al browser.
+
+**Decisione:** esporre intenzionalmente entrambe come `NEXT_PUBLIC_`. La `service_role` key non va mai esposta al client.
+
+**Rationale:** Supabase è progettato per esporre queste credenziali al browser. La `anon key` è una chiave JWT che consente solo le operazioni permesse dalle RLS. La sicurezza dei dati è interamente delegata alle RLS policies, non all'oscuramento della chiave.
+
+---
+
+### [data: ?] — Conferma prenotazioni
+
+**Contesto:** la prenotazione deve essere confermata al cliente senza richiedere intervento manuale del gestore.
+
+**Opzioni considerate:**
+- Conferma manuale da parte del gestore
+- Conferma automatica senza controllo disponibilità
+- Conferma automatica con controllo coperti
+
+**Decisione:** conferma automatica con controllo disponibilità coperti. Il gestore imposta la capacità massima per turno nel backoffice.
+
+**Rationale:** la conferma manuale crea prenotazioni fuori orario (il gestore non è sempre disponibile). La conferma automatica senza controllo genera overbooking. Il controllo sui coperti risolve entrambi i problemi.
+
+---
+
+### [data: ?] — Struttura del menu
+
+**Contesto:** definire la gerarchia e il livello di dettaglio del menu nel data model.
+
+**Decisione:** gerarchia `Section → Category → Item`, tre livelli fissi. Item appartiene a una sola categoria. Section predefinite (non creabili da zero dal tenant). Allergeni: solo i 14 obbligatori per legge (Reg. UE 1169/2011), ridondanti per schema.
+
+**Rationale:** tre livelli coprono tutti i casi d'uso di un bar. Varianti e item multi-categoria aggiungerebbero complessità al data model e all'UI per casi d'uso marginali. Le section predefinite garantiscono consistenza tra tenant. Gli allergeni ridondanti per schema evitano dipendenze cross-schema.
+
+---
+
+### [data: ?] — Framework frontend — Next.js vs Vite
+
+**Contesto:** scegliere il framework per homepage pubblica e backoffice.
+
+**Decisione:** Next.js (App Router) per entrambe le app.
+
+**Rationale:** la homepage pubblica ha bisogno di SSR per SEO. Con Vite si perderebbe il rendering server-side e si dovrebbe aggiungere un layer separato. Il backoffice in Next.js funziona perfettamente come SPA senza SSR attivo. pnpm workspaces gestisce il monorepo nativamente.
+
+---
+
+### [data: ?] — Modello monorepo — Modello A (repo per cliente)
+
+**Contesto:** decidere se avere un unico repo con tutti i clienti o un repo separato per ogni cliente.
+
+**Decisione:** Modello A — repo separato per cliente, forkato dal template.
+
+**Rationale:** nella fase iniziale (pochi clienti) la semplicità di un repo per cliente supera i vantaggi della centralizzazione. Il service layer in `/packages` mantiene aperta la strada al Modello B in futuro senza riscritture.
+
+**Trigger per riconsiderare:** stesso fix applicato su più di due repo nella stessa settimana.
+
+---
+
+### [data: ?] — Auth — validazione schema al login
+
+**Contesto:** `user_metadata.schema` è l'unica fonte che lega un utente al suo schema tenant. Se quel campo fosse assente, errato o manomesso, l'utente potrebbe inizializzare il client con lo schema sbagliato senza che il sistema se ne accorga.
+
+**Opzioni considerate:**
+- Fidarsi di `user_metadata.schema` senza validazione aggiuntiva
+- Validare solo nelle Edge Functions
+- Validare al login nel middleware dell'app admin, confrontando con `public.tenants`
+
+**Decisione:** validazione al login tramite `getVerifiedTenantClient()` nel middleware di `/apps/admin`. Prima di inizializzare il client con lo schema da `user_metadata`, si verifica che l'utente sia registrato come owner in `public.tenants`. Se la verifica fallisce, la sessione viene invalidata immediatamente.
+
+**Rationale:** la validazione nelle Edge Functions protegge le chiamate API ma non il client-side. Un `user_metadata.schema` manomesso potrebbe inizializzare il client con lo schema sbagliato, esponendo dati di un altro tenant. La verifica al login chiude questo vettore alla radice, senza overhead su ogni singola richiesta.
+
+**Implementazione:** vedi sezione *Auth — validazione schema al login* in [[architettura-fullstack]].
+
+---
+
+### [data: ?] — Struttura della documentazione
+
+**Contesto:** scegliere come organizzare la documentazione del progetto, partendo da due file non strutturati in `archive/`.
+
+**Decisione:** cartella `docs/` con cinque sotto-sezioni (`tech-architecture/`, `product-scope/`, `decision-log/`, `operations/`, `archive/`). File `archive/` lasciati intatti come riferimento storico. Decision log separato dall'architettura. Nessuna ADR formale — log piatto in `decisioni.md`.
+
+**Rationale:** le decisioni di scope e operatività non appartengono all'architettura tecnica. Tenerle in sezioni separate evita che crescano dentro i file tecnici e permette di consultarle indipendentemente. L'archive non è un cestino: è leggibile e consultabile. Le sezioni `brand/`, `metriche/`, `GTM/` non vengono create finché non esistono contenuti — nessuna cartella vuota.

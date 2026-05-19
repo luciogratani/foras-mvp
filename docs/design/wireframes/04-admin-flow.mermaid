@@ -1,0 +1,59 @@
+flowchart TD
+    A([Admin autenticato\nvedi 03-auth-flow]) --> B[Dashboard\n/admin/bookings]
+
+    B --> NAV{Navigazione sidebar}
+
+    NAV --> C[/admin/bookings\nPrenotazioni]
+    NAV --> D[/admin/content\nContenuti sito]
+    NAV --> E[/admin/menu\nMenu]
+    NAV --> F[/admin/news\nPopup e Novità]
+    NAV --> G[/admin/hours\nOrari di apertura]
+
+    %% PRENOTAZIONI
+    C --> C1[Lista prenotazioni\nfiltrata per data e turno]
+    C1 --> C2{Azione su\nprenotazione}
+    C2 -- Visualizza dettaglio --> C3[Mostra: nome · email\ntelefono · coperti · note]
+    C2 -- Nessuna azione --> NAV
+
+    %% CONTENUTI SITO
+    D --> D1[Schermata contenuti\nhero · slogan · bio · sezioni]
+    D1 --> D2{Azione}
+    D2 -- Modifica testo --> D3[Editor inline · Salva]
+    D2 -- Mostra/nascondi sezione --> D4[Toggle visibilità\naggiorna DB]
+    D2 -- Sostituisci immagine/video --> D5[Upload su Supabase Storage\naggiorna riferimento in DB]
+    D3 & D4 & D5 --> D1
+
+    %% MENU
+    E --> E1[Lista categorie]
+    E1 --> E2{Azione categoria}
+    E2 -- Nuova categoria --> E3[Form: nome · ordine · Salva]
+    E2 -- Modifica --> E4[Edita inline · Salva]
+    E2 -- Elimina --> E5[Confirm dialog · Elimina]
+    E2 -- Entra nella categoria --> E6[Lista sezioni]
+    E6 --> E7{Azione sezione}
+    E7 -- Nuova sezione --> E8[Form: nome · ordine · Salva]
+    E7 -- Entra nella sezione --> E9[Lista item]
+    E9 --> E10{Azione item}
+    E10 -- Nuovo item --> E11[Form: nome · descrizione\nprezzo · allergeni · immagine · Salva]
+    E10 -- Modifica --> E12[Edita · Salva]
+    E10 -- Elimina --> E13[Confirm · Elimina]
+    E3 & E4 & E5 & E8 & E11 & E12 & E13 --> E1
+
+    %% POPUP / NOVITÀ
+    F --> F1[Lista slide popup\ncon ordinamento drag]
+    F1 --> F2{Azione slide}
+    F2 -- Nuova slide --> F3[Form: titolo · testo\nimmagine · link opzionale · Salva]
+    F2 -- Modifica --> F4[Edita · Salva]
+    F2 -- Elimina --> F5[Confirm · Elimina]
+    F2 -- Riordina --> F6[Drag and drop\naggiorna ordine in DB]
+    F3 & F4 & F5 & F6 --> F1
+
+    %% ORARI
+    G --> G1[Griglia orari\ngiorni della settimana]
+    G1 --> G2{Azione}
+    G2 -- Modifica orario --> G3[Picker apertura/chiusura · Salva]
+    G2 -- Segna come chiuso --> G4[Toggle chiuso · Salva]
+    G3 & G4 --> G1
+
+    style A fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style NAV fill:#2a2a2a,color:#ffffff,stroke:#555555

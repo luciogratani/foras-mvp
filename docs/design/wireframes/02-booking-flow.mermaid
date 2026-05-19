@@ -1,0 +1,46 @@
+flowchart TD
+    A([Utente arriva su dominio.it]) --> B[Clicca CTA Prenota]
+    B --> C[/Form prenotazione\]
+
+    C --> D[Compila i campi]
+    D --> E{Tutti i campi\nobbligatori compilati?\nnome · email · coperti · GDPR}
+
+    E -- No --> F[Mostra errori di validazione inline]
+    F --> D
+
+    E -- Sì --> G[Invia form]
+    G --> H{Verifica disponibilità\ncoperti per data e turno}
+
+    H -- Coperti insufficienti --> I[Risposta: prenotazione rifiutata]
+    I --> J[Mostra messaggio:\nNessun posto disponibile per\nil turno selezionato]
+    J --> K{Utente vuole\nriprovare?}
+    K -- Sì, cambia data/turno --> D
+    K -- No --> Z([Fine])
+
+    H -- Coperti disponibili --> L[Crea record in bookings\ncon cancellation_token UUID]
+    L --> M[Decrementa coperti disponibili\nper il turno]
+    M --> N[Invia email conferma\nall'utente via Resend]
+    N --> O[Invia email notifica\nal gestore via Resend]
+    O --> P[Mostra schermata:\nPrenotazione confermata]
+
+    P --> Q{L'utente\nvuole cancellare?}
+    Q -- No --> Z
+    Q -- Sì, clicca link\nnell'email --> R[Naviga a\n/booking/cancel/token]
+
+    R --> S{Token valido\ne prenotazione attiva?}
+    S -- No / scaduto --> T[Mostra errore:\nLink non valido o già usato]
+    T --> Z
+
+    S -- Sì --> U[Mostra schermata\nconferma cancellazione]
+    U --> V[Utente conferma]
+    V --> W[Marca prenotazione\ncome cancellata]
+    W --> X[Ripristina coperti\ndisponibili per il turno]
+    X --> Y[Mostra:\nPrenotazione cancellata]
+    Y --> Z
+
+    style A fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style Z fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style I fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style T fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style P fill:#1a3a1a,color:#6bff6b,stroke:#6bff6b
+    style Y fill:#1a3a1a,color:#6bff6b,stroke:#6bff6b

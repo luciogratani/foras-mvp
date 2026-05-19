@@ -1,0 +1,41 @@
+flowchart TD
+    A([Admin naviga su\nadmin.dominio.it]) --> B[Pagina di login]
+    B --> C[Inserisce email e password]
+    C --> D[Supabase Auth\nautenticazione]
+
+    D -- Credenziali errate --> E[Mostra errore:\nCredenziali non valide]
+    E --> C
+
+    D -- Autenticato --> F[Middleware legge\nuser_metadata.schema]
+
+    F --> G{Campo schema\npresente?}
+    G -- Assente --> H[Invalida sessione\nimmediatamente]
+    H --> I[Reindirizza al login\ncon errore: utente non\nassociato a nessun tenant]
+    I --> B
+
+    G -- Presente --> J[Verifica in public.tenants\nschema_name + owner_id]
+
+    J -- Record non trovato\no owner_id mismatch --> K[Invalida sessione\nimmediatamente]
+    K --> L[Reindirizza al login\ncon errore: schema\nnon autorizzato]
+    L --> B
+
+    J -- Verifica OK --> M[Inizializza client Supabase\ncon schema verificato del tenant]
+    M --> N[Reindirizza a\n/admin/bookings]
+    N --> O([Vedi 04-admin-flow])
+
+    P([Sessione già attiva\nbrowser riaperto]) --> Q[Middleware controlla\ntoken di sessione]
+    Q -- Token scaduto --> B
+    Q -- Token valido --> F
+
+    R([Admin clicca Logout]) --> S[Supabase Auth signOut]
+    S --> T[Distrugge sessione\ne client tenant]
+    T --> B
+
+    style A fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style P fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style R fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style O fill:#2a2a1a,color:#e5ff50,stroke:#e5ff50,stroke-dasharray:5
+    style H fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style K fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style E fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style M fill:#1a3a1a,color:#6bff6b,stroke:#6bff6b

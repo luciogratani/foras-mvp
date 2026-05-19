@@ -1,0 +1,47 @@
+flowchart TD
+    A([Nuovo cliente\nconfermato]) --> B[Fork di repo-template\nsu GitHub]
+    B --> C[Crea nuovo progetto\no usa istanza Supabase esistente]
+
+    C --> D[Crea schema PostgreSQL\nper il nuovo tenant\nes: bar_rossi]
+    D --> E[Esegui schema.sql\nsul nuovo schema]
+    E --> F{Migrazione\nriuscita?}
+    F -- Errore --> G[Debug · correggi · riprova]
+    G --> E
+    F -- OK --> H[Configura RLS\nsullo schema tenant]
+
+    H --> I[Crea utente admin\nin Supabase Auth]
+    I --> J[Imposta user_metadata:\nschema: bar_rossi]
+    J --> K{Verifica in\npublic.tenants}
+    K -- Record mancante --> L[Inserisci riga in public.tenants\nschema_name + owner_id]
+    L --> M
+    K -- Record presente --> M[Test login backoffice\nverifica middleware schema]
+
+    M --> N{Login e verifica\nschema OK?}
+    N -- Fallisce --> O[Debug auth flow\nvedi 03-auth-flow]
+    O --> I
+    N -- OK --> P[Configura .env\nper apps/web e apps/admin\nNEXT_PUBLIC_SUPABASE_SCHEMA=bar_rossi]
+
+    P --> Q[Seed dati iniziali\nsite_settings · orari placeholder\nmenu di esempio]
+    Q --> R[Personalizzazione grafica\ncolori · font · logo · hero]
+    R --> S[Deploy su Vercel\nweb → dominio.it\nadmin → admin.dominio.it]
+
+    S --> T{Deploy\nriuscito?}
+    T -- Errore build --> U[Controlla env vars Vercel\ne output del build log]
+    U --> S
+    T -- OK --> V[Checklist pre-freeze\nvedi mvp.md]
+
+    V --> V1{Tutti i punti\ndella checklist OK?}
+    V1 -- No --> V2[Completa i punti mancanti]
+    V2 --> V1
+    V1 -- Sì --> W[Freeze schema template\nnon modificare senza aggiornare\nschema.sql e migrations]
+
+    W --> X[Consegna credenziali\nadmin al cliente]
+    X --> Y[Walkthrough backoffice\ncon il cliente]
+    Y --> Z([Cliente operativo])
+
+    style A fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style Z fill:#1a3a1a,color:#6bff6b,stroke:#6bff6b
+    style G fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style O fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style U fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
+    style W fill:#1a2a3a,color:#6bb3ff,stroke:#6bb3ff

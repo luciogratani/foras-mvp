@@ -1,0 +1,40 @@
+flowchart TD
+    A([Utente arriva su dominio.it]) --> B[SSR: Next.js carica dati\nda Supabase schema tenant]
+    B --> C{Dati caricati\ncorrettamente?}
+    C -- Errore / timeout --> D[Mostra pagina con\ncontenuti placeholder]
+    C -- Sì --> E[Render homepage]
+
+    E --> F[Sezione Hero\nimmagine o video da Storage]
+    F --> G[Popup novità\nse elementi attivi nel DB]
+
+    G --> H{L'utente\nchiude il popup?}
+    H -- No, naviga le slide --> G
+    H -- Sì / nessun popup --> I[Sezione Slogan\ntesto da DB]
+
+    I --> J[Sezione Biografia\ntesto da DB]
+    J --> K[Sezione CTA\nPrenota · Menu]
+    K --> L{L'utente\ncosa clicca?}
+
+    L -- Prenota --> M[Naviga al\nform prenotazione]
+    M --> N([Vedi 02-booking-flow])
+
+    L -- Menu --> O[Naviga a\n/menu]
+    O --> P[Mostra menu\ncategorie · sezioni · item]
+    P --> Q{Utente torna\nalla homepage?}
+    Q -- Sì --> K
+    Q -- No --> Z([Fine])
+
+    L -- Continua a scorrere --> R[Sezione Galleria\nfoto da Storage]
+    R --> S[Sezione Orari di apertura\nda DB]
+    S --> T[Sezione News\nstessi contenuti del popup\nin formato statico]
+    T --> U[Footer\ninfo contatti · Google Maps · link]
+    U --> V{Utente interagisce\ncol footer?}
+    V -- Clicca mappa --> W[Apre Google Maps\nesterno]
+    W --> Z
+    V -- Clicca Prenota\nnel footer --> M
+    V -- Nessuna azione --> Z
+
+    style A fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style Z fill:#1a1a1a,color:#e5ff50,stroke:#e5ff50
+    style N fill:#2a2a1a,color:#e5ff50,stroke:#e5ff50,stroke-dasharray:5
+    style D fill:#3a1a1a,color:#ff6b6b,stroke:#ff6b6b
