@@ -1,5 +1,5 @@
 ---
-status: DRAFT
+status: DONE
 updated: 2026-05-20
 area: ai-playbooks
 type: prompt
@@ -67,4 +67,12 @@ Il client pubblico anonimo è pronto (sub-task 03). Ora si implementa il **perco
 1. Prerequisito: l'utente admin del template (creato nel sub-task 01) esiste con `user_metadata.schema = 'template'`.
 2. Impostare `SUPABASE_SERVICE_ROLE_KEY` su `apps/admin/.env.local` (locale) e sul progetto Vercel `foras-mvp-admin` (Production + Preview).
 3. Commit: `feat(admin): add verified tenant client and schema-validated auth`
-4. Frontmatter → `status: DONE`. Procedere al sub-task 05 (test isolamento).
+4. Frontmatter → `status: DONE`. Procedere al sub-task 04b (mini-login form) prima del 05.
+
+## Note esecuzione (2026-05-20) — scope gap riconosciuto
+
+Eseguito come scritto. Il middleware gate-a `/dashboard/:path*`, `getVerifiedTenantClient` valida schema+owner, la route `/dashboard` dimostra il flow. `pnpm tsc --noEmit` pulito, `pnpm --filter @repo/admin build` exit 0.
+
+**Quello che il prompt assumeva implicitamente ma non chiedeva**: una UI di login (form email+password che chiami `signInWithPassword`). Senza, i criteri "Done when" che parlano di "Login admin con utente che ha…" non sono testabili end-to-end in browser: l'unica via per creare una sessione sarebbe via `curl` contro l'endpoint `/auth/v1/token`. Smoke test in browser: `/dashboard` → redirect a `/?reason=unauthenticated` come atteso, ma da `/` non si può fare login.
+
+**Conseguenza**: il sub-task 04 resta DONE (il pezzo "verified tenant client + middleware" è completo e corretto), ma si introduce un sub-task **04b** dedicato al mini-login form per chiudere il gap. Non viene espanso il 04 retroattivamente per non mescolare la verifica server-side (alto rischio, già fatta) con la UI di login (basso rischio).

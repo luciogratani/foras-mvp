@@ -34,6 +34,7 @@ Il progetto usa un sistema a due livelli di chat AI:
 
 - Ogni prompt va scritto come file `.md` autonomo in `docs/ai-playbooks/prompts/` prima di essere passato a una sub-chat.
 - Un prompt deve contenere: contesto minimo necessario, scope esplicito, file rilevanti da leggere, output atteso, criteri di completamento.
+- Per ogni prompt suggerisci un /model e /effort adeguati (Claude Code 2026.05)
 - Dopo ogni sessione di sub-chat: commit + push + aggiornamento docs.
 - Il master non delega decisioni architetturali — le prende e le documenta nel `decision-log/`.
 

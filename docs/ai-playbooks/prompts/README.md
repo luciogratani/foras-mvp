@@ -59,6 +59,7 @@ DB online, isolamento verificato, tipi generati. 5 sub-task. Esecuzione **sequen
 2. [[2026-05-20_sprint1_02_typescript-types]] — Genera i tipi TS via `postgres-meta` HTTP (`curl` + tunnel SSH → `packages/supabase/src/types/database.ts`)
 3. [[2026-05-20_sprint1_03_public-supabase-client]] — Client anonimo condiviso schema-aware in `@repo/supabase`
 4. [[2026-05-20_sprint1_04_admin-verified-client]] — `getVerifiedTenantClient()` + auth admin schema-validata (⚠️ alto rischio: leak cross-tenant)
+4b. [[2026-05-20_sprint1_04b_admin-login-form]] — Mini-login form per chiudere lo scope gap del 04 (senza form la sessione non è creabile via browser)
 5. [[2026-05-20_sprint1_05_isolation-tests]] — Suite test isolamento e verifica RLS (gate di sicurezza)
 
 **Step manuali del master (NON delegabili a sub-chat):** creazione utente admin `template` in Supabase Auth, esecuzione degli script SQL nel SQL editor come service_role, set di `SUPABASE_SERVICE_ROLE_KEY` (env server-only, mai `NEXT_PUBLIC`), apertura del tunnel SSH verso `supabase-meta` per la generazione tipi (`ssh -N -L 18080:<IP_CONTAINER_META>:8080 foras-vps`) e set opzionale di `SUPABASE_META_URL` (env CLI/dev). Nessun `SUPABASE_PROJECT_ID`/`SUPABASE_ACCESS_TOKEN`: la CLI Supabase non è utilizzata, vedi decision-log.
