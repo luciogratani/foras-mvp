@@ -290,6 +290,14 @@ INSERT INTO menu_sections (name, position, is_active) VALUES
 INSERT INTO site_settings (title, description) VALUES
   ('Nome del locale', 'Descrizione del locale — da personalizzare nel backoffice');
 
+-- 5d. Turni di prenotazione (due placeholder ragionevoli)
+-- Un tenant senza time_slots non ha form prenotazioni utilizzabile: il gestore
+-- aggiusterà orari e capacità dal backoffice. Default ragionevole per un bar:
+-- pranzo 12:30 (30 coperti) + cena 20:00 (50 coperti), entrambi attivi.
+INSERT INTO time_slots (label, time, max_covers, is_active) VALUES
+  ('Pranzo', '12:30', 30, true),
+  ('Cena',   '20:00', 50, true);
+
 
 -- -----------------------------------------------------------------------
 -- 6. Registrazione in public.tenants

@@ -269,3 +269,50 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 - Mai aggiungere route che usino `supabaseAdmin` con table/column dinamici
 
 **Trigger di revisione (→ post-MVP):** [[post-mvp|migrazione a Edge Function]] quando: (a) entra il secondo tenant reale, (b) si introduce CRUD esposto a admin con potenziale superficie d'attacco maggiore, o (c) si vuole riusare la verifica da `apps/web`. Vedi anche la sezione "Edge Functions — validazione schema" in `architettura-fullstack.md`.
+
+---
+
+### 2026-05-21 — Service layer — funzioni ricevono il client come parametro
+
+**Contesto:** Sprint 2 porta i service in `@repo/supabase/src/services/`. Le funzioni operano sullo stesso `TenantClient` tipato `SupabaseClient<Database, 'template'>` ma devono funzionare con credenziali diverse a seconda del consumer:
+
+- `getSiteSettings`, `getActiveNews`, `getMenuSections`, `getMenuBySection`, `createBooking` → eseguibili con client **anon** (read pubblico + INSERT anon su `bookings`)
+- `getAvailableTimeSlots`, `cancelBookingByToken` → richiedono un client **privilegiato** (SELECT/UPDATE su `bookings` sono gated da `auth.uid() IS NOT NULL` nelle RLS attuali)
+
+**Opzioni considerate:**
+- (a) ogni service istanzia internamente il client (con `createSupabaseClient()` o un'API helper)
+- (b) il service riceve `client: TenantClient` come **primo parametro** e non sa nulla delle credenziali
+
+**Decisione:** (b). Firma uniforme: `async function fn(client: TenantClient, ...args)`.
+
+**Rationale:** separa la responsabilità "ottenere le credenziali giuste" (che vive nei Server Component / Server Action / Route Handler del consumer) dalla logica della query (che vive nel service). Evita di duplicare i service per scope diversi (anon vs admin) e di accoppiare `@repo/supabase` alle env variabili del singolo consumer. Già implicitamente supportato da `@supabase/supabase-js` (i metodi del client sono semplici method-call sull'istanza passata).
+
+**Conseguenza operativa:** il chiamante è responsabile di:
+1. Istanziare il client con le credenziali appropriate (vedi voce successiva).
+2. Non passare un client anon a service che richiedono privilegi (TypeScript non lo impedisce — è una convenzione documentata caso per caso nel JSDoc del service).
+
+---
+
+### 2026-05-21 — `bookings` lato pubblico — service_role server-side, no RPC
+
+**Contesto:** due delle service function di Sprint 2 (`getAvailableTimeSlots`, `cancelBookingByToken`) toccano `bookings` con operazioni vietate ad anon dalle RLS attuali (`bookings_admin_select`, `bookings_admin_update` USING `auth.uid() IS NOT NULL`). Anche se i consumer (homepage SSR, route `/booking/cancel/[token]`) sono pubblici, il *client* lato server può essere privilegiato.
+
+**Opzioni considerate:**
+- (a) **RPC PostgreSQL `SECURITY DEFINER`** esposte come `template.available_time_slots(p_date)` e `template.cancel_booking_by_token(p_token)`, anon EXECUTE. Cambio dello schema baseline + rigenerazione tipi.
+- (b) **Service riceve client privilegiato**, chiamato lato server-only con `SUPABASE_SERVICE_ROLE_KEY` su `apps/web` (stesso pattern di `apps/admin/lib/supabaseAdmin.ts`). Nessun cambio DB.
+- (c) Aggiornare RLS/GRANT per permettere SELECT aggregata + UPDATE token-based ad anon. Più rischioso, ricalibra la baseline di sicurezza.
+
+**Decisione:** (b). Sprint 2 produce solo i service in `@repo/supabase`. Quando arriva Sprint 4 (form prenotazioni e route cancel), `apps/web` introduce `lib/supabaseAdmin.ts` server-only e `SUPABASE_SERVICE_ROLE_KEY` come env Vercel non-`NEXT_PUBLIC_`, e i consumer chiamano i service con quel client.
+
+**Rationale:**
+- Coerente con la decisione precedente *2026-05-21 — `SUPABASE_SERVICE_ROLE_KEY` su Vercel admin* (lo stesso pattern, esteso a un secondo target).
+- Sprint 2 resta puramente TypeScript: niente nuova migrazione DB, niente rigenerazione tipi, niente nuova decisione cross-cutting.
+- L'opzione (a) resta sul tavolo come refactor coerente con la migrazione post-MVP a Edge Function (entrambi tolgono la `service_role` da Vercel).
+- L'opzione (c) cambia il modello di sicurezza dei bookings — richiede analisi separata, non da Sprint 2.
+
+**Mitigazioni in piedi (estensione delle regole già definite per `apps/admin`):**
+- Il futuro `apps/web/lib/supabaseAdmin.ts` deve avere `import 'server-only'` come guard.
+- Mai accettare input utente come argomento di `supabaseAdmin.from(...)`, `.select(...)`, `.eq(...)` direttamente — passare sempre attraverso i service tipati che hanno firme chiuse.
+- I service `getAvailableTimeSlots` e `cancelBookingByToken` accettano solo input scalari (date, token UUID), validati con Zod a monte.
+
+**Trigger di revisione (→ post-MVP):** stesso della voce precedente — migrazione a Edge Function quando: 2° tenant, CRUD admin esteso, o quando si vuole eliminare la `service_role` da Vercel del tutto. A quel punto sia `apps/admin` che `apps/web` perdono la chiave.

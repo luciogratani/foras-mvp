@@ -76,40 +76,51 @@ Done when:
 
 ---
 
-## Sprint 2 — Homepage pubblica — struttura e SSR
+## Sprint 2 — Service layer in `@repo/supabase` — DRAFT (apertura 2026-05-21)
 
-**Goal:** homepage SSR headless funzionante sullo schema `template`.
+**Goal:** service layer riusabile in `packages/supabase/src/services/` consumato da homepage pubblica (Sprint 3) e backoffice (Sprint 5). Nessuna query DB nei componenti UI.
+
+**Allineamento docs (2026-05-21):** il backlog precedente fondeva "Sprint 2 = Homepage" e "Sprint 3 = Menu", mentre `roadmap-sviluppo.md` (Fase 2) e `runbook-implementazione.md` (Phase 2) trattano il service layer come uno sprint distinto. Riallineato qui.
+
+Eseguito come 3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sprint2/`:
+- 01 [[2026-05-21_sprint2_01_site-service]] — `getSiteSettings`, `getActiveNews` su `template.site_settings` / `template.news_slides` (read-only, client anon)
+- 02 [[2026-05-21_sprint2_02_menu-service]] — `getMenuSections`, `getMenuBySection`, `getAllergens` con convenzione di ordinamento `position asc NULLS LAST, name asc` (read-only, client anon)
+- 03 [[2026-05-21_sprint2_03_bookings-service]] — `getAvailableTimeSlots`, `createBooking`, `cancelBookingByToken` + Zod schemas in `packages/supabase/src/schemas/` + error class (`OverbookingError`, `DuplicateBookingError`). ⚠️ due funzioni richiedono client privilegiato server-side.
+
+**Decisioni architetturali Sprint 2** (vedi `decision-log/decisioni.md`):
+- *Service layer — funzioni ricevono il client come parametro* — firma uniforme `(client: TenantClient, ...args)`; il consumer inietta le credenziali
+- *`bookings` lato pubblico — service_role server-side, no RPC* — niente cambio dello schema baseline; Sprint 4 introdurrà `apps/web/lib/supabaseAdmin.ts` server-only
+- Zod schemas in directory dedicata `schemas/` (non co-located in `services/*.ts`) — evita di trascinare `@supabase/supabase-js` nei bundle dei form Sprint 4
+- `zod` aggiunto come `dependencies` di `@repo/supabase` nel sub-task 03
+
+Done when:
+- I service sono tipati end-to-end (`Tables<{ schema: 'template' }, ...>`, niente `any`)
+- `pnpm -r tsc --noEmit` exit 0
+- Nessuna query DB diretta fuori da `@repo/supabase`
+- Smoke test manuale eseguito contro lo schema `template` (procedura in coda a ciascun prompt)
+- `createBooking` rifiuta `gdpr_consent: false` via Zod e mappa il `23505` di Postgres a `DuplicateBookingError`
+
+---
+
+## Sprint 3 — Homepage pubblica SSR (con menu)
+
+**Goal:** homepage SSR headless funzionante sullo schema `template`, completa di sezione menu — primo consumer reale del service layer.
 
 Tasks:
-- Implementare `getSiteSettings()` e `getActiveNews()` server-side
-- Implementare layout homepage con skeleton dei componenti principali
-- Componenti headless: Hero, Slogan, Bio, Orari, Footer, Galleria, Popup, Sezione news
-- Skeleton screens per contenuti secondari (Galleria, Popup, News)
+- `app/page.tsx`: fetch server-side di `getSiteSettings()` e `getActiveNews()` da `@repo/supabase`
+- Componenti headless: Hero, Slogan, Bio, OpeningHours, Footer, Galleria, NewsPopup, NewsSection, Menu (tab per `getMenuSections`, contenuto da `getMenuBySection`)
+- Skeleton screens per contenuti secondari (Galleria, NewsPopup, NewsSection)
+- Popup/sheet allergeni per item (consuma `getAllergens` + `menu_items.allergen_ids`)
 - `error.tsx` e `loading.tsx`
-- Meta tag dinamici da `site_settings`
+- Meta tag dinamici in `app/layout.tsx` da `site_settings`
 
 Done when:
 - Homepage carica con SSR e mostra dati dallo schema `template`
 - Nessun flash di layout shift sui contenuti above the fold
 - Meta tag corretti nel `<head>`
-
----
-
-## Sprint 3 — Menu pubblico
-
-**Goal:** menu consultabile sulla homepage pubblica.
-
-Tasks:
-- Implementare query `getMenuBySection()` server-side
-- Componente Menu con navigazione a tab per section
-- Visualizzazione categorie e item con prezzo
-- Popup/sheet allergeni per item
-- `is_active` rispettato su tutti i livelli
-
-Done when:
-- Menu completo navigabile sulla homepage
-- Allergeni visualizzabili senza navigare fuori dalla pagina
-- Item e categorie disabilitate non visibili
+- Menu navigabile per sezione con allergeni visibili in popup
+- Item e categorie disabilitate non visibili (filtro applicato già nel service)
+- Nessuna query DB dentro i componenti — tutto via service layer
 
 ---
 
