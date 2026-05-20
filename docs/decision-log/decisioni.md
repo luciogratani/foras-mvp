@@ -239,3 +239,33 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Conseguenza per i tenant già creati:** se un tenant esiste senza grant (caso del nostro `template`), va sbloccato eseguendo manualmente il blocco GRANT come service_role nel SQL editor. Non serve droppare e ricreare lo schema.
 
 **Debito tecnico aperto:** `docs/operations/audit_rls.sql` oggi verifica solo `rowsecurity` e presenza policy — non i grant. Va esteso per controllare anche `has_schema_privilege(...)` minimi sui ruoli Supabase, così il prossimo onboarding manchevole verrebbe intercettato dall'audit invece che dal primo smoke test runtime. **Trigger:** prima del secondo tenant creato via script, o prima del freeze del template (Sprint 6).
+
+---
+
+### 2026-05-21 — `SUPABASE_SERVICE_ROLE_KEY` su Vercel admin (non Edge Function) per MVP
+
+**Contesto:** la verifica owner in `getVerifiedTenantClient` (sub-task Sprint 1 / 04) richiede di leggere `public.tenants` con un client che possa farlo affidabilmente indipendentemente dalle RLS. Due pattern equivalenti dal punto di vista del modello di trust:
+1. **Edge Function Supabase**: l'admin app chiama una function passando il JWT utente; la function (su server Supabase) usa la `service_role` e ritorna `{ verified, schema }`. La chiave non lascia mai i server Supabase.
+2. **Server-side Next.js**: `supabaseAdmin` vive nell'app admin (Vercel), con `import 'server-only'` come guard, env non-`NEXT_PUBLIC_`.
+
+**Opzioni considerate:**
+- (1) — più sicuro, riusabile anche da `apps/web`, ma round-trip extra e secondo deploy da gestire (Supabase Functions)
+- (2) — meno passaggi, latenza minore, ma la chiave esiste come variabile cifrata su Vercel
+
+**Decisione:** (2) per Sprint 1 / MVP. Pattern già adottato in `apps/admin/lib/supabaseAdmin.ts`.
+
+**Rationale:** la doc di architettura prevedeva entrambi i pattern (riga 85 vs 118 erano in contraddizione interna, ora sanate). Per il backoffice MVP la complessità extra di un Edge Function dedicato non è giustificata: la chiave è confinata al processo server Vercel, non bundled, non loggata, e il client `supabaseAdmin` ha campi fissi (nessun input utente passa per `from()`/`select()`).
+
+**Mitigazioni in piedi:**
+- `import 'server-only'` su `supabaseAdmin.ts` (verificato: un import lato client fa fallire `next build`)
+- env non-`NEXT_PUBLIC_` → mai nel bundle
+- `.env.local` in `.gitignore` → mai nel repo
+- `supabaseAdmin` confinato a una sola query con campi fissi (`schema_name`, `owner_id`) — nessun pattern dinamico
+- Sequence `apps/admin/.env.local` su Vercel come variabile cifrata
+
+**Regole operative (vincolanti per tutto lo sviluppo admin):**
+- Mai loggare `process.env`, l'oggetto `supabaseAdmin`, né la sua config
+- Mai accettare input utente come argomento di `supabaseAdmin.from(…)`, `.select(…)`, `.eq(…)`
+- Mai aggiungere route che usino `supabaseAdmin` con table/column dinamici
+
+**Trigger di revisione (→ post-MVP):** [[post-mvp|migrazione a Edge Function]] quando: (a) entra il secondo tenant reale, (b) si introduce CRUD esposto a admin con potenziale superficie d'attacco maggiore, o (c) si vuole riusare la verifica da `apps/web`. Vedi anche la sezione "Edge Functions — validazione schema" in `architettura-fullstack.md`.

@@ -115,7 +115,14 @@ NEXT_PUBLIC_SUPABASE_SCHEMA=nome_bar
 
 Un singolo `supabaseClient.ts` condiviso le legge e inizializza il client con lo schema corretto.
 
-**Cosa è sicuro esporre con `NEXT_PUBLIC_`:** `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` sono intenzionalmente pubbliche — Supabase è progettato per esporre queste credenziali al browser. La `anon key` non è una chiave segreta: è una chiave JWT che identifica il progetto e consente solo le operazioni permesse dalle RLS. La sicurezza dei dati è interamente delegata alle RLS policies, non all'oscuramento della chiave. La `service_role` key non va mai esposta al client e va usata solo nelle Edge Functions server-side.
+**Cosa è sicuro esporre con `NEXT_PUBLIC_`:** `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` sono intenzionalmente pubbliche — Supabase è progettato per esporre queste credenziali al browser. La `anon key` non è una chiave segreta: è una chiave JWT che identifica il progetto e consente solo le operazioni permesse dalle RLS. La sicurezza dei dati è interamente delegata alle RLS policies, non all'oscuramento della chiave.
+
+**`SUPABASE_SERVICE_ROLE_KEY` — uso server-side, mai client:** la service_role key bypassa qualsiasi RLS, quindi non deve mai finire nel bundle client. È usabile in due contesti server-side equivalenti dal punto di vista del modello di trust:
+
+1. **Edge Functions Supabase** — pattern preferito quando l'operazione può viverci (la chiave non lascia mai i server Supabase). Vedi sezione "Edge Functions — validazione schema".
+2. **Server-side Next.js (Server Component / Route Handler / Middleware)** — usato nell'admin app per `supabaseAdmin` (vedi sezione "Auth — validazione schema al login"). La chiave vive su Vercel come variabile NON-`NEXT_PUBLIC_` (cifrata, accessibile solo al runtime server). Il modulo che la consuma deve avere `import 'server-only'` per impedirne l'import accidentale lato client.
+
+Per il backoffice MVP si usa il pattern (2) perché la verifica owner avviene nel flusso Next.js direttamente. Migrazione a (1) tracciata in [[post-mvp|post-MVP]] (riduce attack surface: la chiave non passa più da Vercel).
 
 ---
 

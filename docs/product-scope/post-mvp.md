@@ -55,3 +55,26 @@ Feature escluse consapevolmente dallo scope MVP, documentate per non perderle.
 **Attuale:** unique constraint a livello DB `(email, time_slot_id, date)`. Copre il 95% dei casi reali.
 
 **Potenziale problema:** un attacco coordinato con email diverse multiple. Per un bar locale questo scenario è improbabile e non giustifica un sistema di rate limiting applicativo. Da riconsiderare solo se si verificano abusi reali.
+
+---
+
+## Migrazione verifica owner a Edge Function Supabase
+
+**Cosa:** spostare la logica di `getVerifiedTenantClient` (oggi in `apps/admin/lib/auth.ts`, Server Component Next.js) in un'Edge Function Supabase. L'admin app chiama l'edge function passando il JWT utente; la function usa la `service_role` per leggere `public.tenants` e ritorna `{ verified, schema }`.
+
+**Attuale:** `apps/admin/lib/supabaseAdmin.ts` usa `SUPABASE_SERVICE_ROLE_KEY` come variabile server-side su Vercel (decisione tracciata nel [[decisioni|decision-log]], voce *2026-05-21 — SUPABASE_SERVICE_ROLE_KEY su Vercel admin*).
+
+**Vantaggi della migrazione:**
+- La `service_role` key non lascia mai i server Supabase — Vercel non la vede
+- Attack surface ridotto: RCE su Vercel non comprometterebbe la chiave
+- Riusabile da `apps/web` quando servirà (al momento non serve, ma per la cancellazione prenotazione via link unico sì)
+
+**Svantaggi:**
+- Round-trip extra (latenza ~50-150ms)
+- Secondo target di deploy (Supabase Functions) — più complessità operativa
+- Devi gestire la concorrenza dei deploy (rollback non sincronizzato)
+
+**Trigger per migrazione:** quando si verifica una di queste:
+1. Entra il secondo tenant reale (più dati a rischio)
+2. Si introduce CRUD admin con superficie d'attacco maggiore (es. import file, query dinamica)
+3. Serve verifica owner da `apps/web` (es. cancellazione prenotazione autenticata)
