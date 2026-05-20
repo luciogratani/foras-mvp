@@ -11,6 +11,18 @@ owner: master-chat
 
 Questa cartella contiene i prompt scritti dal master per le sub-chat, secondo le regole di [[workflow-master-sub]].
 
+## Organizzazione cartelle
+
+I prompt sono raggruppati per sprint in sottocartelle:
+
+```
+prompts/
+  2026-05-20_sprint0/   ← Sprint 0 (DONE)
+  2026-05-20_sprint1/   ← Sprint 1 (DRAFT)
+```
+
+I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle.
+
 ## Convenzione naming
 
 ```
@@ -38,6 +50,20 @@ Lo Sprint 0 è suddiviso in 5 sub-task per limitare il consumo token di ogni sub
 5. [[2026-05-20_sprint0_05_supabase-smoke]] — Connessione Supabase e smoke test query
 
 Il task **"deploy preview Vercel"** del backlog Sprint 0 resta a carico del master e si esegue manualmente al termine dei 5 sub-task — non viene delegato a sub-chat.
+
+## Sprint 1 — set di prompt
+
+DB online, isolamento verificato, tipi generati. 5 sub-task. Esecuzione **sequenziale** (ci sono dipendenze forti: i tipi richiedono lo schema applicato, i client richiedono i tipi):
+
+1. [[2026-05-20_sprint1_01_audit-rls-and-db-baseline]] — Finalizza `audit_rls.sql` + applica `create_schema_from_template.sql` sullo schema `template`
+2. [[2026-05-20_sprint1_02_typescript-types]] — Genera i tipi TS (`supabase gen types` → `packages/supabase/src/types/database.ts`)
+3. [[2026-05-20_sprint1_03_public-supabase-client]] — Client anonimo condiviso schema-aware in `@repo/supabase`
+4. [[2026-05-20_sprint1_04_admin-verified-client]] — `getVerifiedTenantClient()` + auth admin schema-validata (⚠️ alto rischio: leak cross-tenant)
+5. [[2026-05-20_sprint1_05_isolation-tests]] — Suite test isolamento e verifica RLS (gate di sicurezza)
+
+**Step manuali del master (NON delegabili a sub-chat):** creazione utente admin `template` in Supabase Auth, esecuzione degli script SQL nel SQL editor come service_role, set di `SUPABASE_SERVICE_ROLE_KEY` e `SUPABASE_PROJECT_ID` (env CLI/server, mai `NEXT_PUBLIC`).
+
+**Decisioni master prese per Sprint 1:** (a) `audit_rls.sql` viene creato in `docs/operations/` estraendolo dalla bozza in `migration-runbook.md`; (b) si introduce `SUPABASE_SERVICE_ROLE_KEY` come env server-only per `supabaseAdmin`; (c) il client tenant è tipato `Database`, niente `any`.
 
 ## Ordine di esecuzione
 
