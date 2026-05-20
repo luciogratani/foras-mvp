@@ -56,3 +56,6 @@ docs/.obsidian/
 .history/
 .tmp/
 tmp/
+
+# --- Credenziali locali (mai in repo) ---
+docs/user.md

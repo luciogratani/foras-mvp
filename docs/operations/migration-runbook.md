@@ -96,6 +96,8 @@ Non esiste un meccanismo automatico di rollback. In caso di errore:
 
 Dopo ogni migrazione che tocca RLS, eseguire questo script per verificare che tutti gli schemi tenant abbiano lo stesso set di policies. Individua le discrepanze prima che diventino un problema di sicurezza.
 
+→ versione finale: `docs/operations/audit_rls.sql`
+
 ```sql
 -- audit_rls.sql
 -- Confronta le RLS policies su tutti gli schemi tenant registrati in public.tenants
@@ -103,7 +105,7 @@ Dopo ogni migrazione che tocca RLS, eseguire questo script per verificare che tu
 -- Output: righe presenti in un solo schema → indicano una discrepanza da correggere.
 --
 -- Uso:
---   \i scripts/audit_rls.sql
+--   \i docs/operations/audit_rls.sql
 -- oppure eseguire dal Supabase SQL editor (con service_role).
 
 WITH reference_schema AS (

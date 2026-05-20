@@ -18,17 +18,27 @@
 --     con user_metadata.schema = 'nome_schema'
 -- -----------------------------------------------------------------------
 
--- ⚠️  Impostare qui il nome dello schema e l'owner_id prima di eseguire
-\set target_schema 'nome_schema'
-\set owner_uuid    'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+-- ⚠️  Schema e owner già impostati per il tenant 'template'
+--     (usare psql con \set per altri tenant)
+
+
+-- -----------------------------------------------------------------------
+-- 0. Bootstrap public.tenants (idempotente — safe se già esiste)
+-- -----------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS public.tenants (
+  schema_name TEXT        PRIMARY KEY,
+  owner_id    UUID        NOT NULL REFERENCES auth.users(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 
 -- -----------------------------------------------------------------------
 -- 1. Creazione schema
 -- -----------------------------------------------------------------------
 
-CREATE SCHEMA IF NOT EXISTS :target_schema;
-SET search_path = :target_schema;
+CREATE SCHEMA IF NOT EXISTS template;
+SET search_path = template;
 
 
 -- -----------------------------------------------------------------------
@@ -253,11 +263,11 @@ INSERT INTO site_settings (title, description) VALUES
 -- -----------------------------------------------------------------------
 
 INSERT INTO public.tenants (schema_name, owner_id)
-VALUES (:'target_schema', :'owner_uuid'::uuid);
+VALUES ('template', '1c486961-12b2-47d0-8aef-0aee30df083c'::uuid);
 
 
 -- -----------------------------------------------------------------------
 -- Fine script
--- Verificare con l'audit RLS (scripts/audit_rls.sql) prima di procedere
+-- Verificare con l'audit RLS (docs/operations/audit_rls.sql) prima di procedere
 -- con il resto dell'onboarding.
 -- -----------------------------------------------------------------------
