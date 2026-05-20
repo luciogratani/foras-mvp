@@ -47,21 +47,32 @@ Done when:
 
 ---
 
-## Sprint 1 — DB, RLS e tipi TypeScript
+## Sprint 1 — DB, RLS e tipi TypeScript ✅ CHIUSO (2026-05-21)
 
 **Goal:** schema tenant completo, isolamento verificato, tipi generati.
 
-Tasks:
-- Eseguire `create_schema_from_template.sql` sullo schema `template`
-- Verificare RLS con lo script `audit_rls.sql`
-- Eseguire test di isolamento cross-tenant
-- Generare tipi TypeScript con Supabase CLI (`database.ts` in `/packages/supabase`)
-- Scrivere `supabaseClient.ts` condiviso che legge `NEXT_PUBLIC_SUPABASE_SCHEMA`
+Tasks (eseguiti come 5 sub-task + 1 follow-up in `docs/ai-playbooks/prompts/2026-05-20_sprint1/`):
+- ✅ Eseguito `create_schema_from_template.sql` sullo schema `template` (sub-task 01)
+- ✅ Verificate RLS con `audit_rls.sql` (sub-task 01)
+- ✅ Generati tipi TypeScript via `postgres-meta` HTTP — bypass CLI Supabase per setup self-hosted (sub-task 02)
+- ✅ `createSupabaseClient()` schema-aware tipato `SupabaseClient<Database, SchemaName>` in `@repo/supabase` (sub-task 03)
+- ✅ `getVerifiedTenantClient()` + `supabaseAdmin` server-only + middleware `/dashboard` (sub-task 04)
+- ✅ Mini-login form admin per chiudere lo scope gap del 04 (sub-task 04b)
+- ✅ Suite test isolamento `docs/operations/rls_isolation_tests.sql` con sezioni 1/2a/2b (sub-task 05)
 
 Done when:
-- Tutti i test di isolamento passano
-- Tipi TypeScript generati e importabili nelle app
-- `getVerifiedTenantClient()` implementata e funzionante in `/apps/admin`
+- ✅ Tutti i test di isolamento passano
+- ✅ Tipi TypeScript generati e importabili nelle app
+- ✅ `getVerifiedTenantClient()` implementata e funzionante in `/apps/admin`
+
+**Scoperte e decisioni durante l'esecuzione** (vedi `decision-log/decisioni.md`):
+- Generazione tipi via `postgres-meta` HTTP (no CLI Supabase, no Docker locale)
+- GRANT espliciti aggiunti a `create_schema_from_template.sql` §3b — RLS senza GRANT non sono raggiungibili
+- `SUPABASE_SERVICE_ROLE_KEY` su Vercel admin per MVP; trigger di migrazione a Edge Function tracciato in `post-mvp.md`
+- Hardening RLS scrittura (owner-scope vs `auth.uid() IS NOT NULL`): trigger = secondo tenant o freeze template
+
+**Debito tecnico aperto:**
+- `audit_rls.sql` non controlla i GRANT — va esteso prima del secondo tenant o del freeze del template
 
 ---
 
