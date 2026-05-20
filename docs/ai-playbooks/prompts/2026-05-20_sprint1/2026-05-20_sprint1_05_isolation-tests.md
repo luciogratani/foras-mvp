@@ -1,12 +1,15 @@
 ---
 status: DRAFT
-updated: 2026-05-20
+updated: 2026-05-21
 area: ai-playbooks
 type: prompt
 sprint: 1
 order: 5
 tags: [foras-mvp, sprint1, rls, security, testing]
 owner: master-chat
+suggested_model: claude-sonnet-4-6
+suggested_effort: medium
+patched: 2026-05-21 — usa alex_akashi/underclub come fixture READ-ONLY (tenant reali); mantiene test_iso per i casi di scrittura; nota GRANT prerequisite scoperto in 04b
 ---
 
 # Sprint 1 / 5 of 5 — Test di isolamento e verifica RLS
@@ -34,23 +37,40 @@ Creare una suite di test di isolamento riproducibile. Due livelli:
    - Scrittura su menu/site_settings da anon **rifiutata**
    - Per ogni caso, output atteso esplicito (PASS/FAIL)
 
-2. **Test isolamento cross-tenant** — script (SQL o piccolo script node con due client su schemi diversi) che dimostra che una query lanciata con lo schema `template` non può leggere/scrivere dati di un altro schema, e che un accesso a uno schema non in `public.tenants` viene rifiutato (atteso 403 lato app via `getVerifiedTenantClient`).
-   - Nota: se esiste un solo schema (`template`), creare uno schema di prova usa-e-getta (es. `test_iso`) per il test cross-tenant, poi eliminarlo. Documentare la procedura; l'esecuzione su DB è step manuale del master.
+2. **Test isolamento cross-tenant** — due livelli complementari:
+
+   **2a. Verifica READ-ONLY contro tenant reali esistenti** (`alex_akashi`, `underclub`).
+   Nel progetto Supabase esistono già due schemi tenant di clienti reali. Sono **off-limits per scrittura** ma vanno benissimo come fixture di sola lettura per dimostrare l'isolamento. Casi da coprire:
+   - Client tenant configurato su `template` che tenta `SELECT` da una tabella di `alex_akashi` (es. via `from()` con schema cross-call, oppure via REST forzando `Accept-Profile: alex_akashi`): atteso fallimento (`42501` o "schema not bound").
+   - Stesso scenario contro `underclub` per confermare che non è specifico di un singolo schema.
+   - Tentativo di login admin con `user_metadata.schema = 'alex_akashi'` ma `owner_id` che non corrisponde a quella riga in `public.tenants`: atteso `signOut()` + redirect a `/?reason=tenant-mismatch` (è il flow del 04 / 04b).
+   - **Vincolo non negoziabile:** zero INSERT/UPDATE/DELETE contro `alex_akashi` o `underclub`. Mai. I test che richiedono scrittura usano `test_iso` (vedi 2b).
+
+   **2b. Schema usa-e-getta `test_iso` per i casi di scrittura.**
+   Crea uno schema temporaneo `test_iso` (struttura minima: una sola tabella `dummy(id, owner_id)` con RLS attiva e un GRANT minimo replicato dal modello di `create_schema_from_template.sql` §3b), inserisce una riga, dimostra che un client `template`-bound non può leggerla né modificarla, poi `DROP SCHEMA test_iso CASCADE`. Lo step esecutivo SQL è manuale del master — la sub-chat produce lo script idempotente.
+
+   Tutti gli script SQL vanno in `docs/operations/rls_isolation_tests.sql` (un solo file con sezioni etichettate `-- 2a` e `-- 2b`).
 
 3. **Checklist verificabile** in coda al file di test: i 4 criteri "Done when" del runbook, ciascuno con come verificarlo.
 
 ## Vincoli
 
-- I test SQL devono essere **read-only dove possibile**; dove serve un INSERT di prova (bookings), usare dati chiaramente fittizi e ripulirli a fine test (o usare una transazione con ROLLBACK).
-- Non modificare le RLS policy: se un test fallisce, **segnalare** la discrepanza al master, non "aggiustare" lo schema in autonomia (decisione architetturale = master).
-- Eventuale schema `test_iso` va eliminato a fine test (`DROP SCHEMA test_iso CASCADE`).
+- I test SQL devono essere **read-only dove possibile**; dove serve un INSERT di prova (bookings su `template`, dummy su `test_iso`), usare dati chiaramente fittizi e ripulirli a fine test (transazione con `ROLLBACK` o `DELETE` esplicito).
+- **Zero scritture su `alex_akashi` e `underclub`** — sono tenant di clienti reali. Solo SELECT, e solo per dimostrare l'isolamento.
+- Non modificare le RLS policy né i GRANT esistenti: se un test fallisce, **segnalare** la discrepanza al master, non "aggiustare" lo schema in autonomia (decisione architetturale = master).
+- `test_iso` va eliminato a fine test (`DROP SCHEMA test_iso CASCADE`). Lo script deve essere idempotente: se `test_iso` esiste già da un'esecuzione precedente non chiusa, droppare prima di ricreare.
 - L'esecuzione su Supabase è manuale (master); la sub-chat produce gli script e la procedura.
+- **Prerequisito DB (acquisito in 04b):** lo schema `template` ha già i GRANT per `anon/authenticated/service_role` (vedi voce *2026-05-21 — GRANT espliciti per i ruoli Supabase* nel decision-log). Se viene creato `test_iso`, replicare lo stesso pattern di GRANT, altrimenti i test falliranno con `42501` invece che con il vero motivo di isolamento.
 
 ## Output atteso
 
-- `docs/operations/rls_isolation_tests.sql` (o nome equivalente) con casi PASS/FAIL espliciti
-- Procedura cross-tenant documentata (con setup/teardown di `test_iso`)
-- Checklist dei 4 criteri "Done when" in fondo al file
+- `docs/operations/rls_isolation_tests.sql` con tre sezioni etichettate:
+  - `-- 1. Public read / write permessi e negati su template` (anon)
+  - `-- 2a. Cross-tenant READ-ONLY contro alex_akashi e underclub` (PASS = denied)
+  - `-- 2b. Setup + test + teardown di test_iso` (PASS = denied + DROP a fine sezione)
+- Ogni caso con un commento `-- PASS quando: ...` / `-- FAIL se: ...` esplicito.
+- Procedura per il master in un commento in testa al file: prerequisiti, ordine di esecuzione, come interpretare l'output.
+- Checklist dei 4 criteri "Done when" in coda al file (sotto forma di `-- [ ] criterio ...`).
 
 ## Done when
 
@@ -62,7 +82,8 @@ Creare una suite di test di isolamento riproducibile. Due livelli:
 
 ## Note per il master
 
-1. Eseguire la suite su Supabase come service_role + un client anon di prova.
+1. Eseguire la suite su Supabase come service_role + un client anon di prova. Per le sezioni cross-tenant 2a/2b ricordarsi che PostgREST richiede lo schema target nella whitelist `PGRST_DB_SCHEMAS` (lesson learned 04b): `template`, `alex_akashi`, `underclub` sono già esposti; se viene creato `test_iso` per la 2b, va aggiunto temporaneamente alla whitelist + `docker compose up -d --force-recreate rest` per il test, poi rimosso al teardown.
 2. Se un test FAIL: aprire una voce nel `decision-log/` o correggere `create_schema_from_template.sql`, poi ri-eseguire l'audit.
-3. Commit: `test(rls): add tenant isolation and RLS verification suite`
-4. Frontmatter → `status: DONE`. **Sprint 1 chiuso** → aggiornare `backlog.md` (criteri Done Sprint 1) e aprire Sprint 2 (service layer).
+3. Suggerito: `/model claude-sonnet-4-6`, `/effort medium`. Scope chiuso (file SQL + procedura), nessuna decisione architetturale.
+4. Commit: `test(rls): add tenant isolation and RLS verification suite`
+5. Frontmatter → `status: DONE`. **Sprint 1 chiuso** → aggiornare `backlog.md` (criteri Done Sprint 1) e aprire Sprint 2 (service layer).
