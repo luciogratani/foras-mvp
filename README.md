@@ -57,6 +57,21 @@ packages/
 migrations/ → numbered SQL migration files (post-freeze)
 ```
 
+## Smoke test Supabase
+
+After filling in `apps/web/.env.local`, verify the Supabase connection:
+
+```bash
+# 1. Start the web app
+pnpm dev:web
+
+# 2. In another terminal, hit the health endpoint
+curl http://localhost:3000/api/health
+# → { "ok": true, "supabase": "reachable" }
+```
+
+If env vars are missing you'll get `{ "ok": false, "error": "Missing Supabase env vars: ..." }` with status 500 — no silent crash.
+
 ---
 
 See [docs/README.md](docs/README.md) for the full documentation hub.

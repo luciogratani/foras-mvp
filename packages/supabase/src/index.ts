@@ -1,1 +1,1 @@
-export {}
+export { createSupabaseClient } from './client'

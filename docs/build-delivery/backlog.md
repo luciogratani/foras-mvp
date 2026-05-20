@@ -23,22 +23,27 @@ Backlog esecutivo MVP orientato al freeze del template e all'onboarding del prim
 
 ---
 
-## Sprint 0 — Monorepo Setup
+## Sprint 0 — Monorepo Setup — ✅ DONE (2026-05-20)
 
 **Goal:** base tecnica funzionante in locale e su Vercel.
 
 Tasks:
-- Scaffoldare monorepo pnpm workspaces con struttura `/apps/web`, `/apps/admin`, `/packages/supabase`, `/packages/ui`
-- Configurare Next.js App Router su entrambe le app
-- Collegare Supabase (progetto esistente)
-- Configurare `.env.example` con le tre variabili tenant
-- Configurare TypeScript, ESLint, Prettier condivisi
-- Primo deploy preview su Vercel per entrambe le app
+- [x] Scaffoldare monorepo pnpm workspaces con struttura `/apps/web`, `/apps/admin`, `/packages/supabase`, `/packages/ui`
+- [x] Configurare Next.js App Router su entrambe le app (Next 14.2, porte 3000/3001)
+- [x] Collegare Supabase (progetto esistente) — client factory in `@repo/supabase`
+- [x] Configurare `.env.example` con le tre variabili tenant
+- [x] Configurare TypeScript, ESLint, Prettier condivisi (`tsconfig.base.json`, `strict: true`)
+- [ ] Primo deploy preview su Vercel per entrambe le app — *in corso (config manuale master)*
 
 Done when:
-- `pnpm --filter web dev` e `pnpm --filter admin dev` girano in locale senza errori
-- Deploy preview funzionante su Vercel
-- Connessione a Supabase testata (query di prova sullo schema `template`)
+- [x] `pnpm --filter web dev` e `pnpm --filter admin dev` girano in locale senza errori
+- [ ] Deploy preview funzionante su Vercel — *in setup*
+- [x] Connessione a Supabase testata (health endpoint `GET /api/health` su `apps/web`)
+
+**Note di esecuzione:**
+- Eseguito in 5 sub-task (`docs/ai-playbooks/prompts/2026-05-20_sprint0_0[1-5]_*.md`).
+- Lesson learned: `next dev` riscrive `strict`/`allowJs` nei tsconfig delle app → esplicitati `strict: true` e `allowJs: false` in ogni app Next (vedi `prompts/README.md`).
+- Smoke test Supabase fatto via `auth.getSession()` (no dipendenza da tabelle: lo schema `template` nasce in Sprint 1).
 
 ---
 
