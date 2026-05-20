@@ -2,6 +2,13 @@ import { redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '../../lib/supabaseServer'
 import { getVerifiedTenantClient, TenantVerificationError } from '../../lib/auth'
 
+async function logout() {
+  'use server'
+  const supabase = getSupabaseServerClient()
+  await supabase.auth.signOut()
+  redirect('/')
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
@@ -32,6 +39,9 @@ export default async function DashboardPage() {
       <h1>Foras — dashboard</h1>
       <p>Verified tenant schema: <code>{schemaName}</code></p>
       <p>Utente: {session.user.email ?? session.user.id}</p>
+      <form action={logout}>
+        <button type="submit">Esci</button>
+      </form>
     </main>
   )
 }
