@@ -69,8 +69,12 @@ pnpm -r tsc --noEmit
 pnpm -r lint
 
 # Generazione tipi Supabase (da /packages/supabase)
-pnpm --filter @repo/supabase supabase gen types typescript \
-  --project-id <project-id> --schema nome_schema > src/types/database.ts
+# Su Supabase Cloud si userebbe la CLI Supabase. Qui (self-hosted, niente Docker locale)
+# si colpisce direttamente l'endpoint HTTP di postgres-meta via tunnel SSH.
+# Vedi decision-log → "Generazione tipi TypeScript — postgres-meta HTTP invece di CLI".
+# Prerequisito: ssh -N -L 18080:<IP_CONTAINER_META>:8080 foras-vps
+pnpm --filter @repo/supabase gen:types
+# (lo script interno è: curl -fsS "${SUPABASE_META_URL:-http://localhost:18080}/generators/typescript?included_schemas=template" -o src/types/database.ts)
 ```
 
 **`pnpm-workspace.yaml` atteso:**

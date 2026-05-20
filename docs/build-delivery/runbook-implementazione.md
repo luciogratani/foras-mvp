@@ -55,7 +55,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 - Eseguire `docs/operations/create_schema_from_template.sql` sullo schema `template`
 - Eseguire `docs/operations/audit_rls.sql` — nessuna discrepanza attesa
 - Test isolamento cross-tenant (query da un schema sull'altro devono fallire)
-- Generare tipi TypeScript: `pnpm --filter @repo/supabase supabase gen types ...`
+- Generare tipi TypeScript: `pnpm --filter @repo/supabase gen:types` (curl contro `postgres-meta` HTTP via tunnel SSH — vedi `monorepo-structure.md` e decision-log)
 - Implementare `supabaseClient.ts` in `/packages/supabase` che legge le env vars
 - Implementare `getVerifiedTenantClient()` in `/apps/admin/lib/auth.ts`
 - Testare login admin con utente sullo schema `template`

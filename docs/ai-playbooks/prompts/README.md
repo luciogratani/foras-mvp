@@ -56,12 +56,12 @@ Il task **"deploy preview Vercel"** del backlog Sprint 0 resta a carico del mast
 DB online, isolamento verificato, tipi generati. 5 sub-task. Esecuzione **sequenziale** (ci sono dipendenze forti: i tipi richiedono lo schema applicato, i client richiedono i tipi):
 
 1. [[2026-05-20_sprint1_01_audit-rls-and-db-baseline]] — Finalizza `audit_rls.sql` + applica `create_schema_from_template.sql` sullo schema `template`
-2. [[2026-05-20_sprint1_02_typescript-types]] — Genera i tipi TS (`supabase gen types` → `packages/supabase/src/types/database.ts`)
+2. [[2026-05-20_sprint1_02_typescript-types]] — Genera i tipi TS via `postgres-meta` HTTP (`curl` + tunnel SSH → `packages/supabase/src/types/database.ts`)
 3. [[2026-05-20_sprint1_03_public-supabase-client]] — Client anonimo condiviso schema-aware in `@repo/supabase`
 4. [[2026-05-20_sprint1_04_admin-verified-client]] — `getVerifiedTenantClient()` + auth admin schema-validata (⚠️ alto rischio: leak cross-tenant)
 5. [[2026-05-20_sprint1_05_isolation-tests]] — Suite test isolamento e verifica RLS (gate di sicurezza)
 
-**Step manuali del master (NON delegabili a sub-chat):** creazione utente admin `template` in Supabase Auth, esecuzione degli script SQL nel SQL editor come service_role, set di `SUPABASE_SERVICE_ROLE_KEY` e `SUPABASE_PROJECT_ID` (env CLI/server, mai `NEXT_PUBLIC`).
+**Step manuali del master (NON delegabili a sub-chat):** creazione utente admin `template` in Supabase Auth, esecuzione degli script SQL nel SQL editor come service_role, set di `SUPABASE_SERVICE_ROLE_KEY` (env server-only, mai `NEXT_PUBLIC`), apertura del tunnel SSH verso `supabase-meta` per la generazione tipi (`ssh -N -L 18080:<IP_CONTAINER_META>:8080 foras-vps`) e set opzionale di `SUPABASE_META_URL` (env CLI/dev). Nessun `SUPABASE_PROJECT_ID`/`SUPABASE_ACCESS_TOKEN`: la CLI Supabase non è utilizzata, vedi decision-log.
 
 **Decisioni master prese per Sprint 1:** (a) `audit_rls.sql` viene creato in `docs/operations/` estraendolo dalla bozza in `migration-runbook.md`; (b) si introduce `SUPABASE_SERVICE_ROLE_KEY` come env server-only per `supabaseAdmin`; (c) il client tenant è tipato `Database`, niente `any`.
 

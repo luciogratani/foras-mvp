@@ -1,11 +1,16 @@
 ---
-status: DRAFT
+status: DONE
 updated: 2026-05-20
 area: ai-playbooks
 type: prompt
 sprint: 1
 order: 1
-tags: [foras-mvp, sprint1, db, rls, sql]
+tags:
+  - foras-mvp
+  - sprint1
+  - db
+  - rls
+  - sql
 owner: master-chat
 ---
 

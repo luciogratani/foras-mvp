@@ -183,6 +183,30 @@ Le voci sono ordinate per tema. Le decisioni recuperate dall'archive non avevano
 
 ---
 
+### 2026-05-20 — Generazione tipi TypeScript — `postgres-meta` HTTP invece di CLI Supabase
+
+**Contesto:** durante Sprint 1 / sub-task 02 (generazione di `packages/supabase/src/types/database.ts` dallo schema `template`), il runbook originale prescriveva l'uso della CLI ufficiale `supabase gen types typescript`. In esecuzione si è scoperto che la CLI non è utilizzabile in questo setup, per due motivi cumulati:
+
+1. **Stack self-hosted, non Supabase Cloud** — l'opzione `--project-id` (e il login via `SUPABASE_ACCESS_TOKEN`) presuppone Cloud. Vedi decisione precedente sul progetto Supabase condiviso.
+2. **Anche `--db-url` richiede Docker locale** — la CLI Supabase v2.x, anche con un DB URL esplicito, lancia internamente un container `postgres-meta` per fare l'introspezione dello schema. Docker Desktop non è installato sul Mac di sviluppo, e non si vuole introdurlo solo per questo.
+
+**Opzioni considerate:**
+- Installare Docker Desktop sul Mac solo per la CLI Supabase
+- Eseguire la CLI Supabase sulla VPS (dove Docker gira) — tentato: il container `postgres-meta` parte sulla rete Docker di default invece che sulla rete `supabase_default` dello stack esistente, e finisce per parlare con Supavisor → fallisce con `Tenant or user not found`
+- Bypassare la CLI e chiamare direttamente l'API HTTP del container `supabase-meta` già attivo nello stack, via tunnel SSH
+- Usare un codegen alternativo (`pg-to-ts`, `kanel`, `zapatos`) — output diverso da quello atteso dal runbook, perderebbe gli helper `Tables<>/TablesInsert<>/TablesUpdate<>`
+
+**Decisione:** `pnpm --filter @repo/supabase gen:types` è uno script `curl` contro l'endpoint `GET /generators/typescript?included_schemas=template` di `postgres-meta` (è esattamente l'endpoint che la CLI Supabase invoca internamente). Si raggiunge via tunnel SSH da `localhost:18080` al container `supabase-meta:8080` sulla VPS. La URL è parametrizzata da `SUPABASE_META_URL` con default `http://localhost:18080`.
+
+**Rationale:** output del file identico a quello della CLI Supabase (stesso `postgres-meta`, stessi helper inclusi: `Database`, `Json`, `Tables<>`, `TablesInsert<>`, `TablesUpdate<>`, `Enums<>`, `CompositeTypes<>`, `Constants`). Nessuna dipendenza da Docker locale. Nessuna devDep `supabase` aggiunta al monorepo. Lo script resta riproducibile finché il tunnel SSH è attivo.
+
+**Limitazione nota / trigger di revisione:**
+- L'IP interno del container `supabase-meta` (oggi `172.18.0.10`) può cambiare se lo stack Docker viene ricreato — va recuperato con `docker inspect supabase-meta --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'` e usato nel comando di tunnel.
+- Footgun ssh: il flag `ClearAllForwardings=yes` cancella anche le `-L` passate sulla command line (non solo quelle dal config) — non usarlo se serve un forward.
+- Se in futuro si migrasse a Supabase Cloud o si introducesse Docker locale, tornare alla CLI ufficiale è banale (basta sostituire lo script `gen:types`).
+
+---
+
 ### 2026-05-20 — Hardening RLS scrittura — da owner-scope, non solo `auth.uid()`
 
 **Contesto:** le policy di scrittura admin in `create_schema_from_template.sql` usano `auth.uid() IS NOT NULL` ("qualsiasi utente autenticato"). In un progetto con `auth.users` condiviso (tra tenant foras e/o con altri progetti), questo check non isola le scritture: un qualsiasi utente autenticato passerebbe la policy su uno schema tenant esposto, perché la RLS non verifica che sia owner di **quello** schema. L'isolamento oggi regge solo a livello applicativo (`getVerifiedTenantClient` + quale schema interroga l'app), non a livello RLS.
