@@ -163,3 +163,32 @@ Le voci sono ordinate per tema. Le decisioni recuperate dall'archive non avevano
 **Decisione:** cartella `docs/` con cinque sotto-sezioni (`tech-architecture/`, `product-scope/`, `decision-log/`, `operations/`, `archive/`). File `archive/` lasciati intatti come riferimento storico. Decision log separato dall'architettura. Nessuna ADR formale — log piatto in `decisioni.md`.
 
 **Rationale:** le decisioni di scope e operatività non appartengono all'architettura tecnica. Tenerle in sezioni separate evita che crescano dentro i file tecnici e permette di consultarle indipendentemente. L'archive non è un cestino: è leggibile e consultabile. Le sezioni `brand/`, `metriche/`, `GTM/` non vengono create finché non esistono contenuti — nessuna cartella vuota.
+
+---
+
+### 2026-05-20 — Progetto Supabase condiviso con altri progetti personali
+
+**Contesto:** il progetto Supabase usato per foras non è vergine: ospita già due schemi di progetti personali (`underclub`, `alex_akashi`), uno dei quali ha un utente in `auth.users`. `auth.users` e Storage sono globali di progetto, quindi condivisi con foras.
+
+**Opzioni considerate:**
+- Progetto Supabase dedicato a foras (isolamento totale di auth/public/storage)
+- Restare sul progetto condiviso + hardening RLS e verifiche collisioni
+- Ripulire il DB droppando gli altri schemi
+
+**Decisione:** restare sul progetto condiviso, senza droppare nulla. `public` è vuoto (nessuna collisione su `public.tenants`), gli altri due sono progetti personali usa-e-getta con naming che foras non userà mai, e l'unico utente auth esistente è fidato. Prospettiva: foras resterà su VPS con Supabase self-hosted e saranno i due progetti minori a migrare altrove.
+
+**Rationale:** rischio concreto basso allo stato attuale (un solo schema `template`, un solo utente fidato, `public` vuoto, controllo pieno sugli schemi esposti in PostgREST essendo self-hosted). Il costo di un progetto dedicato non è giustificato finché non ci sono dati di clienti reali.
+
+**Limitazione nota / trigger di revisione:** prima dell'onboarding del **primo cliente reale** (dati personali + GDPR), rivalutare se serve un progetto dedicato. Vedi anche la decisione sull'hardening RLS qui sotto.
+
+---
+
+### 2026-05-20 — Hardening RLS scrittura — da owner-scope, non solo `auth.uid()`
+
+**Contesto:** le policy di scrittura admin in `create_schema_from_template.sql` usano `auth.uid() IS NOT NULL` ("qualsiasi utente autenticato"). In un progetto con `auth.users` condiviso (tra tenant foras e/o con altri progetti), questo check non isola le scritture: un qualsiasi utente autenticato passerebbe la policy su uno schema tenant esposto, perché la RLS non verifica che sia owner di **quello** schema. L'isolamento oggi regge solo a livello applicativo (`getVerifiedTenantClient` + quale schema interroga l'app), non a livello RLS.
+
+**Decisione:** mantenere `auth.uid() IS NOT NULL` per ora (un solo schema `template`, un solo utente fidato → nessun effetto pratico), ma **irrobustire le policy di scrittura prima del secondo tenant / del freeze del template**: la condizione deve legare l'utente allo schema corrente (es. confronto tra lo schema della tabella e `auth.jwt() -> 'user_metadata' ->> 'schema'`, oppure verifica owner contro `public.tenants`).
+
+**Rationale:** con un solo tenant la debolezza è teorica; diventa un leak cross-tenant reale appena esistono due admin nello stesso `auth.users`. Va chiuso a livello RLS (non solo applicativo) prima che entrino dati di clienti reali. Non blocca Sprint 1.
+
+**Trigger:** secondo schema tenant creato, oppure Sprint 6 (template freeze) — qualunque venga prima.
