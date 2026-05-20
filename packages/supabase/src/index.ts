@@ -15,3 +15,6 @@ export { Constants } from './types/database'
 export type { SupabaseClient } from '@supabase/supabase-js'
 
 export type TenantClient = SupabaseClient<Database, Exclude<keyof Database, '__InternalSupabase'>>
+
+export { getSiteSettings, getActiveNews } from './services/site'
+export type { SiteSettings, NewsSlide } from './services/site'
