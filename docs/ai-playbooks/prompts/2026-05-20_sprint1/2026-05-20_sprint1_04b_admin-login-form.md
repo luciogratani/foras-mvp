@@ -73,3 +73,12 @@ Questo sub-task chiude il gap con il **minimo indispensabile**: un form email+pa
 3. Suggerito: `/model claude-sonnet-4-6`, `/effort medium`. Scope chiuso, ~80 righe totali, nessuna decisione architetturale.
 4. Commit: `feat(admin): add minimal login form to close 04 scope gap`
 5. Frontmatter → `status: DONE`. Procedere al sub-task 05 (test isolamento).
+
+## Note esecuzione (2026-05-21)
+
+Sub-chat eseguito ok (codice + tsc + build verdi). Smoke test in browser ha fatto emergere **due problemi di setup Supabase non legati al 04b**, risolti durante il test:
+
+1. **PostgREST non esponeva lo schema `template`** — il container `rest` aveva `PGRST_DB_SCHEMAS` senza `template`. Risolto sul server con modifica a `/opt/supabase/supabase/docker/.env` + `docker compose up -d --force-recreate rest` (un semplice `restart` non ricarica le env var).
+2. **Mancavano i `GRANT` sui ruoli Supabase nello schema `template`** — `42501 permission denied for schema template`. Risolto manualmente con un blocco `GRANT USAGE / SELECT / INSERT / UPDATE / DELETE` in SQL editor. Scoperta tracciata nel `decision-log/decisioni.md` (voce *2026-05-21 — GRANT espliciti per i ruoli Supabase nello schema tenant*) e `create_schema_from_template.sql` patchato con la sezione `3b. GRANT espliciti` per i tenant futuri.
+
+Smoke test finale: login `template@foras.it` → `/dashboard` mostra `Verified tenant schema: template` + email utente + pulsante "Esci" funzionante. **Done when** del 04b tutti verificati.

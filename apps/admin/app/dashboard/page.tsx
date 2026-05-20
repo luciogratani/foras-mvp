@@ -24,7 +24,8 @@ export default async function DashboardPage() {
   let schemaName: string
   try {
     const tenant = await getVerifiedTenantClient(session)
-    schemaName = (await tenant.from('menu_sections').select('id').limit(1).maybeSingle()).error
+    const probe = await tenant.from('menu_sections').select('id').limit(1).maybeSingle()
+    schemaName = probe.error
       ? '(query failed — RLS or empty schema)'
       : (session.user.user_metadata?.schema as string)
   } catch (err) {

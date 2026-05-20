@@ -216,3 +216,26 @@ Le voci sono ordinate per tema. Le decisioni recuperate dall'archive non avevano
 **Rationale:** con un solo tenant la debolezza è teorica; diventa un leak cross-tenant reale appena esistono due admin nello stesso `auth.users`. Va chiuso a livello RLS (non solo applicativo) prima che entrino dati di clienti reali. Non blocca Sprint 1.
 
 **Trigger:** secondo schema tenant creato, oppure Sprint 6 (template freeze) — qualunque venga prima.
+
+---
+
+### 2026-05-21 — GRANT espliciti per i ruoli Supabase nello schema tenant
+
+**Contesto:** primo smoke test admin dopo Sprint 1 → la query `tenant.from('menu_sections').select()` falliva con `42501 permission denied for schema template`. La causa: lo script `create_schema_from_template.sql` definiva tabelle, RLS e policy, ma **nessun `GRANT`** sullo schema/oggetti per i ruoli Supabase (`anon`, `authenticated`, `service_role`). PostgreSQL respinge l'accesso a livello di `USAGE`/object permissions **prima** che le RLS vengano valutate — quindi le RLS apparivano funzionanti in audit ma di fatto erano irraggiungibili dal client.
+
+Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema perché creati dalla UI di Supabase Studio (che applica i grant automaticamente). `template`, creato dal nostro script, era l'unico tenant senza grant.
+
+**Decisione:** aggiungere una sezione `3b. GRANT espliciti` a `create_schema_from_template.sql` con:
+- `GRANT USAGE ON SCHEMA <schema> TO anon, authenticated, service_role`
+- `GRANT SELECT ON ALL TABLES … TO anon, authenticated`
+- `GRANT INSERT ON <schema>.bookings TO anon` (prenotazione pubblica)
+- `GRANT INSERT, UPDATE, DELETE ON ALL TABLES … TO authenticated` (admin CRUD; RLS filtra)
+- `GRANT ALL ON ALL TABLES … TO service_role`
+- Grant equivalenti su `ALL SEQUENCES`
+- `ALTER DEFAULT PRIVILEGES` per le tabelle/sequenze create in futuro nello stesso schema (es. migrazioni post-freeze)
+
+**Rationale:** i `GRANT` sono il complemento obbligatorio delle RLS, non un'alternativa. Lasciarli fuori dallo script di onboarding garantisce un fallimento ricorrente per ogni nuovo tenant. I default privileges proteggono anche le evoluzioni future dello schema.
+
+**Conseguenza per i tenant già creati:** se un tenant esiste senza grant (caso del nostro `template`), va sbloccato eseguendo manualmente il blocco GRANT come service_role nel SQL editor. Non serve droppare e ricreare lo schema.
+
+**Debito tecnico aperto:** `docs/operations/audit_rls.sql` oggi verifica solo `rowsecurity` e presenza policy — non i grant. Va esteso per controllare anche `has_schema_privilege(...)` minimi sui ruoli Supabase, così il prossimo onboarding manchevole verrebbe intercettato dall'audit invece che dal primo smoke test runtime. **Trigger:** prima del secondo tenant creato via script, o prima del freeze del template (Sprint 6).

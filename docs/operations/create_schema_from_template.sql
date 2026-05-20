@@ -161,6 +161,39 @@ ALTER TABLE news_slides   ENABLE ROW LEVEL SECURITY;
 
 
 -- -----------------------------------------------------------------------
+-- 3b. GRANT espliciti per i ruoli Supabase
+--
+-- IMPORTANTE: senza questi GRANT, qualsiasi query allo schema viene respinta
+-- da Postgres con 42501 "permission denied" PRIMA che le RLS vengano valutate.
+-- Le RLS filtrano solo righe — i GRANT autorizzano l'accesso alla tabella.
+-- Scoperto in Sprint 1 al primo smoke test admin: vedi voce
+-- "GRANT espliciti per i ruoli Supabase" nel decision-log.
+--
+-- Note:
+--   anon          → visitatore homepage (read pubblico + insert bookings)
+--   authenticated → admin del tenant loggato (CRUD; RLS filtra per ruolo)
+--   service_role  → server-side (Edge Functions, supabaseAdmin) — bypassa RLS
+-- -----------------------------------------------------------------------
+
+GRANT USAGE ON SCHEMA template TO anon, authenticated, service_role;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA template TO anon, authenticated;
+GRANT INSERT ON template.bookings TO anon;
+GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA template TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA template TO service_role;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA template TO anon, authenticated;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA template TO service_role;
+
+-- Default per oggetti creati in futuro nello schema (post-freeze migrations)
+ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT SELECT ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO service_role;
+
+
+-- -----------------------------------------------------------------------
 -- 4. RLS — policies
 --
 -- Modello: utente anonimo = visitatore homepage (sola lettura su dati pubblici)
