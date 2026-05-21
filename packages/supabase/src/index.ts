@@ -67,3 +67,8 @@ export type {
   MenuItemCreate,
   MenuItemUpdate,
 } from './schemas/menu'
+
+export { getNewsSlidesAdmin, createNewsSlide, updateNewsSlide, deleteNewsSlide, reorderNewsSlides } from './services/news'
+export type { NewsSlide as NewsSlideAdmin } from './services/news'
+export { NewsSlideCreateSchema, NewsSlideUpdateSchema } from './schemas/news'
+export type { NewsSlideCreate, NewsSlideUpdate } from './schemas/news'

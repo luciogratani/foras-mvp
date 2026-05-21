@@ -5,7 +5,7 @@ import { getSupabaseServerClient } from '../../lib/supabaseServer'
 const navLinks = [
   { label: 'Home', href: '/dashboard' },
   { label: 'Menu', href: '/dashboard/menu' },
-  { label: 'Novità', href: '/dashboard/novita' },
+  { label: 'Novità', href: '/dashboard/news' },
   { label: 'Orari & coperti', href: '/dashboard/orari' },
   { label: 'Impostazioni', href: '/dashboard/impostazioni' },
   { label: 'Prenotazioni', href: '/dashboard/prenotazioni' },
