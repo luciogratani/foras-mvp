@@ -200,7 +200,7 @@ Done when:
 **Stato di partenza rilevato:** `apps/admin` non ha ancora Tailwind/shadcn (parte da zero, a differenza di `apps/web`); il service layer è solo *read* e filtrato `is_active=true` → servono funzioni *admin-read* (non filtrate) + *write* in `@repo/supabase`.
 
 Piano a 6 sub-task verticali in `docs/ai-playbooks/prompts/2026-05-21_sprint5/`:
-- ⏳ `01` baseline UI (TW4 + `@repo/ui` in `apps/admin`) + shell/nav `/dashboard/*` + helper server `requireTenantClient()` + restyle login/dashboard. Nessun CRUD.
+- ✅ `01` (commit `dd99c70`) baseline UI (TW4 + `@repo/ui` in `apps/admin`) + shell/nav `/dashboard/*` + helper server `requireTenantClient()` + restyle login/dashboard. Nessun CRUD. Review trust-but-verify: `pnpm -r exec tsc --noEmit` + build admin verdi (7 route dinamiche), `globals.css`/`postcss` identici a `apps/web`, browser smoke OK (Lucio).
 - ⏳ `02` CRUD menu: sezioni (rinomina, toggle `is_active`), categorie, item (prezzo, descrizione, `image_url` come URL, allergeni come checkbox). Funzioni *admin-read* (incl. disattivati) + *write* nel service.
 - ⏳ `03` drag-and-drop ordinamento: `@dnd-kit` + funzione bulk-update `position` nel service, applicata a sezioni/categorie/item (e slide novità).
 - ⏳ `04` CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione).
