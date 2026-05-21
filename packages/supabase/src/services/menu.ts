@@ -1,6 +1,12 @@
 import type { Tables } from '../types/database'
 import type { TenantClient } from '../index'
-import type { MenuSectionUpdate, MenuCategoryCreate, MenuCategoryUpdate } from '../schemas/menu'
+import type {
+  MenuSectionUpdate,
+  MenuCategoryCreate,
+  MenuCategoryUpdate,
+  MenuItemCreate,
+  MenuItemUpdate,
+} from '../schemas/menu'
 
 export type MenuSection = Tables<{ schema: 'template' }, 'menu_sections'>
 export type MenuCategory = Tables<{ schema: 'template' }, 'menu_categories'>
@@ -134,4 +140,51 @@ export async function updateMenuCategory(
 export async function deleteMenuCategory(client: TenantClient, id: string): Promise<void> {
   const { error } = await client.from('menu_categories').delete().eq('id', id)
   if (error) throw new Error(`deleteMenuCategory failed: ${error.message}`)
+}
+
+export async function getMenuItemsAdmin(
+  client: TenantClient,
+  categoryId: string
+): Promise<MenuItem[]> {
+  const { data, error } = await client
+    .from('menu_items')
+    .select('*')
+    .eq('category_id', categoryId)
+    .order('position', { ascending: true, nullsFirst: false })
+    .order('name', { ascending: true })
+  if (error) throw new Error(`getMenuItemsAdmin failed: ${error.message}`)
+  return data ?? []
+}
+
+export async function createMenuItem(
+  client: TenantClient,
+  input: MenuItemCreate
+): Promise<MenuItem> {
+  const { data, error } = await client
+    .from('menu_items')
+    .insert(input)
+    .select('*')
+    .single()
+  if (error) throw new Error(`createMenuItem failed: ${error.message}`)
+  return data
+}
+
+export async function updateMenuItem(
+  client: TenantClient,
+  id: string,
+  patch: MenuItemUpdate
+): Promise<MenuItem> {
+  const { data, error } = await client
+    .from('menu_items')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) throw new Error(`updateMenuItem failed: ${error.message}`)
+  return data
+}
+
+export async function deleteMenuItem(client: TenantClient, id: string): Promise<void> {
+  const { error } = await client.from('menu_items').delete().eq('id', id)
+  if (error) throw new Error(`deleteMenuItem failed: ${error.message}`)
 }

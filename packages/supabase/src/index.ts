@@ -33,6 +33,10 @@ export {
   createMenuCategory,
   updateMenuCategory,
   deleteMenuCategory,
+  getMenuItemsAdmin,
+  createMenuItem,
+  updateMenuItem,
+  deleteMenuItem,
 } from './services/menu'
 
 export {
@@ -50,5 +54,13 @@ export {
   MenuSectionUpdateSchema,
   MenuCategoryCreateSchema,
   MenuCategoryUpdateSchema,
+  MenuItemCreateSchema,
+  MenuItemUpdateSchema,
 } from './schemas/menu'
-export type { MenuSectionUpdate, MenuCategoryCreate, MenuCategoryUpdate } from './schemas/menu'
+export type {
+  MenuSectionUpdate,
+  MenuCategoryCreate,
+  MenuCategoryUpdate,
+  MenuItemCreate,
+  MenuItemUpdate,
+} from './schemas/menu'

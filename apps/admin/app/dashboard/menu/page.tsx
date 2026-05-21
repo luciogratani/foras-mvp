@@ -1,5 +1,11 @@
 import { requireTenantClient } from '../../../lib/auth'
-import { getMenuSectionsAdmin, getMenuCategoriesAdmin } from '@repo/supabase'
+import {
+  getMenuSectionsAdmin,
+  getMenuCategoriesAdmin,
+  getMenuItemsAdmin,
+  getAllergens,
+} from '@repo/supabase'
+import type { MenuItem } from '@repo/supabase'
 import { SectionCard } from './_components/SectionCard'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +16,15 @@ export default async function MenuPage() {
   const categoriesBySection = await Promise.all(
     sections.map((s) => getMenuCategoriesAdmin(tenant, s.id))
   )
+  const allCategories = categoriesBySection.flat()
+  const [itemsLists, allergens] = await Promise.all([
+    Promise.all(allCategories.map((c) => getMenuItemsAdmin(tenant, c.id))),
+    getAllergens(tenant),
+  ])
+  const itemsByCategory: Record<string, MenuItem[]> = {}
+  allCategories.forEach((c, i) => {
+    itemsByCategory[c.id] = itemsLists[i] ?? []
+  })
 
   return (
     <div>
@@ -20,6 +35,8 @@ export default async function MenuPage() {
             key={section.id}
             section={section}
             categories={categoriesBySection[i] ?? []}
+            itemsByCategory={itemsByCategory}
+            allergens={allergens}
           />
         ))}
       </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useActionState } from 'react'
-import type { MenuSection, MenuCategory } from '@repo/supabase'
+import type { Allergen, MenuSection, MenuCategory, MenuItem } from '@repo/supabase'
 import {
   Button,
   Card,
@@ -22,9 +22,13 @@ const idle: MenuActionState = { status: 'idle' }
 export function SectionCard({
   section,
   categories,
+  itemsByCategory,
+  allergens,
 }: {
   section: MenuSection
   categories: MenuCategory[]
+  itemsByCategory: Record<string, MenuItem[]>
+  allergens: Allergen[]
 }) {
   const [renameOpen, setRenameOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
@@ -69,11 +73,13 @@ export function SectionCard({
               Nessuna categoria. Aggiungine una.
             </p>
           ) : (
-            <ul className="mb-3 space-y-1">
+            <ul className="mb-3 space-y-3">
               {categories.map((cat) => (
                 <CategoryRow
                   key={cat.id}
                   category={cat}
+                  items={itemsByCategory[cat.id] ?? []}
+                  allergens={allergens}
                   onEdit={setEditCategory}
                   onDelete={setDeleteCategory}
                 />

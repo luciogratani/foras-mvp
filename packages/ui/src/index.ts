@@ -26,3 +26,5 @@ export {
   CardAction,
 } from './components/ui/card'
 export { Switch } from './components/ui/switch'
+export { Textarea } from './components/ui/textarea'
+export { Checkbox } from './components/ui/checkbox'
