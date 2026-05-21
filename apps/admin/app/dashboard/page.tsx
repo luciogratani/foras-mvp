@@ -4,7 +4,7 @@ import { getVerifiedTenantClient, TenantVerificationError } from '../../lib/auth
 
 async function logout() {
   'use server'
-  const supabase = getSupabaseServerClient()
+  const supabase = await getSupabaseServerClient()
   await supabase.auth.signOut()
   redirect('/')
 }
@@ -12,7 +12,7 @@ async function logout() {
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const supabase = getSupabaseServerClient()
+  const supabase = await getSupabaseServerClient()
   const {
     data: { session },
   } = await supabase.auth.getSession()

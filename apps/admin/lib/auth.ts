@@ -18,7 +18,7 @@ export async function getVerifiedTenantClient(session: Session): Promise<TenantC
   const schema = session.user.user_metadata?.schema as string | undefined
 
   if (!schema) {
-    await getSupabaseServerClient().auth.signOut()
+    await (await getSupabaseServerClient()).auth.signOut()
     throw new TenantVerificationError('Utente non associato a nessuno schema tenant')
   }
 
@@ -30,7 +30,7 @@ export async function getVerifiedTenantClient(session: Session): Promise<TenantC
     .maybeSingle()
 
   if (error || !tenant) {
-    await getSupabaseServerClient().auth.signOut()
+    await (await getSupabaseServerClient()).auth.signOut()
     throw new TenantVerificationError('Schema non autorizzato per questo utente')
   }
 
