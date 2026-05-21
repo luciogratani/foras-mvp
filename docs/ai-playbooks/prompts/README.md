@@ -19,7 +19,7 @@ I prompt sono raggruppati per sprint in sottocartelle:
 prompts/
   2026-05-20_sprint0/   ← Sprint 0 (DONE)
   2026-05-20_sprint1/   ← Sprint 1 (DONE)
-  2026-05-21_sprint2/   ← Sprint 2 (DRAFT — service layer)
+  2026-05-21_sprint2/   ← Sprint 2 (DONE — service layer)
 ```
 
 I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle.

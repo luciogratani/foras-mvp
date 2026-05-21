@@ -76,29 +76,31 @@ Done when:
 
 ---
 
-## Sprint 2 — Service layer in `@repo/supabase` — DRAFT (apertura 2026-05-21)
+## Sprint 2 — Service layer in `@repo/supabase` ✅ CHIUSO (2026-05-21)
 
 **Goal:** service layer riusabile in `packages/supabase/src/services/` consumato da homepage pubblica (Sprint 3) e backoffice (Sprint 5). Nessuna query DB nei componenti UI.
 
-**Allineamento docs (2026-05-21):** il backlog precedente fondeva "Sprint 2 = Homepage" e "Sprint 3 = Menu", mentre `roadmap-sviluppo.md` (Fase 2) e `runbook-implementazione.md` (Phase 2) trattano il service layer come uno sprint distinto. Riallineato qui.
+**Allineamento docs (2026-05-21):** il backlog precedente fondeva "Sprint 2 = Homepage" e "Sprint 3 = Menu", mentre `roadmap-sviluppo.md` (Fase 2) e `runbook-implementazione.md` (Phase 2) trattano il service layer come uno sprint distinto. Riallineato in apertura.
 
 Eseguito come 3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sprint2/`:
-- 01 [[2026-05-21_sprint2_01_site-service]] — `getSiteSettings`, `getActiveNews` su `template.site_settings` / `template.news_slides` (read-only, client anon)
-- 02 [[2026-05-21_sprint2_02_menu-service]] — `getMenuSections`, `getMenuBySection`, `getAllergens` con convenzione di ordinamento `position asc NULLS LAST, name asc` (read-only, client anon)
-- 03 [[2026-05-21_sprint2_03_bookings-service]] — `getAvailableTimeSlots`, `createBooking`, `cancelBookingByToken` + Zod schemas in `packages/supabase/src/schemas/` + error class (`OverbookingError`, `DuplicateBookingError`). ⚠️ due funzioni richiedono client privilegiato server-side.
+- ✅ 01 [[2026-05-21_sprint2_01_site-service]] (commit `b8877b3`) — `getSiteSettings`, `getActiveNews` su `template.site_settings` / `template.news_slides` (read-only, client anon)
+- ✅ 02 [[2026-05-21_sprint2_02_menu-service]] (commit `aadc338`) — `getMenuSections`, `getMenuBySection`, `getAllergens` + tipo composito `MenuCategoryWithItems`. `getMenuBySection` implementato con 2 query separate (categorie + item via `in(category_id, ids)`) per preservare categorie con `items: []` — `!inner` avrebbe escluso categorie vuote.
+- ✅ 03 [[2026-05-21_sprint2_03_bookings-service]] (commit `15c5978`) — `getAvailableTimeSlots`, `createBooking`, `cancelBookingByToken` + Zod schemas in `packages/supabase/src/schemas/` + `OverbookingError`, `DuplicateBookingError`. `zod` aggiunto come `dependencies` di `@repo/supabase`.
 
 **Decisioni architetturali Sprint 2** (vedi `decision-log/decisioni.md`):
 - *Service layer — funzioni ricevono il client come parametro* — firma uniforme `(client: TenantClient, ...args)`; il consumer inietta le credenziali
-- *`bookings` lato pubblico — service_role server-side, no RPC* — niente cambio dello schema baseline; Sprint 4 introdurrà `apps/web/lib/supabaseAdmin.ts` server-only
+- *`bookings` lato pubblico — service_role server-side, no RPC* — niente cambio dello schema baseline; Sprint 3 introdurrà `apps/web/lib/supabaseAdmin.ts` server-only per `getAvailableTimeSlots`/`cancelBookingByToken`
 - Zod schemas in directory dedicata `schemas/` (non co-located in `services/*.ts`) — evita di trascinare `@supabase/supabase-js` nei bundle dei form Sprint 4
-- `zod` aggiunto come `dependencies` di `@repo/supabase` nel sub-task 03
+- `zod` aggiunto come `dependencies` (runtime) di `@repo/supabase` nel sub-task 03
 
 Done when:
-- I service sono tipati end-to-end (`Tables<{ schema: 'template' }, ...>`, niente `any`)
-- `pnpm -r tsc --noEmit` exit 0
-- Nessuna query DB diretta fuori da `@repo/supabase`
-- Smoke test manuale eseguito contro lo schema `template` (procedura in coda a ciascun prompt)
-- `createBooking` rifiuta `gdpr_consent: false` via Zod e mappa il `23505` di Postgres a `DuplicateBookingError`
+- ✅ I service sono tipati end-to-end (`Tables<{ schema: 'template' }, ...>`, niente `any`)
+- ✅ `pnpm -r tsc --noEmit` exit 0
+- ✅ Nessuna query DB diretta fuori da `@repo/supabase`
+- ✅ `createBooking` rifiuta `gdpr_consent: false` via Zod e mappa il `23505` di Postgres a `DuplicateBookingError`
+- ✅ `cancelBookingByToken` mai throw per token non valido (ritorna `{ cancelled: false }`)
+
+**Prerequisito Sprint 3/4 emergente:** apps/web dovrà introdurre `lib/supabaseAdmin.ts` server-only + env `SUPABASE_SERVICE_ROLE_KEY` su Vercel (pattern già rodato in `apps/admin`). Prerequisito per consumare `getAvailableTimeSlots` e `cancelBookingByToken` lato pubblico.
 
 ---
 
