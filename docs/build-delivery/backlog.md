@@ -201,7 +201,9 @@ Done when:
 
 Piano a 6 sub-task verticali in `docs/ai-playbooks/prompts/2026-05-21_sprint5/`:
 - ✅ `01` (commit `dd99c70`) baseline UI (TW4 + `@repo/ui` in `apps/admin`) + shell/nav `/dashboard/*` + helper server `requireTenantClient()` + restyle login/dashboard. Nessun CRUD. Review trust-but-verify: `pnpm -r exec tsc --noEmit` + build admin verdi (7 route dinamiche), `globals.css`/`postcss` identici a `apps/web`, browser smoke OK (Lucio).
-- ⏳ `02` CRUD menu: sezioni (rinomina, toggle `is_active`), categorie, item (prezzo, descrizione, `image_url` come URL, allergeni come checkbox). Funzioni *admin-read* (incl. disattivati) + *write* nel service.
+- `02` CRUD menu — **splittato in 02a/02b** (gerarchia profonda → review più trattabili):
+  - ✅ `02a` (commit `d671c9a`) sezioni + categorie: service *admin-read* (non filtrato) + update sezioni (rinomina/toggle — le 6 sezioni sono seed predefiniti, **no create/delete**) + CRUD categorie. UI: shell pagina menu con lista sezioni e categorie. FK `ON DELETE CASCADE`: cancellare una categoria cancella i suoi item (avviso nel dialog di delete). Primitiva `Switch` in `@repo/ui`. Review verde (tsc -r + build admin/web + smoke browser di Lucio: rinomina/toggle sezione propagata al sito pubblico senza rebuild).
+  - ⏳ `02b` item + allergeni: service CRUD item (prezzo, descrizione, `image_url` come URL, `allergen_ids`) + UI item sotto le categorie con checkbox dei 14 allergeni seed (read-only).
 - ⏳ `03` drag-and-drop ordinamento: `@dnd-kit` + funzione bulk-update `position` nel service, applicata a sezioni/categorie/item (e slide novità).
 - ⏳ `04` CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione).
 - ⏳ `05` orari apertura (`site_settings.opening_hours` JSON, form 7 giorni con toggle chiuso) + coperti/`time_slots` (label/orario/`max_covers`/attivo) + impostazioni sito (SEO title/description/`og_image`, testi: slogan/bio/indirizzo/telefono/email).
