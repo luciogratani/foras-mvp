@@ -160,23 +160,25 @@ Done when:
 
 ---
 
-## Sprint 4 — Form prenotazioni
+## Sprint 4 — Form prenotazioni — apertura 2026-05-21
 
-**Goal:** un visitatore prenota un tavolo e riceve conferma via email.
+**Goal:** un visitatore prenota un tavolo; il write-path è completo end-to-end (privileged client + form + cancel route + hardening auth admin). Email di conferma/notifica demandata a follow-up (vedi nota sotto).
 
-Tasks:
-- Implementare `getAvailableTimeSlots()` con conteggio coperti disponibili
-- Form prenotazione: nome, email, telefono (opzionale), coperti, note, GDPR
-- Validazione Zod lato server
-- Controllo disponibilità coperti e rifiuto se esauriti
-- Conferma automatica con `cancellation_token`
-- Route `GET /booking/cancel/[token]` per cancellazione senza auth
-- Edge function Resend: email conferma al cliente + notifica al gestore
+**Nota — Email Resend: demandata a follow-up.** Decisione 2026-05-21: il canale email richiede scelte ancora aperte (dominio generico vs per-cliente, email vs SMS, Edge Function vs Server Action + Resend SDK). Il write-path funziona senza email — `cancellation_token` è mostrato nella success page come link diretto. Tracciato in `decision-log/decisioni.md`.
+
+Tasks (3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sprint4/`):
+- [ ] 01 [[2026-05-21_sprint4_01_auth-hardening]] — `dashboard/page.tsx` usa `getUser()` per l'identità; firma `getVerifiedTenantClient(user, accessToken)`. Chiude follow-up sicurezza Sprint 2.5.
+- [ ] 02 [[2026-05-21_sprint4_02_supabase-admin-web-cancel-route]] — `apps/web/lib/supabaseAdmin.ts` server-only (TenantClient privilegiato) + `SUPABASE_SERVICE_ROLE_KEY` env + rotta `/booking/cancel/[token]`
+- [ ] 03 [[2026-05-21_sprint4_03_form-prenotazione]] — `BookingPage` (Server Component, slot fetch), `BookingForm` ('use client', useActionState React 19), `createBookingAction` (Zod + OverbookingError/DuplicateBookingError mapping)
 
 Done when:
-- Prenotazione completata end-to-end con email ricevuta
-- Unique constraint `(email, time_slot_id, date)` testato
-- Cancellazione via link funzionante, coperti ripristinati
+- ✅ `getVerifiedTenantClient` usa `(user, accessToken)` — identità da `getUser()` verificata
+- ✅ `apps/web/lib/supabaseAdmin.ts` esiste, inizia con `import 'server-only'`, tipato `TenantClient`
+- ✅ `/booking` mostra form con slot disponibili per la data selezionata
+- ✅ Prenotazione persistita su DB con `cancellation_token`; unique constraint `(email, time_slot_id, date)` gestito con messaggio utente
+- ✅ `/booking/cancel/[token]` funzionante, coperti ripristinati
+- ✅ `SUPABASE_SERVICE_ROLE_KEY` non compare in bundle browser né in file committati
+- ⏳ Email conferma/notifica — follow-up (pending decisioni dominio + canale)
 
 ---
 

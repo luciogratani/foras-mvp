@@ -359,3 +359,20 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Rationale:** soddisfa il requisito "modifiche visibili sulla homepage pubblica senza rebuild" (backlog Sprint 5) nel modo più semplice e diretto. Il traffico di un sito di bar/ristorante non giustifica l'ottimizzazione di ISR o di revalidation on-demand (che resterebbero da mantenere/wirare). `force-dynamic` non penalizza il SEO: l'HTML è completo e server-reso per-request. Verificato: con la direttiva la route passa da `○` a `ƒ` nel build.
 
 **Conseguenza operativa:** ogni sub-task che riscrive o estende `app/page.tsx` (es. Sprint 3 / 03) **deve preservare la direttiva**. **Trigger di revisione (→ post-MVP):** se il traffico cresce o la query a visita diventa un costo, passare a `revalidate = N` o a `revalidatePath` on-demand dal backoffice.
+
+---
+
+### 2026-05-21 — Email prenotazioni (conferma cliente + notifica gestore): demandata a follow-up
+
+**Contesto:** Sprint 4 introduce il write-path prenotazioni (client privilegiato + form + cancel route). Il backlog originale includeva "Edge function Resend: email conferma al cliente + notifica al gestore" in Sprint 4, ma alla pianificazione emergono decisioni ancora aperte.
+
+**Decisioni aperte (da prendere prima di implementare):**
+1. **Dominio mittente:** dominio generico condiviso (es. `noreply@foras.it`) vs dominio specifico per ogni cliente (es. `noreply@bar-rossi.it`). Il dominio va verificato su Resend — impatta l'onboarding di ogni nuovo tenant.
+2. **Canale:** email (Resend) vs SMS (Twilio/Vonage o altra). Il post-mvp.md esclude gli SMS per "complessità eccessiva" ma la preferenza del gestore potrebbe cambiare.
+3. **Architettura di invio:** (a) Supabase Edge Function — coerente con la doc architetturale ("una edge function per l'email"), la service_role key non lascia Vercel; (b) Server Action + Resend Node SDK — nessun deploy separato, più semplice, ma diverge dalla doc e lascia `RESEND_API_KEY` su Vercel.
+
+**Decisione (2026-05-21):** demandata. Sprint 4 è completo senza email — il `cancellation_token` viene mostrato nella success page come link diretto `/booking/cancel/{token}`, rendendo il cancel flow testabile senza email. L'email verrà implementata in un sub-task/sprint dedicato una volta risolte le tre decisioni sopra.
+
+**Rationale:** il write-path ha già la sua complessità (surface di sicurezza più sensibile del progetto finora — service_role key su `apps/web`). Aggiungere infra email esterna (account Resend, verifica dominio, deploy funzione) allungherebbe Sprint 4 senza sbloccare ulteriori test funzionali. Il follow-up è a basso rischio di regressione (aggiunge una chiamata dopo `createBooking`, non modifica il flusso).
+
+**Trigger:** quando le 3 decisioni sopra sono risolte. Implementazione prevista come sub-task autonomo (Sprint 4.5 o inizio Sprint 5).
