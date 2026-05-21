@@ -1,6 +1,7 @@
 ---
 status: DONE
 updated: 2026-05-21
+commit: cb1e619
 area: ai-playbooks
 type: prompt
 sprint: 3
