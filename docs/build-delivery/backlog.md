@@ -167,9 +167,9 @@ Done when:
 **Nota — Email Resend: demandata a follow-up.** Decisione 2026-05-21: il canale email richiede scelte ancora aperte (dominio generico vs per-cliente, email vs SMS, Edge Function vs Server Action + Resend SDK). Il write-path funziona senza email — `cancellation_token` è mostrato nella success page come link diretto. Tracciato in `decision-log/decisioni.md`.
 
 Tasks (3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sprint4/`):
-- [ ] 01 [[2026-05-21_sprint4_01_auth-hardening]] — `dashboard/page.tsx` usa `getUser()` per l'identità; firma `getVerifiedTenantClient(user, accessToken)`. Chiude follow-up sicurezza Sprint 2.5.
-- [ ] 02 [[2026-05-21_sprint4_02_supabase-admin-web-cancel-route]] — `apps/web/lib/supabaseAdmin.ts` server-only (TenantClient privilegiato) + `SUPABASE_SERVICE_ROLE_KEY` env + rotta `/booking/cancel/[token]`
-- [ ] 03 [[2026-05-21_sprint4_03_form-prenotazione]] — `BookingPage` (Server Component, slot fetch), `BookingForm` ('use client', useActionState React 19), `createBookingAction` (Zod + OverbookingError/DuplicateBookingError mapping)
+- ✅ 01 [[2026-05-21_sprint4_01_auth-hardening]] (commit `94e00c6`) — `dashboard/page.tsx` usa `getUser()` per l'identità; firma `getVerifiedTenantClient(user, accessToken)`. Chiude follow-up sicurezza Sprint 2.5.
+- ✅ 02 [[2026-05-21_sprint4_02_supabase-admin-web-cancel-route]] (commit `94e00c6`) — `apps/web/lib/supabaseAdmin.ts` server-only (TenantClient privilegiato) + `SUPABASE_SERVICE_ROLE_KEY` env + rotta `/booking/cancel/[token]`
+- ✅ 03 [[2026-05-21_sprint4_03_form-prenotazione]] (commit `94e00c6`) — `BookingPage` (Server Component, slot fetch), `BookingForm` ('use client', useActionState React 19), `createBookingAction` (Zod + OverbookingError/DuplicateBookingError mapping)
 
 Done when:
 - ✅ `getVerifiedTenantClient` usa `(user, accessToken)` — identità da `getUser()` verificata

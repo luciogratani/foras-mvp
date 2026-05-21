@@ -1,5 +1,5 @@
 ---
-status: READY
+status: DONE
 sprint: 4
 sub-task: "03"
 created: 2026-05-21
