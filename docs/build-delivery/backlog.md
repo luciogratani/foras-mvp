@@ -104,6 +104,29 @@ Done when:
 
 ---
 
+## Sprint 2.5 — Stack upgrade (Next 16 + React 19 + Tailwind 4) — milestone infrastrutturale
+
+**Goal:** portare il monorepo allo stack corrente *prima* di costruire la prima UI vera. Non è una feature: è un prerequisito di Sprint 3 emerso aprendo la scelta Tailwind.
+
+**Perché ora:** la codebase è al minimo storico (`apps/web` stub, `apps/admin` minimale, `packages/ui` vuoto, **nessun cliente ha forkato il template**) → costo di migrazione minimo. Rimandare a pre-freeze (Sprint 6) significherebbe migrare anche tutta la homepage + admin CRUD. Inoltre Tailwind 4 è comunque obbligato (gli strumenti `latest` la assumono) e TW4 su React 18 è meno battuto di TW4 su React 19 → un solo giro di migrazione. Decisione, rationale e blast radius: `decision-log/decisioni.md` voce *2026-05-21 — Upgrade stack major*.
+
+Eseguito come milestone dedicata (1 prompt) in `docs/ai-playbooks/prompts/2026-05-21_stack-upgrade/`:
+- [[2026-05-21_stack-upgrade_01_framework]] — Next 14.2→16, React 18.3→19, `@supabase/ssr` 0.5→0.10, `supabase-js`, `eslint-config-next`, toolchain. **Tailwind 4 NON qui** (è Sprint 3 / 01, col setup shadcn).
+
+Tasks:
+- Bump versioni coerente su tutto il monorepo (React **unica** versione, `pnpm.overrides` se serve)
+- Codemod ufficiali Next + React; fix async request APIs (`cookies()`/`headers()`/`params`); migrazione cookie pattern `@supabase/ssr` 0.5→0.10
+- Verifica caching defaults (Next 15+ non cache-by-default su `fetch`/`GET` route handler)
+
+Done when:
+- `pnpm -r tsc --noEmit` + build `web`/`admin` verdi; `pnpm why react` → una sola versione
+- **GATE di sicurezza auth admin** (codice Sprint 1): login + sessione + route protetta + `getVerifiedTenantClient` + `supabaseAdmin` server-only — tutti verdi
+- `apps/web` stub e `/api/health` funzionanti sul nuovo stack
+
+**Caveat:** Next 16 / React 19 sono successivi al knowledge cutoff dell'assistente (gen 2026) → il prompt richiede di seguire le **upgrade guide ufficiali correnti** + codemod, non istruzioni a memoria. **Trigger di rollback** (→ TW4 su Next 14.2/React 18) se l'auth admin non supera il gate: tracciato nel decision-log.
+
+---
+
 ## Sprint 3 — Homepage pubblica SSR (con menu)
 
 **Goal:** homepage SSR headless funzionante sullo schema `template`, completa di sezione menu — primo consumer reale del service layer.
@@ -123,6 +146,13 @@ Done when:
 - Menu navigabile per sezione con allergeni visibili in popup
 - Item e categorie disabilitate non visibili (filtro applicato già nel service)
 - Nessuna query DB dentro i componenti — tutto via service layer
+
+**Esecuzione (3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sprint3/`, sul nuovo stack post-2.5):**
+- [[2026-05-21_sprint3_01_ui-baseline]] — Tailwind 4 (CSS-first) + shadcn in `@repo/ui` + `<Skeleton>`. Nessun componente applicativo.
+- [[2026-05-21_sprint3_02_homepage-ssr]] — `generateMetadata` da `site_settings`, `page.tsx` SSR, componenti Server (Hero/Slogan/Bio/OpeningHours/NewsSection/Footer), `error.tsx` + `loading.tsx`.
+- [[2026-05-21_sprint3_03_menu-news-popup-gallery]] — `MenuClient` (tabs + dialog allergeni, `'use client'`), `NewsPopup` (auto-open + `sessionStorage`), `Gallery` (skeleton placeholder). Estende `page.tsx` con i fetch menu.
+
+**Decisioni master Sprint 3:** (a) 3 sub-task (baseline UI / SSR statico / interattività client) per isolare setup e idratazione; (b) SSR completo del menu, tabs come pura UI state (no lazy fetch) — SEO-first; (c) skeleton **solo** per Galleria (Storage non popolato), non per News che è SSR-ready — risolta una contraddizione del backlog originale; (d) componenti applicativi in `apps/web/app/_components/`, primitives shadcn in `@repo/ui`.
 
 ---
 

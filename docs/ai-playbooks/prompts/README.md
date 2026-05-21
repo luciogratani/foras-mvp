@@ -17,9 +17,11 @@ I prompt sono raggruppati per sprint in sottocartelle:
 
 ```
 prompts/
-  2026-05-20_sprint0/   ← Sprint 0 (DONE)
-  2026-05-20_sprint1/   ← Sprint 1 (DONE)
-  2026-05-21_sprint2/   ← Sprint 2 (DONE — service layer)
+  2026-05-20_sprint0/        ← Sprint 0 (DONE)
+  2026-05-20_sprint1/        ← Sprint 1 (DONE)
+  2026-05-21_sprint2/        ← Sprint 2 (DONE — service layer)
+  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DRAFT — framework upgrade)
+  2026-05-21_sprint3/        ← Sprint 3 (DRAFT — homepage SSR)
 ```
 
 I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle.
@@ -79,9 +81,31 @@ Service layer in `packages/supabase/src/services/` (+ Zod schemas in `packages/s
 
 **Decisioni master prese per Sprint 2:** (a) **3 sub-task** (site/menu/bookings) per isolare il rischio sul bookings; (b) **firma uniforme** `(client: TenantClient, ...args)` — il client è iniettato dal consumer, mai istanziato nel service (vedi decision-log voce *Service layer — funzioni ricevono il client come parametro*); (c) **Zod in directory `schemas/` dedicata** (non co-located nei service files) per evitare di trascinare `@supabase/supabase-js` nei bundle client dei form Sprint 4; (d) **niente RPC PostgreSQL** per le funzioni che richiedono privilegi su `bookings` — si delega al consumer la scelta del client, sub-task 03 lo documenta.
 
+## Sprint 2.5 — set di prompt
+
+Milestone **infrastrutturale** (non una feature): upgrade major dello stack *prima* della prima UI vera. Emersa aprendo Sprint 3 sulla scelta Tailwind. 1 sub-task in `2026-05-21_stack-upgrade/`. Decisione e rationale: decision-log voce *2026-05-21 — Upgrade stack major*.
+
+1. [[2026-05-21_stack-upgrade_01_framework]] — Next 14.2→16, React 18.3→19, `@supabase/ssr` 0.5→0.10, `supabase-js`, toolchain. Tailwind 4 **escluso** (è Sprint 3 / 01, col setup shadcn). ⚠️ **Gate di sicurezza sull'auth admin** (codice chiuso in Sprint 1): login + middleware + `getVerifiedTenantClient` + `supabaseAdmin` server-only.
+
+**Step manuali del master:** review del diff sul branch `chore/stack-upgrade` prima del merge (tocca codice di sicurezza); test login admin in locale (utente `template` già in Auth da Sprint 1). Nessun nuovo step infra.
+
+**Decisioni master prese per Sprint 2.5:** (a) **upgrade completo** (non TW4-only su stack vecchio) — un solo giro di migrazione mentre la codebase è minimale; (b) **milestone separata** da Sprint 3 per isolare il gate di sicurezza e tenere Sprint 3 = homepage; (c) **Tailwind 4 installato in Sprint 3 / 01** (dove serve), non nella milestone framework; (d) per le versioni successive al cutoff dell'assistente, il prompt impone di seguire le **upgrade guide ufficiali correnti + codemod**.
+
+## Sprint 3 — set di prompt
+
+Homepage pubblica SSR (primo consumer reale del service layer). Gira sul nuovo stack (Next 16 + React 19 + TW4). 3 sub-task in `2026-05-21_sprint3/`. Esecuzione **sequenziale** (01 baseline UI → 02 SSR statico → 03 interattività client; 02 e 03 dipendono dalle primitives del 01, il 03 estende il `page.tsx` del 02):
+
+1. [[2026-05-21_sprint3_01_ui-baseline]] — Tailwind 4 (CSS-first: `@theme`, `@source`, `@tailwindcss/postcss`, `tw-animate-css`) + shadcn in `@repo/ui` + `<Skeleton>`. Nessun componente applicativo.
+2. [[2026-05-21_sprint3_02_homepage-ssr]] — `generateMetadata` da `site_settings`, `page.tsx` SSR, 6 componenti Server (Hero/Slogan/Bio/OpeningHours/NewsSection/Footer), `error.tsx` + `loading.tsx`.
+3. [[2026-05-21_sprint3_03_menu-news-popup-gallery]] — `MenuClient` (shadcn Tabs + Dialog allergeni, `'use client'`), `NewsPopup` (auto-open + `sessionStorage`), `Gallery` (skeleton placeholder). Estende `page.tsx` con i fetch menu.
+
+**Step manuali del master:** seed opzionali nel SQL editor per gli smoke test (categoria+item con `allergen_ids` per il popup del 03; `bio`/`slogan`/`address` per le sezioni opzionali del 02; una `news_slide` attiva per il popup del 03). Cleanup a fine test.
+
+**Decisioni master prese per Sprint 3:** (a) **3 sub-task** (baseline UI / SSR statico / interattività) per isolare setup e idratazione client; (b) **SSR completo del menu**, tabs come pura UI state (no lazy fetch) — SEO-first; (c) **skeleton solo per Galleria** (Storage non popolato), non per News che è SSR-ready — risolta una contraddizione del backlog originale; (d) componenti applicativi in `apps/web/app/_components/`, primitives shadcn condivise in `@repo/ui`.
+
 ## Ordine di esecuzione
 
-Esecuzione sequenziale, un sub-task per volta. Dopo ogni sub-task: commit + push + aggiornamento [[backlog]].
+Esecuzione sequenziale, un sub-task per volta. Dopo ogni sub-task: commit + push + aggiornamento [[backlog]]. **Sprint 2.5 va eseguito e mergiato prima di aprire Sprint 3 / 01** (la UI si costruisce sul nuovo stack).
 
 ---
 
