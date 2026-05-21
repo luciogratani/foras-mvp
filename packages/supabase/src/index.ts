@@ -26,6 +26,14 @@ export type { SiteSettings, NewsSlide } from './services/site'
 
 export { getMenuSections, getMenuBySection, getAllergens } from './services/menu'
 export type { MenuSection, MenuCategory, MenuItem, Allergen, MenuCategoryWithItems } from './services/menu'
+export {
+  getMenuSectionsAdmin,
+  getMenuCategoriesAdmin,
+  updateMenuSection,
+  createMenuCategory,
+  updateMenuCategory,
+  deleteMenuCategory,
+} from './services/menu'
 
 export {
   getAvailableTimeSlots,
@@ -38,3 +46,9 @@ export type { TimeSlot, Booking, AvailableTimeSlot } from './services/bookings'
 
 export { CreateBookingInputSchema, CancelBookingTokenSchema } from './schemas/bookings'
 export type { CreateBookingInput } from './schemas/bookings'
+export {
+  MenuSectionUpdateSchema,
+  MenuCategoryCreateSchema,
+  MenuCategoryUpdateSchema,
+} from './schemas/menu'
+export type { MenuSectionUpdate, MenuCategoryCreate, MenuCategoryUpdate } from './schemas/menu'

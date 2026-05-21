@@ -25,3 +25,4 @@ export {
   CardFooter,
   CardAction,
 } from './components/ui/card'
+export { Switch } from './components/ui/switch'

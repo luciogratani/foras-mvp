@@ -1,5 +1,6 @@
 import type { Tables } from '../types/database'
 import type { TenantClient } from '../index'
+import type { MenuSectionUpdate, MenuCategoryCreate, MenuCategoryUpdate } from '../schemas/menu'
 
 export type MenuSection = Tables<{ schema: 'template' }, 'menu_sections'>
 export type MenuCategory = Tables<{ schema: 'template' }, 'menu_categories'>
@@ -61,4 +62,76 @@ export async function getAllergens(client: TenantClient): Promise<Allergen[]> {
     .order('name', { ascending: true })
   if (error) throw new Error(`getAllergens failed: ${error.message}`)
   return data ?? []
+}
+
+export async function getMenuSectionsAdmin(client: TenantClient): Promise<MenuSection[]> {
+  const { data, error } = await client
+    .from('menu_sections')
+    .select('*')
+    .order('position', { ascending: true, nullsFirst: false })
+    .order('name', { ascending: true })
+  if (error) throw new Error(`getMenuSectionsAdmin failed: ${error.message}`)
+  return data ?? []
+}
+
+export async function getMenuCategoriesAdmin(
+  client: TenantClient,
+  sectionId: string
+): Promise<MenuCategory[]> {
+  const { data, error } = await client
+    .from('menu_categories')
+    .select('*')
+    .eq('section_id', sectionId)
+    .order('position', { ascending: true, nullsFirst: false })
+    .order('name', { ascending: true })
+  if (error) throw new Error(`getMenuCategoriesAdmin failed: ${error.message}`)
+  return data ?? []
+}
+
+export async function updateMenuSection(
+  client: TenantClient,
+  id: string,
+  patch: MenuSectionUpdate
+): Promise<MenuSection> {
+  const { data, error } = await client
+    .from('menu_sections')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) throw new Error(`updateMenuSection failed: ${error.message}`)
+  return data
+}
+
+export async function createMenuCategory(
+  client: TenantClient,
+  input: MenuCategoryCreate
+): Promise<MenuCategory> {
+  const { data, error } = await client
+    .from('menu_categories')
+    .insert(input)
+    .select('*')
+    .single()
+  if (error) throw new Error(`createMenuCategory failed: ${error.message}`)
+  return data
+}
+
+export async function updateMenuCategory(
+  client: TenantClient,
+  id: string,
+  patch: MenuCategoryUpdate
+): Promise<MenuCategory> {
+  const { data, error } = await client
+    .from('menu_categories')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) throw new Error(`updateMenuCategory failed: ${error.message}`)
+  return data
+}
+
+export async function deleteMenuCategory(client: TenantClient, id: string): Promise<void> {
+  const { error } = await client.from('menu_categories').delete().eq('id', id)
+  if (error) throw new Error(`deleteMenuCategory failed: ${error.message}`)
 }
