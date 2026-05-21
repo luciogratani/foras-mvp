@@ -1,6 +1,10 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { useActionState } from 'react'
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { GripVertical } from 'lucide-react'
 import type { Allergen, MenuSection, MenuCategory, MenuItem } from '@repo/supabase'
 import {
   Button,
@@ -10,7 +14,7 @@ import {
   CardTitle,
   Switch,
 } from '@repo/ui'
-import { updateSectionAction, type MenuActionState } from '../actions'
+import { updateSectionAction, reorderCategoriesAction, type MenuActionState } from '../actions'
 import { CategoryRow } from './CategoryRow'
 import { RenameSectionDialog } from './RenameSectionDialog'
 import { CreateCategoryDialog } from './CreateCategoryDialog'
@@ -34,63 +38,100 @@ export function SectionCard({
   const [createOpen, setCreateOpen] = useState(false)
   const [editCategory, setEditCategory] = useState<MenuCategory | null>(null)
   const [deleteCategory, setDeleteCategory] = useState<MenuCategory | null>(null)
+  const [cats, setCats] = useState(categories)
+  const [, startTransition] = useTransition()
 
   const [, toggleAction, isToggling] = useActionState(updateSectionAction, idle)
   const sectionFormRef = useRef<HTMLFormElement>(null)
 
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
+
+  const sensors = useSensors(useSensor(PointerSensor))
+
+  function handleCategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setCats((prev) => {
+      const oldIndex = prev.findIndex((c) => c.id === active.id)
+      const newIndex = prev.findIndex((c) => c.id === over.id)
+      const reordered = arrayMove(prev, oldIndex, newIndex)
+      startTransition(() => {
+        void reorderCategoriesAction(reordered.map((c) => c.id))
+      })
+      return reordered
+    })
+  }
+
   return (
     <>
-      <Card className={!section.is_active ? 'opacity-60' : ''}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              {section.name}
-              {!section.is_active && (
-                <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
-                  Inattiva
-                </span>
-              )}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <form ref={sectionFormRef} action={toggleAction}>
-                <input type="hidden" name="id" value={section.id} />
-                <input type="hidden" name="is_active" value={(!section.is_active).toString()} />
-                <Switch
-                  checked={section.is_active}
-                  disabled={isToggling}
-                  onCheckedChange={() => sectionFormRef.current?.requestSubmit()}
-                />
-              </form>
-              <Button variant="outline" size="sm" onClick={() => setRenameOpen(true)}>
-                Rinomina
-              </Button>
+      <div ref={setNodeRef} style={style}>
+        <Card className={!section.is_active ? 'opacity-60' : ''}>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="cursor-grab text-muted-foreground"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <GripVertical size={16} />
+                </button>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  {section.name}
+                  {!section.is_active && (
+                    <span className="rounded bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground">
+                      Inattiva
+                    </span>
+                  )}
+                </CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <form ref={sectionFormRef} action={toggleAction}>
+                  <input type="hidden" name="id" value={section.id} />
+                  <input type="hidden" name="is_active" value={(!section.is_active).toString()} />
+                  <Switch
+                    checked={section.is_active}
+                    disabled={isToggling}
+                    onCheckedChange={() => sectionFormRef.current?.requestSubmit()}
+                  />
+                </form>
+                <Button variant="outline" size="sm" onClick={() => setRenameOpen(true)}>
+                  Rinomina
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {categories.length === 0 ? (
-            <p className="mb-3 text-sm text-muted-foreground">
-              Nessuna categoria. Aggiungine una.
-            </p>
-          ) : (
-            <ul className="mb-3 space-y-3">
-              {categories.map((cat) => (
-                <CategoryRow
-                  key={cat.id}
-                  category={cat}
-                  items={itemsByCategory[cat.id] ?? []}
-                  allergens={allergens}
-                  onEdit={setEditCategory}
-                  onDelete={setDeleteCategory}
-                />
-              ))}
-            </ul>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
-            + Aggiungi categoria
-          </Button>
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {cats.length === 0 ? (
+              <p className="mb-3 text-sm text-muted-foreground">
+                Nessuna categoria. Aggiungine una.
+              </p>
+            ) : (
+              <DndContext sensors={sensors} onDragEnd={handleCategoryDragEnd}>
+                <SortableContext items={cats.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+                  <ul className="mb-3 space-y-3">
+                    {cats.map((cat) => (
+                      <CategoryRow
+                        key={cat.id}
+                        category={cat}
+                        items={itemsByCategory[cat.id] ?? []}
+                        allergens={allergens}
+                        onEdit={setEditCategory}
+                        onDelete={setDeleteCategory}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+              + Aggiungi categoria
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       {renameOpen && (
         <RenameSectionDialog

@@ -9,6 +9,9 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  reorderMenuSections,
+  reorderMenuCategories,
+  reorderMenuItems,
   MenuSectionUpdateSchema,
   MenuCategoryCreateSchema,
   MenuCategoryUpdateSchema,
@@ -176,4 +179,22 @@ export async function deleteItemAction(
   } catch {
     return { status: 'error', message: 'Eliminazione item fallita. Riprova.' }
   }
+}
+
+export async function reorderSectionsAction(orderedIds: string[]): Promise<void> {
+  const { tenant } = await requireTenantClient()
+  await reorderMenuSections(tenant, orderedIds)
+  revalidatePath('/dashboard/menu')
+}
+
+export async function reorderCategoriesAction(orderedIds: string[]): Promise<void> {
+  const { tenant } = await requireTenantClient()
+  await reorderMenuCategories(tenant, orderedIds)
+  revalidatePath('/dashboard/menu')
+}
+
+export async function reorderItemsAction(orderedIds: string[]): Promise<void> {
+  const { tenant } = await requireTenantClient()
+  await reorderMenuItems(tenant, orderedIds)
+  revalidatePath('/dashboard/menu')
 }

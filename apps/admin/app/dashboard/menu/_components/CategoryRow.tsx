@@ -1,9 +1,13 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useRef, useState, useTransition } from 'react'
 import { useActionState } from 'react'
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { GripVertical } from 'lucide-react'
 import type { Allergen, MenuCategory, MenuItem } from '@repo/supabase'
 import { Button, Switch } from '@repo/ui'
-import { updateCategoryAction, updateItemAction, type MenuActionState } from '../actions'
+import { updateCategoryAction, updateItemAction, reorderItemsAction, type MenuActionState } from '../actions'
 import { CreateItemDialog } from './CreateItemDialog'
 import { EditItemDialog } from './EditItemDialog'
 import { DeleteItemDialog } from './DeleteItemDialog'
@@ -28,16 +32,47 @@ export function CategoryRow({
   const [createItemOpen, setCreateItemOpen] = useState(false)
   const [editItem, setEditItem] = useState<MenuItem | null>(null)
   const [deleteItem, setDeleteItem] = useState<MenuItem | null>(null)
+  const [localItems, setLocalItems] = useState(items)
+  const [, startTransition] = useTransition()
+
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: category.id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
+
+  const itemSensors = useSensors(useSensor(PointerSensor))
+
+  function handleItemDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setLocalItems((prev) => {
+      const oldIndex = prev.findIndex((it) => it.id === active.id)
+      const newIndex = prev.findIndex((it) => it.id === over.id)
+      const reordered = arrayMove(prev, oldIndex, newIndex)
+      startTransition(() => {
+        void reorderItemsAction(reordered.map((it) => it.id))
+      })
+      return reordered
+    })
+  }
 
   return (
-    <li className="rounded-md border">
+    <li ref={setNodeRef} style={style} className="rounded-md border">
       <div className="flex items-center justify-between px-3 py-2">
-        <span className={`text-sm font-medium ${!category.is_active ? 'opacity-50' : ''}`}>
-          {category.name}
-          {!category.is_active && (
-            <span className="ml-2 text-xs text-muted-foreground">(inattiva)</span>
-          )}
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="cursor-grab text-muted-foreground"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical size={16} />
+          </button>
+          <span className={`text-sm font-medium ${!category.is_active ? 'opacity-50' : ''}`}>
+            {category.name}
+            {!category.is_active && (
+              <span className="ml-2 text-xs text-muted-foreground">(inattiva)</span>
+            )}
+          </span>
+        </div>
         <div className="flex items-center gap-2">
           <form ref={formRef} action={toggleAction}>
             <input type="hidden" name="id" value={category.id} />
@@ -58,14 +93,18 @@ export function CategoryRow({
       </div>
 
       <div className="border-t px-3 py-2">
-        {items.length === 0 ? (
+        {localItems.length === 0 ? (
           <p className="mb-2 text-sm text-muted-foreground">Nessun item.</p>
         ) : (
-          <ul className="mb-2 space-y-1">
-            {items.map((item) => (
-              <ItemRow key={item.id} item={item} onEdit={setEditItem} onDelete={setDeleteItem} />
-            ))}
-          </ul>
+          <DndContext sensors={itemSensors} onDragEnd={handleItemDragEnd}>
+            <SortableContext items={localItems.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+              <ul className="mb-2 space-y-1">
+                {localItems.map((item) => (
+                  <ItemRow key={item.id} item={item} onEdit={setEditItem} onDelete={setDeleteItem} />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
         <Button variant="outline" size="sm" onClick={() => setCreateItemOpen(true)}>
           + Aggiungi item
@@ -110,16 +149,32 @@ function ItemRow({
 }) {
   const [, toggleAction, isToggling] = useActionState(updateItemAction, idle)
   const formRef = useRef<HTMLFormElement>(null)
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
 
   return (
-    <li className="flex items-center justify-between gap-2 rounded border px-2 py-1.5">
-      <span className={`text-sm ${!item.is_active ? 'opacity-50' : ''}`}>
-        {item.name}
-        <span className="ml-2 text-muted-foreground">€{Number(item.price).toFixed(2)}</span>
-        {!item.is_active && (
-          <span className="ml-2 text-xs text-muted-foreground">(inattivo)</span>
-        )}
-      </span>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between gap-2 rounded border px-2 py-1.5"
+    >
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="cursor-grab text-muted-foreground"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={14} />
+        </button>
+        <span className={`text-sm ${!item.is_active ? 'opacity-50' : ''}`}>
+          {item.name}
+          <span className="ml-2 text-muted-foreground">€{Number(item.price).toFixed(2)}</span>
+          {!item.is_active && (
+            <span className="ml-2 text-xs text-muted-foreground">(inattivo)</span>
+          )}
+        </span>
+      </div>
       <div className="flex items-center gap-2">
         <form ref={formRef} action={toggleAction}>
           <input type="hidden" name="id" value={item.id} />

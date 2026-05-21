@@ -188,3 +188,27 @@ export async function deleteMenuItem(client: TenantClient, id: string): Promise<
   const { error } = await client.from('menu_items').delete().eq('id', id)
   if (error) throw new Error(`deleteMenuItem failed: ${error.message}`)
 }
+
+export async function reorderMenuSections(client: TenantClient, orderedIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      client.from('menu_sections').update({ position: i }).eq('id', id)
+    )
+  )
+}
+
+export async function reorderMenuCategories(client: TenantClient, orderedIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      client.from('menu_categories').update({ position: i }).eq('id', id)
+    )
+  )
+}
+
+export async function reorderMenuItems(client: TenantClient, orderedIds: string[]): Promise<void> {
+  await Promise.all(
+    orderedIds.map((id, i) =>
+      client.from('menu_items').update({ position: i }).eq('id', id)
+    )
+  )
+}

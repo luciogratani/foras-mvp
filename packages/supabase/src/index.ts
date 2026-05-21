@@ -37,6 +37,9 @@ export {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  reorderMenuSections,
+  reorderMenuCategories,
+  reorderMenuItems,
 } from './services/menu'
 
 export {

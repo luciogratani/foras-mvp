@@ -6,7 +6,7 @@ import {
   getAllergens,
 } from '@repo/supabase'
 import type { MenuItem } from '@repo/supabase'
-import { SectionCard } from './_components/SectionCard'
+import { SectionList } from './_components/SectionList'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,17 +29,12 @@ export default async function MenuPage() {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-semibold">Menu</h1>
-      <div className="space-y-4">
-        {sections.map((section, i) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            categories={categoriesBySection[i] ?? []}
-            itemsByCategory={itemsByCategory}
-            allergens={allergens}
-          />
-        ))}
-      </div>
+      <SectionList
+        sections={sections}
+        categoriesBySection={Object.fromEntries(sections.map((s, i) => [s.id, categoriesBySection[i] ?? []]))}
+        itemsByCategory={itemsByCategory}
+        allergens={allergens}
+      />
     </div>
   )
 }
