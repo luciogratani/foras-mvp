@@ -89,7 +89,7 @@ Eseguito come 3 sub-task sequenziali in `docs/ai-playbooks/prompts/2026-05-21_sp
 
 **Decisioni architetturali Sprint 2** (vedi `decision-log/decisioni.md`):
 - *Service layer — funzioni ricevono il client come parametro* — firma uniforme `(client: TenantClient, ...args)`; il consumer inietta le credenziali
-- *`bookings` lato pubblico — service_role server-side, no RPC* — niente cambio dello schema baseline; Sprint 3 introdurrà `apps/web/lib/supabaseAdmin.ts` server-only per `getAvailableTimeSlots`/`cancelBookingByToken`
+- *`bookings` lato pubblico — service_role server-side, no RPC* — niente cambio dello schema baseline; Sprint 4 (form prenotazioni) introdurrà `apps/web/lib/supabaseAdmin.ts` server-only per `getAvailableTimeSlots`/`cancelBookingByToken`
 - Zod schemas in directory dedicata `schemas/` (non co-located in `services/*.ts`) — evita di trascinare `@supabase/supabase-js` nei bundle dei form Sprint 4
 - `zod` aggiunto come `dependencies` (runtime) di `@repo/supabase` nel sub-task 03
 
