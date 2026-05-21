@@ -406,7 +406,7 @@ Loading fallback minimo, copre il primo paint mentre Next sta facendo SSR — no
    UPDATE template.site_settings SET bio = 'Breve descrizione del locale...', slogan = 'Un posto dove stare bene', address = 'Via Roma 1, 20100 Milano', phone = '+39 02 1234567', email = 'info@locale.it' WHERE true;
    ```
    Ricaricare la home → tutte le sezioni opzionali devono apparire. Cleanup a fine sessione se non interessano lo stato del template.
-3. **Verifica skeleton purge in prod**: dopo `pnpm --filter @repo/web build`, controllare con `grep -l 'animate-pulse' apps/web/.next/static/css/*.css` — `loading.tsx` deve forzare la classe dentro il bundle CSS, altrimenti significa che la direttiva `@source '../../../packages/ui/src'` in `globals.css` non sta includendo i sorgenti di `@repo/ui` (regression del sub-task 01).
+3. **Verifica skeleton purge in prod**: dopo `pnpm --filter @repo/web build`, controllare con `grep -rl 'animate-pulse' apps/web/.next --include='*.css' | grep -v /cache/`. ⚠️ **Next 16 + Turbopack mette il CSS in `.next/static/chunks/`, non in `.next/static/css/`** (verificato nel sub-task 01) — non cercare solo in `static/css/` o avrai un falso negativo. Se `animate-pulse` non compare da nessuna parte, allora la direttiva `@source '../../../packages/ui/src'` in `globals.css` non sta includendo i sorgenti di `@repo/ui` (regression del sub-task 01).
 4. **`generateMetadata` fa 1 query a request**: accettato per MVP. Caching via `unstable_cache` / `revalidate` tag è post-MVP.
 5. **Suggerito:** `/model claude-sonnet-4-6`, `/effort medium`. Scope SSR puro, niente interattività, vincoli ben chiusi.
 6. **Commit:** `feat(web): add SSR homepage with dynamic metadata and headless sections`

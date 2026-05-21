@@ -45,23 +45,24 @@ Adesso si introducono i **tre pezzi interattivi e/o secondari** della homepage:
 
 ### 1. Aggiungere primitives shadcn a `@repo/ui`
 
-Dalla root del repo:
-
 ```bash
-pnpm --filter @repo/ui dlx shadcn@latest add tabs dialog button
+cd packages/ui && pnpm dlx shadcn@latest add tabs dialog button --overwrite
 ```
 
-Questo deve creare:
+Deve creare:
 - `packages/ui/src/components/ui/tabs.tsx`
 - `packages/ui/src/components/ui/dialog.tsx`
 - `packages/ui/src/components/ui/button.tsx`
 
-E aggiungere come **dependencies** di `@repo/ui`:
-- `@radix-ui/react-tabs`
-- `@radix-ui/react-dialog`
-- `@radix-ui/react-slot` (richiesto da Button con `asChild`)
+E aggiungere come **dependencies** di `@repo/ui`: `@radix-ui/react-tabs`, `@radix-ui/react-dialog`, `@radix-ui/react-slot` (richiesto da Button con `asChild`).
 
-Verificare a mano i `package.json` dopo il comando — shadcn `add` aggiunge correttamente le radix-ui deps in 99% dei casi.
+⚠️ **Lezione dal sub-task 01 (CLI shadcn — path errato):** in questa repo la CLI `shadcn@latest` risolve male l'alias `@repo/ui` e può scrivere i file in un path doppio sbagliato (`packages/ui/packages/ui/src/...`). Mitigazioni:
+- Invocare **da dentro il package** (`cd packages/ui && pnpm dlx ...`), non con `pnpm --filter @repo/ui dlx`.
+- **Verificare il path di output PRIMA di accettarlo.** Se i file finiscono in `packages/ui/packages/ui/...`, spostarli in `packages/ui/src/components/ui/` (sono piccoli) e **rimuovere la dir errata** (`rm -rf packages/ui/packages`). Confermare con `find packages/ui -path '*packages/ui/packages*'` → 0 risultati.
+- Se la CLI continua a sbagliare, fallback manuale: i tre componenti sono brevi, copiabili dal codice generato dalla CLI o dalla doc shadcn. Aggiungere a mano le radix-ui deps al `package.json` in tal caso.
+- Il `components.json` è corretto (lo legge solo per CSS/variabili, non per la destinazione dei file).
+
+Verificare a mano i `package.json` dopo il comando.
 
 Aggiornare `packages/ui/src/index.ts` per re-esportare i nuovi componenti:
 
