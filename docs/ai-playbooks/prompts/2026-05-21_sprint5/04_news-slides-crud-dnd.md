@@ -1,3 +1,16 @@
+---
+status: DONE
+updated: 2026-05-21
+area: ai-playbooks
+type: prompt
+sprint: 5
+order: 4
+tags: [foras-mvp, sprint5, admin, crud, news-slides, dnd-kit]
+owner: master-chat
+suggested_model: claude-sonnet-4-6
+suggested_effort: high
+---
+
 # Sub-task 04 — News Slides CRUD + DnD
 
 Sei una sub-chat di implementazione per il progetto `foras-mvp` (monorepo Next.js + Supabase multi-tenant, pnpm workspaces). Il master farà trust-but-verify e committerà. **Tu non committi.**

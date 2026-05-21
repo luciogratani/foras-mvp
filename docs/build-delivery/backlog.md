@@ -1,6 +1,6 @@
 ---
 status: DRAFT
-updated: 2026-05-19
+updated: 2026-05-22
 area: build-delivery
 type: backlog
 tags: [foras-mvp, build-delivery]
@@ -205,8 +205,9 @@ Piano a 6 sub-task verticali in `docs/ai-playbooks/prompts/2026-05-21_sprint5/`:
   - ✅ `02a` (commit `d671c9a`) sezioni + categorie: service *admin-read* (non filtrato) + update sezioni (rinomina/toggle — le 6 sezioni sono seed predefiniti, **no create/delete**) + CRUD categorie. UI: shell pagina menu con lista sezioni e categorie. FK `ON DELETE CASCADE`: cancellare una categoria cancella i suoi item (avviso nel dialog di delete). Primitiva `Switch` in `@repo/ui`. Review verde (tsc -r + build admin/web + smoke browser di Lucio: rinomina/toggle sezione propagata al sito pubblico senza rebuild).
   - ✅ `02b` (commit `6958c5d`) item + allergeni: service CRUD item (`getMenuItemsAdmin`, `createMenuItem`, `updateMenuItem`, `deleteMenuItem`, order position NULLS LAST poi name) + Zod `MenuItemCreateSchema`/`MenuItemUpdateSchema` (`z.coerce.number()` per price, empty→null, `allergen_ids` array UUID) + `Textarea`/`Checkbox` in `@repo/ui` (hand-written, zero dipendenze nuove) + UI item sotto le categorie con checkbox dei 14 allergeni seed precheckati in edit + toggle `is_active` per item + 3 dialog Create/Edit/Delete. Propagazione allergeni nel popup `MenuClient` verificata. Review verde (tsc -r + build admin/web + smoke browser di Lucio).
 - ✅ `03` (commit `fadd2f0`) drag-and-drop ordinamento: `@dnd-kit/core`+`sortable`+`utilities` in `apps/admin`; service `reorderMenuSections`/`reorderMenuCategories`/`reorderMenuItems` (Promise.all update position 0-based); reorder Server Actions (firma `string[]`, non FormData); `SectionList.tsx` nuovo client wrapper per DndContext sezioni; `SectionCard`+`CategoryRow` estesi con `useSortable`+`GripVertical`+DndContext annidati. Fix React 19: `startTransition` separato da `setState`; `useEffect` per sincronizzare state locale con props dopo revalidatePath; `id={useId()}` su ogni DndContext (fix hydration mismatch aria-describedby). Review verde (tsc -r + build admin/web + smoke browser Lucio: DnD funzionante a tutti e 3 i livelli, ordine persistito, CRUD invariato).
-- ⏳ `04` CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione).
-- ⏳ `05` orari apertura (`site_settings.opening_hours` JSON, form 7 giorni con toggle chiuso) + coperti/`time_slots` (label/orario/`max_covers`/attivo) + impostazioni sito (SEO title/description/`og_image`, testi: slogan/bio/indirizzo/telefono/email).
+- ✅ `04` (commit `eb237fa`) CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione + DnD). Pattern identico al menu: `NewsSlideAdmin` alias per evitare collisione con `NewsSlide` pubblico nel barrel.
+- ✅ `05` (commit `36aba34`) orari apertura (`site_settings.opening_hours` JSON, form 7 giorni con toggle chiuso) + coperti/`time_slots` (label/orario/`max_covers`/attivo, nessun DnD) + impostazioni sito (SEO title/description/`og_image`, testi: slogan/bio/indirizzo/telefono/email). `services/site-admin.ts` separato per non toccare l'invariante `services/site.ts`.
+- ⏳ `05b` guard giorni chiusi nel booking: `getAvailableTimeSlots` controlla `opening_hours` e ritorna `[]` se il giorno della data richiesta ha `closed: true`. Nessuna migration — fix applicativo solo in `services/bookings.ts`. Tech debt rilevato: `time_slots` non ha `day_of_week`, quindi non è possibile configurare turni diversi per giorno (rinviato a post-MVP su richiesta cliente).
 - ⏳ `06` vista prenotazioni: lista filtrabile per data/turno + cancellazione lato admin.
 
 Done when:

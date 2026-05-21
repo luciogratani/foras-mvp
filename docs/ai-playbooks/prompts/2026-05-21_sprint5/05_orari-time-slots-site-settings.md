@@ -1,6 +1,14 @@
 ---
-task: sprint5-05
-date: 2026-05-22
+status: DONE
+updated: 2026-05-22
+area: ai-playbooks
+type: prompt
+sprint: 5
+order: 5
+tags: [foras-mvp, sprint5, admin, orari, time-slots, site-settings]
+owner: master-chat
+suggested_model: claude-sonnet-4-6
+suggested_effort: high
 ---
 
 # Sub-task 05 — Orari, turni e impostazioni sito
