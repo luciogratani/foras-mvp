@@ -13,21 +13,20 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
 
-  if (!session) {
-    redirect('/?reason=unauthenticated')
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/?reason=unauthenticated')
+
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) redirect('/?reason=unauthenticated')
 
   let schemaName: string
   try {
-    const tenant = await getVerifiedTenantClient(session)
+    const tenant = await getVerifiedTenantClient(user, session.access_token)
     const probe = await tenant.from('menu_sections').select('id').limit(1).maybeSingle()
     schemaName = probe.error
       ? '(query failed — RLS or empty schema)'
-      : (session.user.user_metadata?.schema as string)
+      : (user.user_metadata?.schema as string)
   } catch (err) {
     if (err instanceof TenantVerificationError) {
       redirect('/?reason=tenant-mismatch')
@@ -39,7 +38,7 @@ export default async function DashboardPage() {
     <main>
       <h1>Foras — dashboard</h1>
       <p>Verified tenant schema: <code>{schemaName}</code></p>
-      <p>Utente: {session.user.email ?? session.user.id}</p>
+      <p>Utente: {user.email ?? user.id}</p>
       <form action={logout}>
         <button type="submit">Esci</button>
       </form>

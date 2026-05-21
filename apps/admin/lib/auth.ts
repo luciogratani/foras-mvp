@@ -1,6 +1,6 @@
 import 'server-only'
 import { createClient } from '@supabase/supabase-js'
-import type { Session } from '@supabase/supabase-js'
+import type { User } from '@supabase/supabase-js'
 import type { Database, TenantClient } from '@repo/supabase'
 import { getSupabaseAdmin } from './supabaseAdmin'
 import { getSupabaseServerClient } from './supabaseServer'
@@ -14,8 +14,8 @@ export class TenantVerificationError extends Error {
   }
 }
 
-export async function getVerifiedTenantClient(session: Session): Promise<TenantClient> {
-  const schema = session.user.user_metadata?.schema as string | undefined
+export async function getVerifiedTenantClient(user: User, accessToken: string): Promise<TenantClient> {
+  const schema = user.user_metadata?.schema as string | undefined
 
   if (!schema) {
     await (await getSupabaseServerClient()).auth.signOut()
@@ -26,7 +26,7 @@ export async function getVerifiedTenantClient(session: Session): Promise<TenantC
     .from('tenants')
     .select('schema_name')
     .eq('schema_name', schema)
-    .eq('owner_id', session.user.id)
+    .eq('owner_id', user.id)
     .maybeSingle()
 
   if (error || !tenant) {
@@ -46,7 +46,7 @@ export async function getVerifiedTenantClient(session: Session): Promise<TenantC
   return createClient<Database, SchemaName>(url, anonKey, {
     db: { schema: schema as SchemaName },
     global: {
-      headers: { Authorization: `Bearer ${session.access_token}` },
+      headers: { Authorization: `Bearer ${accessToken}` },
     },
     auth: {
       autoRefreshToken: false,
