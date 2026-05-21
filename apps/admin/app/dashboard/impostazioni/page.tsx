@@ -1,10 +1,17 @@
+import { requireTenantClient } from '../../../lib/auth'
+import { getSiteSettings } from '@repo/supabase'
+import { SiteSettingsForm } from './_components/SiteSettingsForm'
+
 export const dynamic = 'force-dynamic'
 
-export default function ImpostazioniPage() {
+export default async function ImpostazioniPage() {
+  const { tenant } = await requireTenantClient()
+  const settings = await getSiteSettings(tenant)
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-2">Impostazioni</h1>
-      <p className="text-muted-foreground">Sezione in arrivo (Sprint 5)</p>
+    <div className="space-y-6 p-6 max-w-2xl">
+      <h1 className="text-2xl font-semibold">Impostazioni sito</h1>
+      <SiteSettingsForm settings={settings} />
     </div>
   )
 }

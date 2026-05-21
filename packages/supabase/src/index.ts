@@ -72,3 +72,8 @@ export { getNewsSlidesAdmin, createNewsSlide, updateNewsSlide, deleteNewsSlide, 
 export type { NewsSlide as NewsSlideAdmin } from './services/news'
 export { NewsSlideCreateSchema, NewsSlideUpdateSchema } from './schemas/news'
 export type { NewsSlideCreate, NewsSlideUpdate } from './schemas/news'
+
+export { getTimeSlotsAdmin, createTimeSlot, updateTimeSlot, deleteTimeSlot, updateSiteSettings } from './services/site-admin'
+export type { TimeSlotAdmin } from './services/site-admin'
+export { TimeSlotCreateSchema, TimeSlotUpdateSchema, SiteSettingsUpdateSchema, OpeningHoursSchema } from './schemas/settings'
+export type { TimeSlotCreate, TimeSlotUpdate, SiteSettingsUpdate, OpeningHours } from './schemas/settings'
