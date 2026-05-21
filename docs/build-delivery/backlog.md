@@ -187,18 +187,25 @@ Done when:
 
 ---
 
-## Sprint 5 — Admin panel
+## Sprint 5 — Admin panel — apertura 2026-05-21
 
 **Goal:** il gestore gestisce tutti i contenuti del proprio sito dal backoffice.
 
-Tasks:
-- Layout admin con navigazione (autenticazione con `getVerifiedTenantClient()`)
-- CRUD menu: sezioni (abilita/disabilita, rinomina), categorie, item, allergeni
-- Drag-and-drop per ordinamento con bulk update `position`
-- CRUD popup/novità (ordinamento slide)
-- Gestione orari di apertura (form con 7 giorni, toggle chiuso/aperto)
-- Impostazioni sito: SEO (title, description, og:image), testi homepage (slogan, bio, indirizzo)
-- Vista prenotazioni: lista per data/turno, filtrabile
+**Decisioni master all'apertura** (vedi `decision-log/decisioni.md` voce *2026-05-21 — Sprint 5 (Admin panel)*):
+- **Slice verticali**, non orizzontale: ogni sub-task = una sezione CRUD completa (service + UI), demoabile a fine review. Unica fondazione orizzontale: la baseline UI + shell.
+- **Drag-and-drop come sub-task dedicato** (dopo il CRUD menu); fallback su/giù se `@dnd-kit` non regge React 19.
+- **Immagini via URL testuale** (no Storage): l'upload resta Sprint 7.
+- **Nessuna modifica DB**: le RLS di scrittura (`auth.uid() IS NOT NULL`) + GRANT a `authenticated` sono già a posto; il CRUD usa il verified tenant client.
+
+**Stato di partenza rilevato:** `apps/admin` non ha ancora Tailwind/shadcn (parte da zero, a differenza di `apps/web`); il service layer è solo *read* e filtrato `is_active=true` → servono funzioni *admin-read* (non filtrate) + *write* in `@repo/supabase`.
+
+Piano a 6 sub-task verticali in `docs/ai-playbooks/prompts/2026-05-21_sprint5/`:
+- ⏳ `01` baseline UI (TW4 + `@repo/ui` in `apps/admin`) + shell/nav `/dashboard/*` + helper server `requireTenantClient()` + restyle login/dashboard. Nessun CRUD.
+- ⏳ `02` CRUD menu: sezioni (rinomina, toggle `is_active`), categorie, item (prezzo, descrizione, `image_url` come URL, allergeni come checkbox). Funzioni *admin-read* (incl. disattivati) + *write* nel service.
+- ⏳ `03` drag-and-drop ordinamento: `@dnd-kit` + funzione bulk-update `position` nel service, applicata a sezioni/categorie/item (e slide novità).
+- ⏳ `04` CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione).
+- ⏳ `05` orari apertura (`site_settings.opening_hours` JSON, form 7 giorni con toggle chiuso) + coperti/`time_slots` (label/orario/`max_covers`/attivo) + impostazioni sito (SEO title/description/`og_image`, testi: slogan/bio/indirizzo/telefono/email).
+- ⏳ `06` vista prenotazioni: lista filtrabile per data/turno + cancellazione lato admin.
 
 Done when:
 - Tutte le sezioni CRUD funzionanti

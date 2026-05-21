@@ -378,3 +378,29 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Rationale:** il write-path ha già la sua complessità (surface di sicurezza più sensibile del progetto finora — service_role key su `apps/web`). Aggiungere infra email esterna (account Resend, verifica dominio, deploy funzione) allungherebbe Sprint 4 senza sbloccare ulteriori test funzionali. Il follow-up è a basso rischio di regressione (aggiunge una chiamata dopo `createBooking`, non modifica il flusso).
 
 **Trigger:** quando le 3 decisioni sopra sono risolte. Implementazione prevista come sub-task autonomo (Sprint 4.5 o inizio Sprint 5).
+
+---
+
+### 2026-05-21 — Sprint 5 (Admin panel): slice verticali, drag&drop isolato, immagini via URL
+
+**Contesto:** Sprint 5 è il più ampio del progetto (tutto il CRUD del backoffice). All'apertura emergono tre fatti che vincolano la pianificazione:
+
+1. **`apps/admin` non ha ancora Tailwind/shadcn** — `globals.css` è un reset puro, `layout.tsx` è nudo, il login usa stili inline, `package.json` non dipende da `@repo/ui` né da `tailwindcss`. La UI admin parte da zero (mentre `apps/web` ha già la baseline da Sprint 3/01).
+2. **Il service layer è solo lettura, e filtrata** — `getMenuSections/getMenuBySection/getActiveNews` filtrano `is_active = true`. L'admin deve vedere anche gli elementi disattivati e scriverli → servono nuove funzioni *admin-read* (senza filtro) e *write* in `@repo/supabase`.
+3. **Le RLS di scrittura (`auth.uid() IS NOT NULL`) + GRANT a `authenticated` sono già a posto** → il CRUD funziona col verified tenant client (anon key + access token utente). **Nessuna modifica DB richiesta per Sprint 5.**
+
+**Decisioni (3 forcelle, decise con Lucio il 2026-05-21):**
+
+- **Decomposizione a slice verticali (non orizzontale).** Ogni sub-task = una sezione CRUD completa (funzioni service + UI), verificabile in browser a fine review. Unica fondazione orizzontale: la baseline UI + shell. Piano a 6 sub-task: `01` baseline UI + shell/nav + helper `requireTenantClient`, `02` CRUD menu, `03` drag-and-drop, `04` CRUD novità, `05` orari apertura + `time_slots`/coperti + impostazioni sito, `06` vista prenotazioni.
+  - *Rationale:* Sprint 5 è grande e la review è trust-but-verify con test in browser; le slice verticali danno feature demoabili e blast radius piccolo per sub-task. L'orizzontale (stile Sprint 2) accumulerebbe molto codice prima di qualcosa di visibile.
+- **Drag-and-drop come sub-task dedicato** (dopo il CRUD menu), non interleaved né rimandato. Aggiunge `@dnd-kit` (versione + compat React 19 da verificare in fase di scrittura del prompt 03) e una funzione di bulk-update di `position` nel service, applicata a sezioni/categorie/item/slide.
+  - *Rationale:* è la parte più interattiva e iterativa, e introduce una dep nuova → isolarla tiene puliti i CRUD e confina il rischio. L'ordinamento numerico/su-giù come fallback resta sul tavolo se `@dnd-kit` desse problemi su React 19.
+- **Immagini via URL testuale**, niente Storage in Sprint 5. I campi `menu_items.image_url`, `news_slides.image_url`, `site_settings.og_image` sono input di testo per un URL. L'upload su Storage (bucket `bar-assets` + path convention + RLS) resta in Sprint 7 come da backlog.
+  - *Rationale:* lo Storage richiede wiring infra (bucket, path helper, RLS policies) che il backlog colloca consapevolmente dopo il freeze, all'onboarding del primo cliente. Anticiparlo allungherebbe Sprint 5 senza sbloccare il resto del CRUD.
+
+**Conseguenze operative:**
+- Il sub-task `01` replica per `apps/admin` il setup TW4 + `@repo/ui` di Sprint 3/01 (`apps/web`) e introduce l'helper server `requireTenantClient()` per non ripetere `getUser()` + `getSession()` + `getVerifiedTenantClient(user, accessToken)` in ogni pagina.
+- Le primitive shadcn vengono aggiunte a `@repo/ui` (single source of truth condiviso con `apps/web`), invocando la CLI **da dentro `packages/ui`** (lezione Sprint 3: l'alias `@repo/ui` fa sbagliare il path alla CLI).
+- Ogni nuova funzione di scrittura vive in `packages/supabase/src/services/` con firma `(client: TenantClient, ...args)` — nessuna query DB nei componenti.
+
+**Trigger di revisione:** se `@dnd-kit` non è compatibile con React 19, ripiegare su ordinamento su/giù nel prompt 03 (la funzione di bulk-update `position` nel service resta invariata).
