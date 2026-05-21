@@ -131,7 +131,7 @@ Done when:
 
 ---
 
-## Sprint 3 — Homepage pubblica SSR (con menu)
+## Sprint 3 — Homepage pubblica SSR (con menu) ✓ DONE
 
 **Goal:** homepage SSR headless funzionante sullo schema `template`, completa di sezione menu — primo consumer reale del service layer.
 
