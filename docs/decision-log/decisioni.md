@@ -316,3 +316,29 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 - I service `getAvailableTimeSlots` e `cancelBookingByToken` accettano solo input scalari (date, token UUID), validati con Zod a monte.
 
 **Trigger di revisione (→ post-MVP):** stesso della voce precedente — migrazione a Edge Function quando: 2° tenant, CRUD admin esteso, o quando si vuole eliminare la `service_role` da Vercel del tutto. A quel punto sia `apps/admin` che `apps/web` perdono la chiave.
+
+---
+
+### 2026-05-21 — Upgrade stack major (Next 16 + React 19 + Tailwind 4) anticipato all'apertura di Sprint 3
+
+**Contesto:** aprendo Sprint 3 (homepage pubblica SSR, prima UI vera del progetto) serviva scegliere la versione di Tailwind/shadcn da introdurre. Verifica fattuale delle versioni pubblicate al 2026-05-21: `tailwindcss@latest` = **4.3.0** (la v3 sopravvive solo come tag `v3-lts` = 3.4.19), `shadcn@latest` = **4.7.0** (targetizza TW4 di default), `next@latest` = **16.2.6**, `react@latest` = **19.2.6**. Il repo era su Next **14.2.29** + React **18.3.1**, senza Tailwind installato. Restare su Tailwind 3 avrebbe richiesto di pinnare il tag legacy `v3-lts` e usare la shadcn CLI in modalità retrocompatibile — andando *controcorrente* rispetto ai default degli strumenti, cioè creando l'attrito che la scelta "v3 = strada sicura" voleva evitare. La motivazione "Next 14 ⇒ shadcn documentati su v3" si è rivelata datata e di fatto invertita.
+
+**Opzioni considerate:**
+- (a) **Tailwind 3-LTS pinnato** sullo stack attuale (Next 14.2 + React 18.3) — collaudato storicamente ma ormai legacy; shadcn CLI in modalità retrocompatibile; doppia migrazione futura inevitabile.
+- (b) **Tailwind 4 sullo stack attuale** (Next 14.2 + React 18.3) — allinea l'asse CSS/UI ai default degli strumenti, ma lascia aperto il debito framework (Next/React major) e usa la combinazione meno battuta TW4 + React 18.
+- (c) **Upgrade completo** Next 16 + React 19 + Tailwind 4 — allineamento totale dello stack.
+
+**Decisione:** (c). L'upgrade viene eseguito come **milestone infrastrutturale che precede i sub-task UI di Sprint 3** (la homepage SSR si costruisce direttamente sul nuovo stack).
+
+**Rationale:** il costo di un major upgrade scala con la dimensione della codebase. Allo stato attuale `apps/web` è uno stub (page + health route), `apps/admin` è minimale (login + middleware + dashboard), `packages/ui` è vuoto e **nessun cliente ha ancora forkato il template**. È il punto di costo minimo. Rimandare a pre-freeze (Sprint 6) significherebbe migrare anche tutta la homepage e l'admin panel CRUD. Inoltre Tailwind 4 è comunque obbligato (gli strumenti `latest` lo assumono) e TW4 su React 18 è meno battuto di TW4 su React 19: tanto vale salire entrambi gli assi insieme, ora.
+
+**Blast radius (l'upgrade NON è confinabile a `apps/web`):**
+- Tocca tutto il monorepo: `apps/web`, `apps/admin`, `packages/ui`, `packages/supabase` (peer dep React). React/Next sono dipendenze condivise — non si può avere `web` su React 19 e `admin` su React 18 nello stesso install.
+- **Punto critico di sicurezza:** `apps/admin` usa `@supabase/ssr@0.5` con middleware + cookies. Next 15+ rende **async** le request API (`cookies()`, `headers()`, `params`, `searchParams`); `@supabase/ssr` salta a 0.10.x. La milestone di upgrade DEVE includere un **gate di riverifica dell'auth admin** (login → `getVerifiedTenantClient` → middleware → isolamento cross-tenant), che è codice di sicurezza chiuso in Sprint 1.
+- **Caching defaults:** Next 15 ha rimosso il cache-by-default su `fetch` e sui `GET` route handler → impatta `app/api/health/route.ts` e i fetch SSR di Sprint 3 (vanno verificati i comportamenti di rivalidazione attesi).
+
+**Caveat di esecuzione:** Next 16 e React 19 sono **successivi al knowledge cutoff dell'assistente** (gennaio 2026). I prompt di upgrade istruiscono la sub-chat a seguire le **upgrade guide ufficiali correnti** e i **codemod ufficiali** (`@next/codemod`, codemod React 19, `@tailwindcss/upgrade`), non istruzioni potenzialmente datate scritte dal master.
+
+**Target versioni (2026-05-21):** `next@16.2.6`, `react@19.2.6`, `react-dom@19.2.6`, `@types/react@19.2.15`, `@types/react-dom@19.2.3`, `tailwindcss@4.3.0` + `@tailwindcss/postcss@4`, `tw-animate-css@1.4.0` (sostituisce `tailwindcss-animate`, deprecato in TW4), `@supabase/ssr@0.10.3`, `@supabase/supabase-js@2.106.1`, `eslint-config-next@16.2.6`.
+
+**Trigger di rollback:** se l'auth admin non supera il gate sotto Next 16, ripiegare sull'opzione (b) — Tailwind 4 su Next 14.2 + React 18.3 — e ritracciare l'upgrade framework come milestone dedicata pre-freeze. La decisione su Tailwind 4 (vs 3) è comunque ferma in tutti gli scenari.
