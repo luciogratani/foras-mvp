@@ -77,7 +77,11 @@ export async function deleteTimeSlotAction(
     await deleteTimeSlot(tenant, id)
     revalidatePath('/dashboard/orari')
     return { status: 'success' }
-  } catch {
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : ''
+    if (raw.includes('bookings_time_slot_id_fkey')) {
+      return { status: 'error', message: 'Impossibile eliminare: esistono prenotazioni per questo turno.' }
+    }
     return { status: 'error', message: 'Eliminazione turno fallita. Riprova.' }
   }
 }

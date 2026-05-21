@@ -51,6 +51,7 @@ export async function updateSiteSettings(
   const { data, error } = await client
     .from('site_settings')
     .update(patch as unknown as TablesUpdate<{ schema: 'template' }, 'site_settings'>)
+    .not('id', 'is', null)
     .select('*')
     .single()
   if (error) throw new Error(`updateSiteSettings failed: ${error.message}`)

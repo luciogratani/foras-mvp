@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useActionState } from 'react'
 import type { OpeningHours } from '@repo/supabase'
 import { Button, Input, Label, Switch } from '@repo/ui'
@@ -29,6 +29,14 @@ export function OpeningHoursForm({ initialHours }: { initialHours: OpeningHours 
     }
     return init
   })
+
+  useEffect(() => {
+    const next = {} as Record<Day, boolean>
+    for (const day of DAYS) {
+      next[day] = initialHours?.[day]?.closed ?? true
+    }
+    setClosed(next)
+  }, [initialHours])
 
   return (
     <form action={formAction} className="space-y-4">
