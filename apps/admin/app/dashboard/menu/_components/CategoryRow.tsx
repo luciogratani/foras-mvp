@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useTransition } from 'react'
+import { useRef, useState, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -35,22 +35,25 @@ export function CategoryRow({
   const [localItems, setLocalItems] = useState(items)
   const [, startTransition] = useTransition()
 
+  useEffect(() => {
+    setLocalItems(items)
+  }, [items])
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: category.id })
   const style = { transform: CSS.Transform.toString(transform), transition }
 
   const itemSensors = useSensors(useSensor(PointerSensor))
+  const itemsDndId = useId()
 
   function handleItemDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    setLocalItems((prev) => {
-      const oldIndex = prev.findIndex((it) => it.id === active.id)
-      const newIndex = prev.findIndex((it) => it.id === over.id)
-      const reordered = arrayMove(prev, oldIndex, newIndex)
-      startTransition(() => {
-        void reorderItemsAction(reordered.map((it) => it.id))
-      })
-      return reordered
+    const oldIndex = localItems.findIndex((it) => it.id === active.id)
+    const newIndex = localItems.findIndex((it) => it.id === over.id)
+    const reordered = arrayMove(localItems, oldIndex, newIndex)
+    setLocalItems(reordered)
+    startTransition(() => {
+      void reorderItemsAction(reordered.map((it) => it.id))
     })
   }
 
@@ -96,7 +99,7 @@ export function CategoryRow({
         {localItems.length === 0 ? (
           <p className="mb-2 text-sm text-muted-foreground">Nessun item.</p>
         ) : (
-          <DndContext sensors={itemSensors} onDragEnd={handleItemDragEnd}>
+          <DndContext id={itemsDndId} sensors={itemSensors} onDragEnd={handleItemDragEnd}>
             <SortableContext items={localItems.map((it) => it.id)} strategy={verticalListSortingStrategy}>
               <ul className="mb-2 space-y-1">
                 {localItems.map((item) => (

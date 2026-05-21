@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -41,6 +41,10 @@ export function SectionCard({
   const [cats, setCats] = useState(categories)
   const [, startTransition] = useTransition()
 
+  useEffect(() => {
+    setCats(categories)
+  }, [categories])
+
   const [, toggleAction, isToggling] = useActionState(updateSectionAction, idle)
   const sectionFormRef = useRef<HTMLFormElement>(null)
 
@@ -48,18 +52,17 @@ export function SectionCard({
   const style = { transform: CSS.Transform.toString(transform), transition }
 
   const sensors = useSensors(useSensor(PointerSensor))
+  const catsDndId = useId()
 
   function handleCategoryDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    setCats((prev) => {
-      const oldIndex = prev.findIndex((c) => c.id === active.id)
-      const newIndex = prev.findIndex((c) => c.id === over.id)
-      const reordered = arrayMove(prev, oldIndex, newIndex)
-      startTransition(() => {
-        void reorderCategoriesAction(reordered.map((c) => c.id))
-      })
-      return reordered
+    const oldIndex = cats.findIndex((c) => c.id === active.id)
+    const newIndex = cats.findIndex((c) => c.id === over.id)
+    const reordered = arrayMove(cats, oldIndex, newIndex)
+    setCats(reordered)
+    startTransition(() => {
+      void reorderCategoriesAction(reordered.map((c) => c.id))
     })
   }
 
@@ -109,7 +112,7 @@ export function SectionCard({
                 Nessuna categoria. Aggiungine una.
               </p>
             ) : (
-              <DndContext sensors={sensors} onDragEnd={handleCategoryDragEnd}>
+              <DndContext id={catsDndId} sensors={sensors} onDragEnd={handleCategoryDragEnd}>
                 <SortableContext items={cats.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                   <ul className="mb-3 space-y-3">
                     {cats.map((cat) => (
