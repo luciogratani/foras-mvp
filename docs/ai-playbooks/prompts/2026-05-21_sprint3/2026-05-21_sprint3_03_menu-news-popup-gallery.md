@@ -97,6 +97,9 @@ import { MenuClient } from './_components/MenuClient'
 import { NewsPopup } from './_components/NewsPopup'
 import { Gallery } from './_components/Gallery'
 
+// Preserva la direttiva del sub-task 02 (decision-log: homepage rendering dinamico)
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const client = createSupabaseClient()
   const [settings, news, sections, allergens] = await Promise.all([
@@ -348,7 +351,7 @@ Note:
 - **`sessionStorage` solo dentro `useEffect` o handler** (mai a top-level del component) — vincolo di idratazione.
 - **shadcn `add` da `packages/ui` non da `apps/web`:** mantenere single source of truth. Riferimento sub-task 01.
 - **Non toccare** `apps/admin/*`, `packages/supabase/*`, `docs/*`, `apps/web/app/api/*`, `apps/web/next.config.mjs`, `apps/web/postcss.config.mjs`, `apps/web/app/globals.css` (TW4 CSS-first: nessun `tailwind.config.ts` da toccare).
-- **Non toccare** i componenti del sub-task 02 (`Hero`, `Slogan`, `Bio`, `OpeningHours`, `NewsSection`, `Footer`). Solo `page.tsx` viene esteso (non riscritto).
+- **Non toccare** i componenti del sub-task 02 (`Hero`, `Slogan`, `Bio`, `OpeningHours`, `NewsSection`, `Footer`). Solo `page.tsx` viene esteso (non riscritto). **Preservare `export const dynamic = 'force-dynamic'`** già presente in `page.tsx` (decision-log: *Homepage pubblica: rendering dinamico*).
 - **`app/error.tsx` e `app/loading.tsx`** del sub-task 02 restano invariati.
 
 ## Output atteso

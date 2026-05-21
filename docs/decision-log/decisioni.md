@@ -342,3 +342,20 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Target versioni (2026-05-21):** `next@16.2.6`, `react@19.2.6`, `react-dom@19.2.6`, `@types/react@19.2.15`, `@types/react-dom@19.2.3`, `tailwindcss@4.3.0` + `@tailwindcss/postcss@4`, `tw-animate-css@1.4.0` (sostituisce `tailwindcss-animate`, deprecato in TW4), `@supabase/ssr@0.10.3`, `@supabase/supabase-js@2.106.1`, `eslint-config-next@16.2.6`.
 
 **Trigger di rollback:** se l'auth admin non supera il gate sotto Next 16, ripiegare sull'opzione (b) — Tailwind 4 su Next 14.2 + React 18.3 — e ritracciare l'upgrade framework come milestone dedicata pre-freeze. La decisione su Tailwind 4 (vs 3) è comunque ferma in tutti gli scenari.
+
+---
+
+### 2026-05-21 — Homepage pubblica: rendering dinamico (`force-dynamic`), non statico
+
+**Contesto:** in Sprint 3 / 02 la homepage SSR (fetch `getSiteSettings` + `getActiveNews`) veniva prerenderizzata da Next 16 come **statica** (`○` nel route table) in assenza di API dinamiche esplicite (no `cookies()`/`headers()`/`searchParams`). Conseguenza: i contenuti — gestiti dal backoffice — sarebbero **congelati al build**, e una modifica dal pannello admin non comparirebbe sul sito pubblico senza un rebuild. Emerso in review dal route table del build (`pnpm --filter @repo/web build`), non da un errore.
+
+**Opzioni considerate:**
+- (a) `export const dynamic = 'force-dynamic'` — SSR per-request, dati sempre freschi.
+- (b) `export const revalidate = N` — ISR, rigenerazione periodica (ritardo di propagazione fino a N s).
+- (c) static + `revalidatePath('/')` on-demand dal backoffice al salvataggio (Sprint 5).
+
+**Decisione:** (a) `force-dynamic` su `apps/web/app/page.tsx`.
+
+**Rationale:** soddisfa il requisito "modifiche visibili sulla homepage pubblica senza rebuild" (backlog Sprint 5) nel modo più semplice e diretto. Il traffico di un sito di bar/ristorante non giustifica l'ottimizzazione di ISR o di revalidation on-demand (che resterebbero da mantenere/wirare). `force-dynamic` non penalizza il SEO: l'HTML è completo e server-reso per-request. Verificato: con la direttiva la route passa da `○` a `ƒ` nel build.
+
+**Conseguenza operativa:** ogni sub-task che riscrive o estende `app/page.tsx` (es. Sprint 3 / 03) **deve preservare la direttiva**. **Trigger di revisione (→ post-MVP):** se il traffico cresce o la query a visita diventa un costo, passare a `revalidate = N` o a `revalidatePath` on-demand dal backoffice.

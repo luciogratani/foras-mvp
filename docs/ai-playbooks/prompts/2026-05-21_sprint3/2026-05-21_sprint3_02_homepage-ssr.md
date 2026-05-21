@@ -1,5 +1,5 @@
 ---
-status: DRAFT
+status: DONE
 updated: 2026-05-21
 area: ai-playbooks
 type: prompt
@@ -113,6 +113,7 @@ export default async function HomePage() {
 ```
 
 Note:
+- **Rendering dinamico (post-esecuzione 02):** aggiungere `export const dynamic = 'force-dynamic'` in cima a `page.tsx`. Senza, Next 16 prerenderizza la home come statica (`○`) e congela i dati di `site_settings`/`news_slides` al build — la home non rifletterebbe le modifiche dal backoffice senza rebuild. Con la direttiva la route è `ƒ` (server-rendered on demand). Vedi decision-log *2026-05-21 — Homepage pubblica: rendering dinamico*.
 - Fetch parallelo via `Promise.all`. `getMenuSections`/`getAllergens`/`getMenuBySection` **non sono qui** — saranno aggiunti dal sub-task 03 quando arriva il `<MenuClient>`.
 - Tutti i componenti sono Server Components. Nessun `'use client'` in questo file né nei componenti applicativi creati qui.
 - `Hero` rende anche se `settings` è null (fallback interno).
