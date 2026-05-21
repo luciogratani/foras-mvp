@@ -7,6 +7,9 @@
   "scripts": {
     "gen:types": "curl -fsS \"${SUPABASE_META_URL:-http://localhost:18080}/generators/typescript?included_schemas=template\" -o src/types/database.ts"
   },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
   "devDependencies": {
     "@types/node": "^20.17.57"
   },
