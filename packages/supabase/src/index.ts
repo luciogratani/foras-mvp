@@ -18,3 +18,6 @@ export type TenantClient = SupabaseClient<Database, Exclude<keyof Database, '__I
 
 export { getSiteSettings, getActiveNews } from './services/site'
 export type { SiteSettings, NewsSlide } from './services/site'
+
+export { getMenuSections, getMenuBySection, getAllergens } from './services/menu'
+export type { MenuSection, MenuCategory, MenuItem, Allergen, MenuCategoryWithItems } from './services/menu'
