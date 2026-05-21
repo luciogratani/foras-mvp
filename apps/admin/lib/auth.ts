@@ -1,4 +1,5 @@
 import 'server-only'
+import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
 import type { Database, TenantClient } from '@repo/supabase'
@@ -53,4 +54,26 @@ export async function getVerifiedTenantClient(user: User, accessToken: string): 
       persistSession: false,
     },
   })
+}
+
+export async function requireTenantClient(): Promise<{ tenant: TenantClient; user: User }> {
+  const supabase = await getSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/?reason=unauthenticated')
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  if (!session) redirect('/?reason=unauthenticated')
+
+  try {
+    const tenant = await getVerifiedTenantClient(user, session.access_token)
+    return { tenant, user }
+  } catch (err) {
+    if (err instanceof TenantVerificationError) redirect('/?reason=tenant-mismatch')
+    throw err
+  }
 }

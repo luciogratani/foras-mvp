@@ -1,47 +1,39 @@
-import { redirect } from 'next/navigation'
-import { getSupabaseServerClient } from '../../lib/supabaseServer'
-import { getVerifiedTenantClient, TenantVerificationError } from '../../lib/auth'
-
-async function logout() {
-  'use server'
-  const supabase = await getSupabaseServerClient()
-  await supabase.auth.signOut()
-  redirect('/')
-}
+import { requireTenantClient } from '../../lib/auth'
+import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const supabase = await getSupabaseServerClient()
+  const { tenant, user } = await requireTenantClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/?reason=unauthenticated')
-
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) redirect('/?reason=unauthenticated')
-
-  let schemaName: string
-  try {
-    const tenant = await getVerifiedTenantClient(user, session.access_token)
-    const probe = await tenant.from('menu_sections').select('id').limit(1).maybeSingle()
-    schemaName = probe.error
-      ? '(query failed — RLS or empty schema)'
-      : (user.user_metadata?.schema as string)
-  } catch (err) {
-    if (err instanceof TenantVerificationError) {
-      redirect('/?reason=tenant-mismatch')
-    }
-    throw err
-  }
+  const probe = await tenant.from('menu_sections').select('id').limit(1).maybeSingle()
+  const connectionStatus = probe.error ? 'fallita' : 'OK'
+  const schemaName = user.user_metadata?.schema as string
 
   return (
-    <main>
-      <h1>Foras — dashboard</h1>
-      <p>Verified tenant schema: <code>{schemaName}</code></p>
-      <p>Utente: {user.email ?? user.id}</p>
-      <form action={logout}>
-        <button type="submit">Esci</button>
-      </form>
-    </main>
+    <div>
+      <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle>Benvenuto</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p>
+            Utente:{' '}
+            <span className="font-medium">{user.email ?? user.id}</span>
+          </p>
+          <p>
+            Schema verificato:{' '}
+            <code className="text-xs bg-muted px-1 rounded">{schemaName}</code>
+          </p>
+          <p>
+            Connessione schema:{' '}
+            <span className={connectionStatus === 'OK' ? 'text-green-600' : 'text-destructive'}>
+              {connectionStatus}
+            </span>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

@@ -32,6 +32,9 @@ importers:
       '@repo/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@supabase/ssr':
         specifier: 0.10.3
         version: 0.10.3(@supabase/supabase-js@2.106.1)
@@ -51,6 +54,9 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
     devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.3.0
+        version: 4.3.0
       '@types/node':
         specifier: ^20.17.57
         version: 20.19.41
@@ -60,6 +66,12 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.15)
+      tailwindcss:
+        specifier: ^4.3.0
+        version: 4.3.0
+      tw-animate-css:
+        specifier: ^1.4.0
+        version: 1.4.0
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

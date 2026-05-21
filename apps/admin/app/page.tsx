@@ -15,8 +15,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <main>
-      <h1>Foras — admin login</h1>
+    <main className="flex min-h-screen items-center justify-center p-4">
       <LoginForm />
     </main>
   )
