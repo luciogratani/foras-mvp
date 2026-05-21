@@ -1,11 +1,11 @@
 import 'server-only'
 import { cookies } from 'next/headers'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type SupabaseSsrClient = SupabaseClient
 
-export function getSupabaseServerClient(): SupabaseSsrClient {
+export async function getSupabaseServerClient(): Promise<SupabaseSsrClient> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -15,27 +15,22 @@ export function getSupabaseServerClient(): SupabaseSsrClient {
     )
   }
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   return createServerClient(url, anonKey, {
     cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
+      getAll() {
+        return cookieStore.getAll()
       },
-      set(name: string, value: string, options: CookieOptions) {
+      setAll(cookiesToSet) {
         try {
-          cookieStore.set({ name, value, ...options })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
         } catch {
           // cookies() is read-only in Server Components; writes happen in
-          // Route Handlers / Server Actions / middleware. Safe to ignore here —
-          // the SSR helper will retry via the response in those contexts.
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value: '', ...options })
-        } catch {
-          // see note above
+          // Route Handlers / Server Actions / the proxy. Safe to ignore here —
+          // the proxy refreshes the session and persists cookies on the response.
         }
       },
     },
