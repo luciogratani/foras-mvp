@@ -160,7 +160,7 @@ Done when:
 
 ---
 
-## Sprint 4 — Form prenotazioni — apertura 2026-05-21
+## Sprint 4 — Form prenotazioni ✅ CHIUSO (2026-05-21)
 
 **Goal:** un visitatore prenota un tavolo; il write-path è completo end-to-end (privileged client + form + cancel route + hardening auth admin). Email di conferma/notifica demandata a follow-up (vedi nota sotto).
 
@@ -175,10 +175,15 @@ Done when:
 - ✅ `getVerifiedTenantClient` usa `(user, accessToken)` — identità da `getUser()` verificata
 - ✅ `apps/web/lib/supabaseAdmin.ts` esiste, inizia con `import 'server-only'`, tipato `TenantClient`
 - ✅ `/booking` mostra form con slot disponibili per la data selezionata
-- ✅ Prenotazione persistita su DB con `cancellation_token`; unique constraint `(email, time_slot_id, date)` gestito con messaggio utente
-- ✅ `/booking/cancel/[token]` funzionante, coperti ripristinati
+- ✅ Prenotazione persistita su DB con `cancellation_token`; unique constraint `(email, time_slot_id, date)` gestito con messaggio utente (`DuplicateBookingError`)
+- ✅ `/booking/cancel/[token]` funzionante: token UUID invalido → errore, token valido → cancellazione, token riusato → "già utilizzato"
+- ✅ GDPR non spuntato → errore client; `z.literal(true)` blocca server-side
 - ✅ `SUPABASE_SERVICE_ROLE_KEY` non compare in bundle browser né in file committati
 - ⏳ Email conferma/notifica — follow-up (pending decisioni dominio + canale)
+
+**Test manuali (2026-05-21):** tutti i round-trip sotto il secondo, console Next.js pulita, nessun 4xx/5xx.
+
+**Gotcha intercettato durante i test:** `SUPABASE_SERVICE_ROLE_KEY` troncata a 117/180 caratteri in `apps/web/.env.local` per copia-incolla incompleta → `Unauthorized` da Supabase. Risolto ricollando la chiave completa. **Checklist per Vercel:** verificare che la chiave sia integra dopo il paste (180 caratteri esatti per le chiavi JWT Supabase).
 
 ---
 

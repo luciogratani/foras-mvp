@@ -76,8 +76,8 @@ Tutte le query DB passano dai service in `packages/supabase/src/services/`. Ness
 
 ## Action item pre-Sprint 5 (da verificare con Lucio)
 
-- [ ] **`SUPABASE_SERVICE_ROLE_KEY` in `apps/web/.env.local`** — il valore reale deve essere inserito manualmente da Lucio prima del test locale del form prenotazioni. Stessa chiave già in `apps/admin/.env.local`.
-- [ ] **`SUPABASE_SERVICE_ROLE_KEY` su Vercel** — da aggiungere alle env di `apps/web` su Vercel prima del primo deploy del form.
+- [x] **`SUPABASE_SERVICE_ROLE_KEY` in `apps/web/.env.local`** — inserita e verificata (test manuali Sprint 4 superati). **Gotcha:** la chiave è ~180 caratteri JWT — un copia-incolla parziale produce `Unauthorized` silenzioso. Verificare sempre la lunghezza dopo il paste.
+- [ ] **`SUPABASE_SERVICE_ROLE_KEY` su Vercel** — da aggiungere alle env di `apps/web` su Vercel prima del primo deploy del form. Stessa precauzione: verificare che sia integra (inizia con `eyJ`, ~180 caratteri).
 - [ ] **Email Resend** — demandata a follow-up. Decisioni aperte: dominio mittente (generico vs per-cliente), canale (email vs SMS), architettura (Edge Function vs Server Action + Resend SDK). Tracciato in `decision-log/decisioni.md` voce *2026-05-21 — Email prenotazioni*. Non blocca Sprint 5.
 
 ---

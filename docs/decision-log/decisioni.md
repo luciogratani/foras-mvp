@@ -317,6 +317,8 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 
 **Trigger di revisione (→ post-MVP):** stesso della voce precedente — migrazione a Edge Function quando: 2° tenant, CRUD admin esteso, o quando si vuole eliminare la `service_role` da Vercel del tutto. A quel punto sia `apps/admin` che `apps/web` perdono la chiave.
 
+**Gotcha operativo (2026-05-21):** la `service_role` key JWT Supabase è lunga ~180 caratteri. Un copia-incolla parziale (es. 117/180) produce un JWT malformato che Supabase accetta sintatticamente ma rifiuta con `Unauthorized` a runtime — senza un messaggio di errore che indichi la causa. **Checklist deploy:** verificare la lunghezza della chiave dopo il paste su Vercel e in `.env.local`. La chiave completa inizia con `eyJ` e finisce con caratteri base64url.
+
 ---
 
 ### 2026-05-21 — Upgrade stack major (Next 16 + React 19 + Tailwind 4) anticipato all'apertura di Sprint 3
