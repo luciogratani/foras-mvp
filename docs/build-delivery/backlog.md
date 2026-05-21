@@ -104,7 +104,7 @@ Done when:
 
 ---
 
-## Sprint 2.5 — Stack upgrade (Next 16 + React 19 + Tailwind 4) — milestone infrastrutturale
+## Sprint 2.5 — Stack upgrade framework (Next 16 + React 19 + @supabase/ssr 0.10) — milestone infrastrutturale ✅ DONE (2026-05-21)
 
 **Goal:** portare il monorepo allo stack corrente *prima* di costruire la prima UI vera. Non è una feature: è un prerequisito di Sprint 3 emerso aprendo la scelta Tailwind.
 
@@ -123,7 +123,11 @@ Done when:
 - **GATE di sicurezza auth admin** (codice Sprint 1): login + sessione + route protetta + `getVerifiedTenantClient` + `supabaseAdmin` server-only — tutti verdi
 - `apps/web` stub e `/api/health` funzionanti sul nuovo stack
 
-**Caveat:** Next 16 / React 19 sono successivi al knowledge cutoff dell'assistente (gen 2026) → il prompt richiede di seguire le **upgrade guide ufficiali correnti** + codemod, non istruzioni a memoria. **Trigger di rollback** (→ TW4 su Next 14.2/React 18) se l'auth admin non supera il gate: tracciato nel decision-log.
+**Esito (2026-05-21):** eseguito sul branch `chore/stack-upgrade` (commit `6e9a227`), mergiato su `main` con `--no-ff` (`cb9e2dd`). Highlights: `middleware.ts` → `proxy.ts` via codemod ufficiale (Next 16 deprecava middleware; runtime `nodejs`); cookie pattern `getAll/setAll` per `@supabase/ssr` 0.10 + `await cookies()`; `next lint` rimosso → flat config `eslint.config.mjs` (eslint 9 + typescript-eslint 8, 3 regole custom preservate); `pnpm.overrides` su `@supabase/supabase-js@2.106.1` (versione unica); `TenantClient`/`createSupabaseClient` allineati ai generici a 3 parametri di supabase-js 2.106 (micro-fix, nessun refactor dei service). Verifiche verdi: tsc, build web+admin (Turbopack), lint, `pnpm why react` → solo 19.2.6. **Gate di sicurezza §5: tutti e 5 verdi** (login/sessione/owner verificati in browser dal master). Review del diff: nessun red flag.
+
+**Follow-up di sicurezza aperto** (non risolto in 2.5, fuori scope "solo framework"): in `apps/admin/app/dashboard/page.tsx` l'identità è letta con `getSession()` (dati dai cookie, non verificati contro l'Auth server) e passata a `getVerifiedTenantClient(session)` → supabase-js emette un advisory. **Non è una regressione** (pattern pre-esistente) ed è **mitigato** da `proxy.ts`, che autentica con `getUser()` prima che `/dashboard` renderizzi (un cookie forgiato fallisce lì). Hardening corretto: usare `getUser()` per l'identità in `dashboard/page.tsx` e cambiare la firma di `getVerifiedTenantClient` a `(user, accessToken)` — modifica al security helper chiuso in Sprint 1, da fare come **sub-task dedicato con commit/review propri**. **Trigger:** prima/durante Sprint 5 (admin panel tocca dashboard e auth), o prima se possibile dato che è codice di sicurezza.
+
+**Caveat:** Next 16 / React 19 sono successivi al knowledge cutoff dell'assistente (gen 2026) → il prompt richiedeva di seguire le **upgrade guide ufficiali correnti** + codemod, non istruzioni a memoria. **Trigger di rollback** (→ TW4 su Next 14.2/React 18) se l'auth admin non avesse superato il gate: non innescato.
 
 ---
 

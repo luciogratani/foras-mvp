@@ -1,5 +1,5 @@
 ---
-status: DRAFT
+status: DONE
 updated: 2026-05-21
 area: ai-playbooks
 type: prompt
@@ -9,6 +9,7 @@ tags: [foras-mvp, stack-upgrade, next, react, supabase-ssr, security]
 owner: master-chat
 suggested_model: claude-opus-4-7
 suggested_effort: high
+commit: 6e9a227
 ---
 
 # Sprint 2.5 / 1 of 1 — Stack upgrade framework (Next 16 + React 19 + @supabase/ssr 0.10)

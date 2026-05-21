@@ -20,7 +20,7 @@ prompts/
   2026-05-20_sprint0/        ← Sprint 0 (DONE)
   2026-05-20_sprint1/        ← Sprint 1 (DONE)
   2026-05-21_sprint2/        ← Sprint 2 (DONE — service layer)
-  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DRAFT — framework upgrade)
+  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DONE — framework upgrade)
   2026-05-21_sprint3/        ← Sprint 3 (DRAFT — homepage SSR)
 ```
 
