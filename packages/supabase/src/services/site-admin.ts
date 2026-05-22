@@ -57,3 +57,33 @@ export async function updateSiteSettings(
   if (error) throw new Error(`updateSiteSettings failed: ${error.message}`)
   return data
 }
+
+export type ClosedDate = Tables<{ schema: 'template' }, 'closed_dates'>
+
+export async function getClosedDates(client: TenantClient): Promise<ClosedDate[]> {
+  const { data, error } = await client
+    .from('closed_dates')
+    .select('*')
+    .order('date', { ascending: true })
+  if (error) throw new Error(`getClosedDates failed: ${error.message}`)
+  return data ?? []
+}
+
+export async function addClosedDate(
+  client: TenantClient,
+  date: string,
+  reason?: string
+): Promise<ClosedDate> {
+  const { data, error } = await client
+    .from('closed_dates')
+    .insert({ date, reason: reason ?? null })
+    .select('*')
+    .single()
+  if (error) throw new Error(`addClosedDate failed: ${error.message}`)
+  return data
+}
+
+export async function removeClosedDate(client: TenantClient, id: string): Promise<void> {
+  const { error } = await client.from('closed_dates').delete().eq('id', id)
+  if (error) throw new Error(`removeClosedDate failed: ${error.message}`)
+}

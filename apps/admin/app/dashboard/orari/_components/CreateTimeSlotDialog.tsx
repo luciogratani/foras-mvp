@@ -43,6 +43,10 @@ export function CreateTimeSlotDialog({ onClose }: { onClose: () => void }) {
           <div className="space-y-1">
             <Label htmlFor="create-slot-covers">Coperti massimi</Label>
             <Input id="create-slot-covers" name="max_covers" type="number" min="1" required />
+            <p className="text-xs text-muted-foreground mt-1">
+              Coperti totali accettati per questa seduta. Per gestire due sedute a sera
+              (es. 19:30 e 21:30), crea due turni separati con il proprio limite ciascuno.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Switch id="create-slot-active" checked={isActive} onCheckedChange={setIsActive} />

@@ -26,6 +26,7 @@ export async function createBookingAction(
     phone: formData.get('phone') || null,
     covers: Number(formData.get('covers')),
     notes: formData.get('notes') || null,
+    preferred_time: formData.get('preferred_time') || null,
     gdpr_consent: formData.get('gdpr_consent') === 'on' ? true : false,
   }
 

@@ -50,7 +50,7 @@ export async function getAvailableTimeSlots(
   const currentTime = now.toISOString().slice(11, 16)
   if (date < today) return []
 
-  const [slotsRes, bookedRes, settingsRes] = await Promise.all([
+  const [slotsRes, bookedRes, settingsRes, closedDateRes] = await Promise.all([
     client.from('time_slots').select('*').eq('is_active', true).order('time', { ascending: true }),
     client
       .from('bookings')
@@ -58,11 +58,16 @@ export async function getAvailableTimeSlots(
       .eq('date', date)
       .eq('status', 'confirmed'),
     client.from('site_settings').select('opening_hours').limit(1).maybeSingle(),
+    client.from('closed_dates').select('id').eq('date', date).limit(1).maybeSingle(),
   ])
 
   if (slotsRes.error) throw new Error(`getAvailableTimeSlots (slots) failed: ${slotsRes.error.message}`)
   if (bookedRes.error) throw new Error(`getAvailableTimeSlots (bookings) failed: ${bookedRes.error.message}`)
   if (settingsRes.error) throw new Error(`getAvailableTimeSlots (settings) failed: ${settingsRes.error.message}`)
+  if (closedDateRes.error) throw new Error(`getAvailableTimeSlots (closed_dates) failed: ${closedDateRes.error.message}`)
+
+  // data chiusa straordinariamente → nessun turno disponibile
+  if (closedDateRes.data) return []
 
   const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
   const dayKey = DAY_NAMES[new Date(date).getUTCDay()]
@@ -70,11 +75,13 @@ export async function getAvailableTimeSlots(
   if (hours?.[dayKey]?.closed === true) return []
 
   const dayHours = hours?.[dayKey]
+  const ranges = dayHours?.ranges ?? []
   const slots = (slotsRes.data ?? []).filter((slot) => {
     if (date === today && slot.time < currentTime) return false
-    if (dayHours?.open && slot.time < dayHours.open) return false
-    if (dayHours?.close && slot.time >= dayHours.close) return false
-    return true
+    // se ranges è vuoto e il giorno non è closed, nessuna restrizione oraria
+    if (ranges.length === 0) return true
+    // il turno deve cadere all'interno di almeno una fascia
+    return ranges.some((r) => slot.time >= r.open && slot.time < r.close)
   })
 
   const bookedBySlot = new Map<string, number>()

@@ -129,6 +129,16 @@ Admin panel CRUD (il più ampio del progetto). **Slice verticali** (ogni sub-tas
 
 **Decisioni master:** slice verticali (non orizzontale); drag&drop come sub-task dedicato; immagini via URL testuale (Storage resta Sprint 7); nessuna modifica DB.
 
+## Intermezzo UX-fix — set di prompt (2026-05-22)
+
+Fix pre-freeze da audit esterno (`docs/audit/03_fit-modello-dati-realta-bar.md`). Tre task schema-affecting inseriti fuori sprint perché devono precedere il freeze. Cartella `2026-05-22_ux-fix/`. Esecuzione sequenziale suggerita: C1 → C3 → C2.
+
+1. [[C1_orari-spezzati]] — `opening_hours` JSONB da singola fascia ad array di fasce (max 2/giorno). Schemi Zod + filtro `getAvailableTimeSlots` + form admin + rendering homepage. 1 migrazione SQL dati + 6 file.
+2. [[C3_capienza-orario-libero]] — Label esplicita `max_covers` nell'admin + campo `preferred_time` opzionale in `bookings` (form pubblico + colonna lista admin). 1 ALTER TABLE + 6 file.
+3. [[C2_date-chiusura]] — Nuova tabella `closed_dates` + guard in `getAvailableTimeSlots` + sezione "Chiusure straordinarie" in `/dashboard/orari`. 1 nuova tabella + 7 file.
+
+**Trigger di rientro nel freeze (Sprint 6):** tutti e 3 i task chiusi, `tsc -r` + build verdi, smoke test Lucio OK.
+
 ## Sprint 6 — set di prompt
 
 Template freeze + onboarding primo cliente. **Operativo, non di sviluppo.** Cartella `2026-05-22_sprint6/`.

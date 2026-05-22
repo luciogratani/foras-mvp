@@ -3,10 +3,14 @@ import { z } from 'zod'
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
 type Day = (typeof DAYS)[number]
 
+const OpeningHoursRangeSchema = z.object({
+  open: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
+  close: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
+})
+
 const OpeningHoursDaySchema = z.object({
-  open: z.string().nullable(),
-  close: z.string().nullable(),
   closed: z.boolean(),
+  ranges: z.array(OpeningHoursRangeSchema).max(2),
 })
 
 export const OpeningHoursSchema = z.object(

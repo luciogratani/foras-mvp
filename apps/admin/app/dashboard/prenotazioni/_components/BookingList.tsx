@@ -24,6 +24,9 @@ function BookingRow({
       <td className="py-3 pr-4 text-sm text-center">{booking.covers}</td>
       <td className="py-3 pr-4 text-sm">{booking.date}</td>
       <td className="py-3 pr-4 text-sm">{slotLabel}</td>
+      <td className="py-3 pr-4 text-sm text-center">
+        {booking.preferred_time ? booking.preferred_time.substring(0, 5) : '—'}
+      </td>
       <td className="py-3 text-right">
         {showAction && (
           <DeleteBookingDialog
@@ -59,6 +62,7 @@ function BookingTable({
             <th className="pb-2 pr-4 text-center">Coperti</th>
             <th className="pb-2 pr-4">Data</th>
             <th className="pb-2 pr-4">Turno</th>
+            <th className="pb-2 pr-4 text-center">Orario pref.</th>
             <th className="pb-2 text-right">{showAction ? 'Azione' : ''}</th>
           </tr>
         </thead>

@@ -102,6 +102,7 @@ CREATE TABLE bookings (
   phone              TEXT,
   covers             INTEGER     NOT NULL,
   notes              TEXT,
+  preferred_time     TIME,
   cancellation_token UUID        NOT NULL DEFAULT gen_random_uuid(),
   status             TEXT        NOT NULL DEFAULT 'confirmed'
                                  CHECK (status IN ('confirmed', 'cancelled')),
@@ -110,6 +111,14 @@ CREATE TABLE bookings (
 
   -- Una sola prenotazione per email per turno per data
   UNIQUE (email, time_slot_id, date)
+);
+
+-- Chiusure straordinarie (ferie, festività, serate private)
+CREATE TABLE closed_dates (
+  id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  date   DATE NOT NULL,
+  reason TEXT,
+  UNIQUE (date)
 );
 
 -- Impostazioni sito e SEO (riga unica per tenant)
@@ -124,13 +133,13 @@ CREATE TABLE site_settings (
   phone         TEXT,
   email         TEXT,
   opening_hours JSONB NOT NULL DEFAULT '{
-    "monday":    {"open": null, "close": null, "closed": true},
-    "tuesday":   {"open": null, "close": null, "closed": true},
-    "wednesday": {"open": null, "close": null, "closed": true},
-    "thursday":  {"open": null, "close": null, "closed": true},
-    "friday":    {"open": null, "close": null, "closed": true},
-    "saturday":  {"open": null, "close": null, "closed": true},
-    "sunday":    {"open": null, "close": null, "closed": true}
+    "monday":    {"closed": true, "ranges": []},
+    "tuesday":   {"closed": true, "ranges": []},
+    "wednesday": {"closed": true, "ranges": []},
+    "thursday":  {"closed": true, "ranges": []},
+    "friday":    {"closed": true, "ranges": []},
+    "saturday":  {"closed": true, "ranges": []},
+    "sunday":    {"closed": true, "ranges": []}
   }'::jsonb
 );
 
@@ -151,6 +160,7 @@ CREATE TABLE news_slides (
 -- -----------------------------------------------------------------------
 
 ALTER TABLE allergens     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE closed_dates  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_sections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items    ENABLE ROW LEVEL SECURITY;
@@ -248,6 +258,12 @@ CREATE POLICY "site_settings_public_read"
   ON site_settings FOR SELECT USING (true);
 CREATE POLICY "site_settings_admin_all"
   ON site_settings FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- closed_dates: lettura pubblica (necessaria per bloccare prenotazioni lato pubblico), scrittura solo admin
+CREATE POLICY "closed_dates_public_read"
+  ON closed_dates FOR SELECT USING (true);
+CREATE POLICY "closed_dates_admin_all"
+  ON closed_dates FOR ALL USING (auth.uid() IS NOT NULL);
 
 -- news_slides: lettura pubblica, scrittura solo admin
 CREATE POLICY "news_slides_public_read"

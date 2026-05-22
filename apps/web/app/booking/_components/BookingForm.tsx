@@ -67,6 +67,12 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
           </div>
 
           <div>
+            <label htmlFor="preferred_time">Orario preferito (facoltativo)</label>
+            <input id="preferred_time" type="time" name="preferred_time" />
+            <p><small>Indicaci a che ora vorresti sederti. Sarà mostrato al gestore come preferenza.</small></p>
+          </div>
+
+          <div>
             <label htmlFor="name">Nome</label>
             <input id="name" type="text" name="name" required />
           </div>

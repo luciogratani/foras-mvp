@@ -36,6 +36,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          preferred_time: string | null
           status: string
           time_slot_id: string
         }
@@ -50,6 +51,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          preferred_time?: string | null
           status?: string
           time_slot_id: string
         }
@@ -64,6 +66,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          preferred_time?: string | null
           status?: string
           time_slot_id?: string
         }
@@ -75,6 +78,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      closed_dates: {
+        Row: {
+          date: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          date: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          date?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
       }
       menu_categories: {
         Row: {

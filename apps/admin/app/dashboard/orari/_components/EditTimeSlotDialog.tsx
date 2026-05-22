@@ -70,6 +70,10 @@ export function EditTimeSlotDialog({
               defaultValue={slot.max_covers}
               required
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Coperti totali accettati per questa seduta. Per gestire due sedute a sera
+              (es. 19:30 e 21:30), crea due turni separati con il proprio limite ciascuno.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Switch id="edit-slot-active" checked={isActive} onCheckedChange={setIsActive} />

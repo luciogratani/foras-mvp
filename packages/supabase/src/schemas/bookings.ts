@@ -8,6 +8,7 @@ export const CreateBookingInputSchema = z.object({
   phone: z.string().min(3).max(40).trim().nullable().optional(),
   covers: z.number().int().min(1).max(50),
   notes: z.string().max(500).trim().nullable().optional(),
+  preferred_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM').nullable().optional(),
   gdpr_consent: z.literal(true),
 })
 

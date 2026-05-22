@@ -22,8 +22,8 @@ Prompt pensati per essere dati a **chat potenti esterne al progetto** (che non h
 
 | # | Audit | Status | Creato | Svolto |
 |---|---|---|---|---|
-| 01 | [UX & conversione funnel prenotazione (sito pubblico)](01_ux-funnel-prenotazione-web.md) | todo | 2026-05-22 | — |
-| 02 | [UX & workflow operativo backoffice (gestore)](02_ux-workflow-admin-gestore.md) | todo | 2026-05-22 | — |
-| 03 | [Fit modello dati ↔ realtà operativa bar](03_fit-modello-dati-realta-bar.md) | todo | 2026-05-22 | — |
+| 01 | [UX & conversione funnel prenotazione (sito pubblico)](01_ux-funnel-prenotazione-web.md) | done | 2026-05-22 | 2026-05-22 |
+| 02 | [UX & workflow operativo backoffice (gestore)](02_ux-workflow-admin-gestore.md) | done | 2026-05-22 | 2026-05-22 |
+| 03 | [Fit modello dati ↔ realtà operativa bar](03_fit-modello-dati-realta-bar.md) | done | 2026-05-22 | 2026-05-22 |
 
 Aggiornare lo `status` qui e nel frontmatter del file quando un audit viene svolto.

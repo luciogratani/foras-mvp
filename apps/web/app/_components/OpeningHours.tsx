@@ -1,6 +1,7 @@
 import type { SiteSettings } from '@repo/supabase'
 
-type DayHours = { open: string | null; close: string | null; closed: boolean }
+type DayRange = { open: string; close: string }
+type DayHours = { closed: boolean; ranges: DayRange[] }
 type OpeningHoursMap = Record<
   'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday',
   DayHours
@@ -30,7 +31,10 @@ export function OpeningHours({ settings }: { settings: SiteSettings | null }) {
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {DAYS.map(({ key, label }) => {
           const day = hours[key]
-          const value = !day || day.closed || !day.open || !day.close ? 'Chiuso' : `${day.open} – ${day.close}`
+          const value =
+            !day || day.closed || day.ranges.length === 0
+              ? 'Chiuso'
+              : day.ranges.map((r) => `${r.open} – ${r.close}`).join(' · ')
           return (
             <div key={key} className="flex justify-between border-b border-border py-2">
               <dt>{label}</dt>

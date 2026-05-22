@@ -6,6 +6,8 @@ import {
   updateTimeSlot,
   deleteTimeSlot,
   updateSiteSettings,
+  addClosedDate,
+  removeClosedDate,
   TimeSlotCreateSchema,
   TimeSlotUpdateSchema,
   OpeningHoursSchema,
@@ -95,11 +97,16 @@ export async function updateOpeningHoursAction(
   const hours: Record<string, unknown> = {}
   for (const day of DAYS) {
     const closed = formData.get(`${day}_closed`) === 'true'
-    hours[day] = {
-      closed,
-      open: closed ? null : formData.get(`${day}_open`) || null,
-      close: closed ? null : formData.get(`${day}_close`) || null,
+    const count = parseInt(formData.get(`${day}_ranges_count`) as string || '0', 10)
+    const ranges: { open: string; close: string }[] = []
+    if (!closed) {
+      for (let i = 0; i < Math.min(count, 2); i++) {
+        const open = formData.get(`${day}_range_${i}_open`) as string | null
+        const close = formData.get(`${day}_range_${i}_close`) as string | null
+        if (open && close) ranges.push({ open, close })
+      }
     }
+    hours[day] = { closed, ranges }
   }
   const parsed = OpeningHoursSchema.safeParse(hours)
   if (!parsed.success) {
@@ -111,5 +118,39 @@ export async function updateOpeningHoursAction(
     return { status: 'success' }
   } catch {
     return { status: 'error', message: 'Salvataggio orari fallito. Riprova.' }
+  }
+}
+
+export async function addClosedDateAction(
+  _prev: SettingsActionState,
+  formData: FormData
+): Promise<SettingsActionState> {
+  const { tenant } = await requireTenantClient()
+  const date = formData.get('date') as string
+  const reason = (formData.get('reason') as string) || undefined
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return { status: 'error', message: 'Data non valida.' }
+  }
+  try {
+    await addClosedDate(tenant, date, reason)
+    revalidatePath('/dashboard/orari')
+    return { status: 'success' }
+  } catch {
+    return { status: 'error', message: 'Data già presente o errore di salvataggio.' }
+  }
+}
+
+export async function removeClosedDateAction(
+  _prev: SettingsActionState,
+  formData: FormData
+): Promise<SettingsActionState> {
+  const { tenant } = await requireTenantClient()
+  const id = formData.get('id') as string
+  try {
+    await removeClosedDate(tenant, id)
+    revalidatePath('/dashboard/orari')
+    return { status: 'success' }
+  } catch {
+    return { status: 'error', message: 'Rimozione fallita. Riprova.' }
   }
 }
