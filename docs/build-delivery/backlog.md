@@ -228,7 +228,8 @@ Done when:
 Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
 
 **Stream A — Artefatti freeze** (sequenziale):
-- A1: hardening RLS (`is_tenant_owner()` + policy) + colonna timezone + guard booking locale + estensione `audit_rls.sql` ai GRANT
+- A1: hardening RLS (`is_tenant_owner()` `SECURITY DEFINER` + riscrittura policy di scrittura) + estensione `audit_rls.sql` ai GRANT — SQL/sicurezza, verificato via `rls_isolation_tests.sql`
+- A1b: colonna `site_settings.timezone` + guard booking (`getAvailableTimeSlots`/`createBooking`) in ora locale del tenant — schema + service layer, verificato via flusso prenotazione
 - A2: parametrizzazione `create_schema_from_template.sql` (`:schema`/`:owner_uuid`)
 - A3: pulizia pre-freeze schema `template` (checklist [[mvp]] — operativo)
 - A4: genera `schema.sql` + `migrations/001_init.sql`, test su schema usa-e-getta (`test_freeze`), audit pulito, drop, freeze `LOCKED`
