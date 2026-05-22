@@ -1,5 +1,6 @@
 import type { Tables } from '../types/database'
 import type { TenantClient } from '../index'
+import type { OpeningHours } from '../schemas/settings'
 import {
   CreateBookingInputSchema,
   CancelBookingTokenSchema,
@@ -44,24 +45,44 @@ export async function getAvailableTimeSlots(
   client: TenantClient,
   date: string
 ): Promise<AvailableTimeSlot[]> {
-  const [slotsRes, bookedRes] = await Promise.all([
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
+  const currentTime = now.toISOString().slice(11, 16)
+  if (date < today) return []
+
+  const [slotsRes, bookedRes, settingsRes] = await Promise.all([
     client.from('time_slots').select('*').eq('is_active', true).order('time', { ascending: true }),
     client
       .from('bookings')
       .select('time_slot_id, covers')
       .eq('date', date)
       .eq('status', 'confirmed'),
+    client.from('site_settings').select('opening_hours').limit(1).maybeSingle(),
   ])
 
   if (slotsRes.error) throw new Error(`getAvailableTimeSlots (slots) failed: ${slotsRes.error.message}`)
   if (bookedRes.error) throw new Error(`getAvailableTimeSlots (bookings) failed: ${bookedRes.error.message}`)
+  if (settingsRes.error) throw new Error(`getAvailableTimeSlots (settings) failed: ${settingsRes.error.message}`)
+
+  const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+  const dayKey = DAY_NAMES[new Date(date).getUTCDay()]
+  const hours = settingsRes.data?.opening_hours as OpeningHours | null | undefined
+  if (hours?.[dayKey]?.closed === true) return []
+
+  const dayHours = hours?.[dayKey]
+  const slots = (slotsRes.data ?? []).filter((slot) => {
+    if (date === today && slot.time < currentTime) return false
+    if (dayHours?.open && slot.time < dayHours.open) return false
+    if (dayHours?.close && slot.time >= dayHours.close) return false
+    return true
+  })
 
   const bookedBySlot = new Map<string, number>()
   for (const row of bookedRes.data ?? []) {
     bookedBySlot.set(row.time_slot_id, (bookedBySlot.get(row.time_slot_id) ?? 0) + row.covers)
   }
 
-  return (slotsRes.data ?? []).map((slot) => {
+  return slots.map((slot) => {
     const booked_covers = bookedBySlot.get(slot.id) ?? 0
     return {
       time_slot_id: slot.id,
@@ -89,6 +110,9 @@ export async function createBooking(
   input: CreateBookingInput
 ): Promise<{ id: string; cancellation_token: string }> {
   const parsed = CreateBookingInputSchema.parse(input)
+
+  const today = new Date().toISOString().slice(0, 10)
+  if (parsed.date < today) throw new Error('Non è possibile prenotare per una data passata')
 
   const slots = await getAvailableTimeSlots(client, parsed.date)
   const slot = slots.find((s) => s.time_slot_id === parsed.time_slot_id)
