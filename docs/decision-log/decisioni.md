@@ -404,3 +404,77 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 - Ogni nuova funzione di scrittura vive in `packages/supabase/src/services/` con firma `(client: TenantClient, ...args)` — nessuna query DB nei componenti.
 
 **Trigger di revisione:** se `@dnd-kit` non è compatibile con React 19, ripiegare su ordinamento su/giù nel prompt 03 (la funzione di bulk-update `position` nel service resta invariata).
+
+---
+
+### 2026-05-22 — Hardening RLS scrittura: owner verificato contro `public.tenants` via funzione `SECURITY DEFINER`
+
+**Contesto:** apertura Sprint 6 (template freeze). Chiude il debito aperto il 2026-05-20 (*Hardening RLS scrittura — da owner-scope*), il cui trigger era "secondo tenant **o** freeze del template, qualunque venga prima". Le policy di scrittura in `create_schema_from_template.sql` usano `auth.uid() IS NOT NULL`: un qualsiasi utente autenticato passa la policy su qualsiasi schema tenant esposto, perché la RLS non verifica che sia owner di **quello** schema. Con dati di clienti reali in arrivo (GDPR), va chiuso a livello RLS e non solo applicativo (`getVerifiedTenantClient`).
+
+**Opzioni considerate:**
+- (a) **Owner verificato contro `public.tenants`**: `auth.uid()` deve coincidere con `owner_id` della riga `schema_name = current_schema()`.
+- (b) **Confronto con `auth.jwt() -> 'user_metadata' ->> 'schema'`**: più economico (nessuna subquery) ma **eredita la debolezza** di `user_metadata`, che è modificabile dall'utente via `updateUser()` — stesso vettore che `getVerifiedTenantClient` già mitiga lato app.
+- (c) **Spostare il binding utente↔schema in `app_metadata`** (solo `service_role`): chiude la debolezza alla radice ma tocca `getVerifiedTenantClient`, la client factory e l'onboarding (Step 3) — scope più ampio del solo RLS.
+
+**Decisione (con Lucio, 2026-05-22):** (a). Le policy di scrittura admin (`*_admin_all`, `bookings_admin_select/update/delete`) legano l'utente allo schema corrente confrontando `auth.uid()` con l'owner registrato in `public.tenants`.
+
+**Implementazione (vincolante per il sub-task):** la verifica passa per una funzione `public.is_tenant_owner()` `SECURITY DEFINER` (es. `SELECT EXISTS (SELECT 1 FROM public.tenants WHERE schema_name = current_schema() AND owner_id = auth.uid())`), **non** come subquery diretta nella policy. Motivo: una subquery diretta richiederebbe `GRANT SELECT` su tutta `public.tenants` al ruolo `authenticated` e rischia ricorsione/effetti RLS su `public.tenants`. La funzione `SECURITY DEFINER` gira coi privilegi del definer (owner del DB), `REVOKE`/`GRANT EXECUTE` controllato, e non espone la tabella.
+
+**Rationale:** (a) è robusta al tampering di `user_metadata` (a differenza di (b)) ed è una migrazione self-contained che **non** tocca il layer auth/client (a differenza di (c)). Entra nel **baseline congelato**: ogni nuovo tenant nasce già hardened, invece di nascere debole e venire patchato con una migrazione successiva. Poiché nessun cliente reale esiste ancora, è il momento di costo minimo.
+
+**Conseguenze operative:**
+- Va piegata in `create_schema_from_template.sql` (le policy di scrittura usano `public.is_tenant_owner()`), in `schema.sql` e in `migrations/001_init.sql`.
+- Va applicata anche allo schema `template` esistente come parte del freeze (le policy attuali vanno droppate e ricreate).
+- `current_schema()` deve risolvere allo schema del tenant quando PostgREST imposta il `search_path` dallo schema del client — **da verificare nel test su schema usa-e-getta** prima del freeze.
+- Contestuale: estendere `docs/operations/audit_rls.sql` per controllare anche i GRANT minimi sui ruoli Supabase (debito aperto il 2026-05-21, stesso trigger freeze) e la presenza/firma di `is_tenant_owner()`.
+
+---
+
+### 2026-05-22 — Progetto Supabase: ri-confermato condiviso al trigger "primo cliente reale"
+
+**Contesto:** la decisione del 2026-05-20 (*Progetto Supabase condiviso*) fissava un trigger di revisione esplicito: "prima dell'onboarding del **primo cliente reale** (dati personali + GDPR), rivalutare se serve un progetto dedicato". Il trigger è scattato con l'apertura di Sprint 6.
+
+**Opzioni considerate:**
+- Restare sul progetto condiviso (con gli schemi personali `underclub`, `alex_akashi`) + mitigazione via hardening RLS.
+- Istanza/progetto Supabase dedicato a foras (isolamento totale di `auth`/`public`/`storage`).
+
+**Decisione (con Lucio, 2026-05-22):** restare sul progetto condiviso per ora.
+
+**Rationale:** `public` è vuoto (nessuna collisione su `public.tenants`), lo stack è self-hosted con controllo pieno sugli schemi esposti in PostgREST, e l'hardening RLS deciso oggi chiude il vettore di scrittura cross-tenant a livello DB. Il costo di un progetto dedicato (nuovo setup + ri-tunnel `postgres-meta` per i tipi + gestione separata) non è giustificato a un solo cliente reale. La separazione netta dei dati CRUD è garantita dallo schema-per-tenant + RLS hardened.
+
+**Limitazione nota / trigger di revisione:** invariato nello spirito — se aumentano i clienti reali o il volume di dati personali, oppure se i due progetti personali non migrano altrove come previsto, rivalutare il progetto dedicato.
+
+---
+
+### 2026-05-22 — Email prenotazioni: Edge Function centralizzata + dominio di servizio condiviso
+
+**Contesto:** chiude il follow-up aperto il 2026-05-21 (*Email prenotazioni: demandata a follow-up*), che lasciava aperte tre decisioni (dominio mittente, canale, architettura di invio). La MVP Release Checklist richiede "email conferma e notifica gestore consegnate". Idea di Lucio: invece di configurare un dominio/DNS per ogni cliente, tutti i clienti fanno riferimento a **un'unica funzione backend** che invia con Resend da **un'email di servizio dedicata al progetto**.
+
+**Decisione (con Lucio, 2026-05-22):** le tre decisioni aperte collassano in un solo design:
+- **Dominio mittente** → unico dominio di servizio `foras.*`, verificato una volta sola su Resend (non per-cliente).
+- **Canale** → email via Resend.
+- **Architettura** → Edge Function Supabase centralizzata `send-booking-email` (sullo stack self-hosted), invocata da tutti i client dopo `createBooking`. Riceve `schema` + booking id, valida lo `schema` contro `public.tenants` (coerente con *Edge Functions — validazione schema*), legge `site_settings` del tenant con `service_role`, invia conferma al cliente + notifica al gestore.
+
+**Costruzione:** in Sprint 6, **in parallelo** al lavoro di freeze (è infra tenant-agnostica, non fa parte degli artefatti congelati). Il primo cliente va live già con email; la pipeline si valida sul cliente #1.
+
+**Rationale:**
+- **Onboarding semplificato** — elimina lo step DNS *per cliente*: si verifica `foras.*` una volta e ogni nuovo tenant eredita la pipeline.
+- **Sicurezza** — la `RESEND_API_KEY` vive solo nella Edge Function, **non tocca il Vercel di nessun cliente**. È la direzione del post-MVP "migrazione a Edge Function" (chiavi fuori da Vercel), ottenuta subito.
+- **Coerenza** — combacia con "una Edge Function per l'email" della doc architetturale e con la decisione di validazione schema.
+
+**Trade-off e mitigazioni:**
+- **Branding mittente:** il cliente finale riceve dal dominio `foras.*`, non dal dominio del locale. Mitigato con `From: "<nome locale>" <prenotazioni@foras.*>` (display name da `site_settings`) + `reply-to` = email del locale. Override per-tenant del dominio mittente possibile in futuro via `site_settings` (post-MVP).
+- **Quota/reputazione Resend condivisa** tra tutti i clienti — irrilevante a scala "bar locali"; trigger di revisione = volumi alti o complaint.
+- **GDPR:** foras diventa data processor dell'email del cliente finale → va riflesso nel template della pagina `/privacy`.
+
+---
+
+### 2026-05-22 — Timezone del tenant: fix anticipato a Sprint 6 (non più post-MVP)
+
+**Contesto:** il guard prenotazioni di Sprint 5 / sub-task 05b (`getAvailableTimeSlots` ritorna `[]` per date passate e giorni chiusi, e filtra i turni fuori dalla finestra `open`/`close`) confronta gli orari in **UTC puro**. Era stato marcato post-MVP. Ma il primo cliente reale è in Italia (`Europe/Rome`, UTC+1/+2): un guard che calcola "data passata" / "giorno chiuso" / "finestra oraria" in UTC sbaglia attorno alla mezzanotte e al confine di giornata (es. "oggi" vs "ieri" nelle ore notturne, o un turno serale vicino a mezzanotte locale).
+
+**Decisione (con Lucio, 2026-05-22):** includere un fix timezone minimale in Sprint 6. Aggiungere `site_settings.timezone TEXT NOT NULL DEFAULT 'Europe/Rome'` (IANA tz). Il guard calcola "ora corrente" e "data odierna" nella timezone del tenant invece che in UTC.
+
+**Conseguenza di scope (intersezione col freeze):** `site_settings.timezone` è una **colonna nuova** → entra nel baseline congelato (`create_schema_from_template.sql`, `schema.sql`, `migrations/001_init.sql`) e va applicata allo schema `template` esistente. Il fix è quindi parte degli artefatti freeze, non un task isolato. La logica del guard (`getAvailableTimeSlots`, guard data-passata in `createBooking`) è un cambiamento al service layer in `@repo/supabase`.
+
+**Rationale:** un cliente reale con prenotazioni serali rende il bug concreto, non teorico. Il costo è piccolo (una colonna + conversione tz nel guard, senza nuove dipendenze: `Intl.DateTimeFormat` con `timeZone` copre il calcolo data/ora locale). Farlo ora evita una migrazione immediata post-freeze. Il campo per-tenant (non hardcoded) copre clienti futuri in altre timezone senza ulteriori modifiche di schema.
