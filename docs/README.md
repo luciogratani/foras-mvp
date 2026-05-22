@@ -75,6 +75,9 @@ Il master scrive i prompt, committa (push solo su richiesta esplicita di Lucio),
 - [[workflow-master-sub]] — workflow master/sub-chat, regole operative, template prompt, commit convention
 - `ai-playbooks/prompts/` — prompt scritti dal master (funge anche da archivio sessioni)
 
+### Audit
+- `audit/` — prompt di consulenza per chat esterne a occhio fresco (UX funnel prenotazione, workflow admin gestore, fit modello dati ↔ realtà bar). Prompt + risposta nello stesso file. Vedi `audit/README.md`.
+
 ### Archive
 - `archive/architettura-progetto-bar-v-0-3.md` — documento di architettura v0.3 (fonte primaria per la migrazione docs)
 - `archive/menu-data-structure.md` — decisioni data model menu (fonte primaria per la migrazione docs)
