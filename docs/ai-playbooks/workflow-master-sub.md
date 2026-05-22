@@ -15,7 +15,7 @@ Il progetto usa un sistema a due livelli di chat AI:
 
 **Master chat** — responsabile di:
 - Scrivere i prompt per le sub-chat (file `.md` in `docs/ai-playbooks/prompts/`)
-- Eseguire `git commit` e `git push` dopo ogni sessione produttiva
+- Eseguire `git commit` dopo ogni sessione produttiva — **il `git push` solo su richiesta esplicita di Lucio**
 - Aggiornare i file di documentazione ([[backlog]], [[roadmap-sviluppo]], [[decisioni]], [[README]], ecc.)
 - Mantenere la coerenza tra documentazione e stato reale del codice
 - Decidere lo scope di ogni sub-task prima di delegarlo
@@ -35,7 +35,7 @@ Il progetto usa un sistema a due livelli di chat AI:
 - Ogni prompt va scritto come file `.md` autonomo in `docs/ai-playbooks/prompts/` prima di essere passato a una sub-chat.
 - Un prompt deve contenere: contesto minimo necessario, scope esplicito, file rilevanti da leggere, output atteso, criteri di completamento.
 - Per ogni prompt suggerisci un /model e /effort adeguati (Claude Code 2026.05)
-- Dopo ogni sessione di sub-chat: commit + push + aggiornamento docs.
+- Dopo ogni sessione di sub-chat: commit + aggiornamento docs. Il push si fa solo quando Lucio lo chiede esplicitamente.
 - Il master non delega decisioni architetturali — le prende e le documenta nel `decision-log/`.
 
 ### Per le sub-chat

@@ -240,6 +240,6 @@ Non fare prima del freeze del template:
 - **Lun:** planning tecnico — obiettivo unico della settimana, prompt scritti per sub-chat
 - **Mar–Mer:** build verticale — un flusso completo, non dieci feature parziali
 - **Gio:** hardening — test manuali, edge cases, TypeScript pulito
-- **Ven:** commit, push, aggiornamento docs, revisione backlog
+- **Ven:** commit, aggiornamento docs, revisione backlog (push su richiesta esplicita di Lucio)
 
 Regola: una settimana = un flusso end-to-end dimostrabile.

@@ -33,7 +33,7 @@ Sistema multi-tenant per sviluppare e gestire siti web per bar e ristoranti loca
 - Regole e template: [[workflow-master-sub]]
 - Prompt eseguiti o da eseguire: `ai-playbooks/prompts/`
 
-Il master scrive i prompt, esegue commit/push, aggiorna i file di documentazione. Le sub-chat eseguono un prompt alla volta su scope delimitato. Per dettagli: vedi [[workflow-master-sub]].
+Il master scrive i prompt, committa (push solo su richiesta esplicita di Lucio), aggiorna i file di documentazione. Le sub-chat eseguono un prompt alla volta su scope delimitato. Per dettagli: vedi [[workflow-master-sub]].
 
 ---
 

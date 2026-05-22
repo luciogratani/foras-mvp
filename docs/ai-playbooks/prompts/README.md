@@ -1,6 +1,6 @@
 ---
 status: DRAFT
-updated: 2026-05-21
+updated: 2026-05-22
 area: ai-playbooks
 type: index
 tags: [foras-mvp, ai-playbooks, prompts]
@@ -17,14 +17,17 @@ I prompt sono raggruppati per sprint in sottocartelle:
 
 ```
 prompts/
-  2026-05-20_sprint0/        ← Sprint 0 (DONE)
-  2026-05-20_sprint1/        ← Sprint 1 (DONE)
+  2026-05-20_sprint0/        ← Sprint 0 (DONE — monorepo setup)
+  2026-05-20_sprint1/        ← Sprint 1 (DONE — DB, RLS, tipi TS)
   2026-05-21_sprint2/        ← Sprint 2 (DONE — service layer)
-  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DONE — framework upgrade)
-  2026-05-21_sprint3/        ← Sprint 3 (DRAFT — homepage SSR)
+  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DONE — upgrade Next 16 / React 19)
+  2026-05-21_sprint3/        ← Sprint 3 (DONE — homepage SSR)
+  2026-05-21_sprint4/        ← Sprint 4 (DONE — form prenotazioni)
+  2026-05-21_sprint5/        ← Sprint 5 (DONE — admin panel CRUD)
+  2026-05-22_sprint6/        ← Sprint 6 (IN CORSO — freeze posticipato)
 ```
 
-I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle.
+I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle. Da Sprint 4 in poi i file usano il naming corto `NN_descrizione.md` dentro la cartella dello sprint.
 
 ## Convenzione naming
 
@@ -103,9 +106,43 @@ Homepage pubblica SSR (primo consumer reale del service layer). Gira sul nuovo s
 
 **Decisioni master prese per Sprint 3:** (a) **3 sub-task** (baseline UI / SSR statico / interattività) per isolare setup e idratazione client; (b) **SSR completo del menu**, tabs come pura UI state (no lazy fetch) — SEO-first; (c) **skeleton solo per Galleria** (Storage non popolato), non per News che è SSR-ready — risolta una contraddizione del backlog originale; (d) componenti applicativi in `apps/web/app/_components/`, primitives shadcn condivise in `@repo/ui`.
 
+## Sprint 4 — set di prompt
+
+Form prenotazioni: write-path completo end-to-end (client privilegiato + form + cancel route + hardening auth admin). 3 sub-task in `2026-05-21_sprint4/`, tutti DONE (commit `94e00c6`).
+
+1. `01_auth-hardening` — `getVerifiedTenantClient(user, accessToken)` (firma cambiata da `(session)`); `dashboard/page.tsx` usa `getUser()` per l'identità verificata. Chiude il follow-up sicurezza di Sprint 2.5.
+2. `02_supabase-admin-web-cancel-route` — `apps/web/lib/supabaseAdmin.ts` server-only (`TenantClient` privilegiato, distinto da quello di `apps/admin`) + rotta `/booking/cancel/[token]`.
+3. `03_form-prenotazione` — `BookingPage` (Server Component) + `BookingForm` (`useActionState`) + `createBookingAction` (Zod + mapping `OverbookingError`/`DuplicateBookingError`).
+
+**Decisione master:** email Resend **demandata a follow-up** (poi ridefinita in Sprint 6 come Edge Function centralizzata) — il write-path è completo senza, il `cancellation_token` è mostrato in success page.
+
+## Sprint 5 — set di prompt
+
+Admin panel CRUD (il più ampio del progetto). **Slice verticali** (ogni sub-task = una sezione CRUD service+UI demoabile). 6 sub-task (02 splittato in 02a/02b) in `2026-05-21_sprint5/`, tutti DONE (ultimo commit `b22a8bd`).
+
+1. `01_admin-ui-baseline-shell` — TW4 + shadcn in `apps/admin`, shell `/dashboard/*`, helper `requireTenantClient()`.
+2. `02a_menu-sezioni-categorie` / `02b_menu-item-allergeni` — CRUD menu (service admin-read non filtrato + write).
+3. `03_menu-drag-drop` — `@dnd-kit` a 3 livelli + bulk-update `position`.
+4. `04_news-slides-crud-dnd` — CRUD novità.
+5. `05_orari-time-slots-site-settings` (+ `05b_booking-closed-day-guard`) — orari apertura + coperti + impostazioni sito; guard booking (date passate/giorni chiusi/finestra oraria).
+6. `06_prenotazioni-admin` — vista prenotazioni filtrabile + cancel admin.
+
+**Decisioni master:** slice verticali (non orizzontale); drag&drop come sub-task dedicato; immagini via URL testuale (Storage resta Sprint 7); nessuna modifica DB.
+
+## Sprint 6 — set di prompt
+
+Template freeze + onboarding primo cliente. **Operativo, non di sviluppo.** Cartella `2026-05-22_sprint6/`.
+
+> **Strategia (2026-05-22): freeze POSTICIPATO.** Prima smoke test + valutazione UX di `apps/web`/`apps/admin`, poi probabili mini-implementazioni schema-affecting (vedi appunti privati di Lucio) da fare *prima* del freeze. Dettaglio: `backlog.md` § Sprint 6 + le 4 decisioni del 2026-05-22 nel `decision-log/decisioni.md`.
+
+- `A1_rls-hardening` (DRAFT, pronto) — hardening RLS scrittura (`is_tenant_owner()` `SECURITY DEFINER` + 9 policy + applicazione al `template`) + estensione `audit_rls.sql` ai GRANT. **Parcheggiato col freeze** (trigger "2° tenant o freeze", non imminente).
+- `B2_send-booking-email-dormant` (DONE, commit `ada289c`) — Edge Function `send-booking-email` (Resend) + wiring `apps/web`, **costruita dormiente** (default OFF, no-op, mai blocca una prenotazione). Unico stream che procede ora perché tenant-agnostico.
+
+Sub-task ancora da scrivere quando si riapre il freeze: A1b (timezone), A2 (parametrizzazione script), A3 (pulizia template), A4 (genera `schema.sql`/`001_init.sql` + test + freeze).
+
 ## Ordine di esecuzione
 
-Esecuzione sequenziale, un sub-task per volta. Dopo ogni sub-task: commit + push + aggiornamento [[backlog]]. **Sprint 2.5 va eseguito e mergiato prima di aprire Sprint 3 / 01** (la UI si costruisce sul nuovo stack).
+Esecuzione sequenziale, un sub-task per volta. Dopo ogni sub-task: commit + aggiornamento [[backlog]] (push solo su richiesta esplicita di Lucio). **Sprint 2.5 va eseguito e mergiato prima di aprire Sprint 3 / 01** (la UI si costruisce sul nuovo stack).
 
 ---
 
