@@ -1,13 +1,17 @@
 ---
-status: TODO
+status: DONE
 sprint: 6
 stream: B
 task: B2
 created: 2026-05-22
+completed: 2026-05-22
+commit: ada289c
 suggested_model: sonnet
 suggested_effort: high
 owner: master-chat
 ---
+
+> **Esito (2026-05-22, commit `ada289c`):** eseguito. `supabase/functions/send-booking-email/index.ts` + README, `apps/web/lib/notifyBooking.ts` (gated server-only), hook `after()` in `createBookingAction`, `.env.example` con var OFF. **Review master trust-but-verify:** `tsc -r` + build `web` verdi; `RESEND_API_KEY` fuori da `apps/web`/bundle; con email OFF zero chiamate di rete (flusso prenotazione invariato). **Fix applicato in review:** escape HTML dei campi utente (`name`/`notes`/`email`/`phone`) nei corpi email — erano interpolati senza escape (HTML injection). B1 (dominio Resend) resta differito; attivazione = flip di config quando Lucio ha dominio + deploy.
 
 # Sprint 6 / B2 — Email prenotazioni (Resend) — costruita ma DORMIENTE
 
