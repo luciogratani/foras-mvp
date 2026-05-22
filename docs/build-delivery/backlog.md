@@ -187,7 +187,7 @@ Done when:
 
 ---
 
-## Sprint 5 — Admin panel — apertura 2026-05-21
+## Sprint 5 — Admin panel ✅ CHIUSO (2026-05-22)
 
 **Goal:** il gestore gestisce tutti i contenuti del proprio sito dal backoffice.
 
@@ -208,7 +208,7 @@ Piano a 6 sub-task verticali in `docs/ai-playbooks/prompts/2026-05-21_sprint5/`:
 - ✅ `04` (commit `eb237fa`) CRUD novità: `news_slides` (titolo, body, `image_url`, toggle, posizione + DnD). Pattern identico al menu: `NewsSlideAdmin` alias per evitare collisione con `NewsSlide` pubblico nel barrel.
 - ✅ `05` (commit `36aba34`) orari apertura (`site_settings.opening_hours` JSON, form 7 giorni con toggle chiuso) + coperti/`time_slots` (label/orario/`max_covers`/attivo, nessun DnD) + impostazioni sito (SEO title/description/`og_image`, testi: slogan/bio/indirizzo/telefono/email). `services/site-admin.ts` separato per non toccare l'invariante `services/site.ts`.
 - ✅ `05b` (commit `8739e12`) guard booking: `getAvailableTimeSlots` ritorna `[]` per date passate, giorni chiusi (`opening_hours[day].closed`), e filtra turni fuori dalla finestra `open`/`close` del giorno. Guard data passata aggiunto anche in `createBooking` (server-side). Confronto orario in UTC puro — **post-MVP**: aggiungere `timezone` a `site_settings` (es. `"Europe/Rome"`) per confronto ora locale corretto.
-- ⏳ `06` vista prenotazioni: lista filtrabile per data/turno + cancellazione lato admin.
+- ✅ `06` (commit `b22a8bd`) vista prenotazioni: lista filtrabile per data/turno + cancellazione lato admin. Due sezioni: confirmed (con dialog cancella) + storico cancelled (sola lettura, muted). Service: `getBookingsAdmin`, `cancelBookingAdmin`. Slot label risolto via lookup in page.tsx. tsc -r exit 0.
 
 Done when:
 - Tutte le sezioni CRUD funzionanti
