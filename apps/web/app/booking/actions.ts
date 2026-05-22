@@ -1,4 +1,5 @@
 'use server'
+import { after } from 'next/server'
 import {
   createBooking,
   OverbookingError,
@@ -6,6 +7,7 @@ import {
   CreateBookingInputSchema,
 } from '@repo/supabase'
 import { getWebSupabaseAdmin } from '../../lib/supabaseAdmin'
+import { notifyBooking } from '../../lib/notifyBooking'
 
 export type BookingActionState =
   | { status: 'idle' }
@@ -34,6 +36,8 @@ export async function createBookingAction(
 
   try {
     const { id, cancellation_token } = await createBooking(getWebSupabaseAdmin(), parsed.data)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? ''
+    after(() => notifyBooking(id, siteUrl))
     return { status: 'success', cancellation_token, booking_id: id }
   } catch (err) {
     if (err instanceof OverbookingError) {
