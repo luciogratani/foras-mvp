@@ -13,12 +13,10 @@ owner: master-chat
 
 Backlog esecutivo MVP orientato al freeze del template e all'onboarding del primo cliente reale. 
 
-**Attenzione**
+**Controlli pre-Sprint 6 eseguiti (2026-05-22):**
 
-**Questa è una bozza avanzata creata come placeholder, può essere considerata già pronta ma va prima revisionata con attenzione. Prima di iniziare con lo sviluppo del codice eseguire i seguenti due controlli:**
-
-1) Coerenza fra tutti i docs md e ricerca incongruenze
-2) Accertarsi che la cartella build-delivery sia completa e sensata
+1) ✅ Coerenza docs md — incongruenze trovate e sanate: email descritta come "consegnata" in roadmap/runbook (in realtà demandata e ridefinita centralizzata, ora in Sprint 6); riferimenti stale a "Supabase CLI" (→ `postgres-meta` HTTP), `apps/admin/middleware.ts` (→ `proxy.ts`), `app/api/bookings/route.ts` (→ Server Action). Resta da chiudere al freeze: `create_schema_from_template.sql` hardcoded `template` (header/onboarding-doc dicono `-v schema=` ma lo script non è parametrizzato) — fix in Sprint 6.
+2) ✅ build-delivery completa e coerente (backlog/roadmap/runbook allineati su Fase 0→7); statuses → `LOCKED` da impostare al freeze.
 
 
 ---
@@ -221,18 +219,33 @@ Done when:
 
 **Goal:** template congelato, primo cliente reale onboardato.
 
-Tasks:
-- Eseguire checklist di pulizia pre-freeze (vedi [[mvp]])
-- Finalizzare `schema.sql` e `migrations/001_init.sql`
-- Finalizzare e testare `create_schema_from_template.sql`
-- Onboarding primo cliente: creare schema, utente admin, deploy su dominio custom
-- Pagina `/privacy` personalizzata per il cliente
+**Decisioni master all'apertura** (2026-05-22, dettaglio nel `decision-log/decisioni.md`):
+- **RLS hardening scrittura** → owner verificato contro `public.tenants` via funzione `public.is_tenant_owner()` `SECURITY DEFINER` (chiude il debito 2026-05-20). Entra nel baseline congelato + applicata al `template`.
+- **Progetto Supabase** → ri-confermato condiviso (il vettore cross-tenant lo chiude l'hardening RLS).
+- **Email** → Edge Function centralizzata `send-booking-email` + dominio di servizio unico `foras.*` (no DNS per-cliente; `RESEND_API_KEY` fuori da ogni Vercel). Costruita in parallelo al freeze.
+- **Timezone** → `site_settings.timezone` + guard booking in ora locale del tenant (anticipato da post-MVP; è modifica di schema → nel baseline).
+
+Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
+
+**Stream A — Artefatti freeze** (sequenziale):
+- A1: hardening RLS (`is_tenant_owner()` + policy) + colonna timezone + guard booking locale + estensione `audit_rls.sql` ai GRANT
+- A2: parametrizzazione `create_schema_from_template.sql` (`:schema`/`:owner_uuid`)
+- A3: pulizia pre-freeze schema `template` (checklist [[mvp]] — operativo)
+- A4: genera `schema.sql` + `migrations/001_init.sql`, test su schema usa-e-getta (`test_freeze`), audit pulito, drop, freeze `LOCKED`
+
+**Stream B — Email** (parallelo, infra tenant-agnostica):
+- B1: account Resend + verifica dominio `foras.*` (operativo)
+- B2: Edge Function `send-booking-email` + wiring `apps/web`
+
+**Stream C — Onboarding cliente #1** (dopo freeze + email):
+- Creare schema, utente admin (`user_metadata.schema`), deploy su dominio custom
+- Pagina `/privacy` personalizzata (incl. nota foras = data processor email)
 - Checklist pre-deploy GDPR completata
 
 Done when:
 - Tutti e tre i criteri di freeze soddisfatti
-- Primo cliente in produzione su dominio custom
-- Audit RLS pulito sul nuovo schema cliente
+- Primo cliente in produzione su dominio custom, con email conferma/notifica funzionanti
+- Audit RLS pulito (RLS + GRANT) sul nuovo schema cliente
 
 ---
 

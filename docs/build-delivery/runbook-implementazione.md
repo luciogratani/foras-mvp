@@ -81,7 +81,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ### Done when
 
-- Tutti i service functions sono tipati con i tipi generati da Supabase CLI
+- Tutti i service functions sono tipati con i tipi generati via `postgres-meta` HTTP (no CLI Supabase)
 - Nessuna query DB diretta fuori da `/packages/supabase`
 - Zod schemas coprono tutti i campi obbligatori e opzionali
 
@@ -111,16 +111,16 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ### Tasks
 
-- `app/booking/page.tsx` (o sezione in homepage): form con validazione Zod client+server
-- `app/api/bookings/route.ts`: POST → `createBooking()` con controllo coperti
-- Edge function Supabase `send-booking-email`: Resend — email cliente + notifica gestore
-- Trigger sulla edge function dopo insert su `bookings`
+- `app/booking/page.tsx`: form con validazione Zod client+server
+- `createBookingAction` (Server Action, non API route) → `createBooking()` con controllo coperti
 - Test unique constraint `(email, time_slot_id, date)`
 - Test overbooking (coperti esauriti → rifiuto con messaggio chiaro)
 
+> **Email demandata a Phase 6.** L'invio email (conferma cliente + notifica gestore) NON è in Phase 4: è ridefinito come Edge Function centralizzata `send-booking-email` con dominio di servizio condiviso `foras.*`, costruita in Phase 6 in parallelo al freeze. Phase 4 chiude col `cancellation_token` mostrato nella success page come link diretto. Vedi decision-log *Email prenotazioni* (2026-05-21 e 2026-05-22).
+
 ### Done when
 
-- Prenotazione completata end-to-end con email ricevuta (cliente e gestore)
+- Prenotazione completata end-to-end (success page mostra il link `/booking/cancel/{token}`)
 - Secondo tentativo con stessa email/turno/data rifiutato da Postgres
 - Cancellazione via link ripristina i coperti
 
@@ -131,7 +131,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 ### Tasks
 
 **Auth e layout:**
-- `apps/admin/middleware.ts`: protezione route con `getVerifiedTenantClient()`
+- `apps/admin/proxy.ts`: protezione route con `getUser()` + `getVerifiedTenantClient()` (era `middleware.ts`, rinominato nello stack upgrade Next 16)
 - Layout con sidebar navigazione
 
 **Menu:**
@@ -157,23 +157,34 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ---
 
-## Phase 6 — Template freeze (0,5 giorni)
+## Phase 6 — Template freeze + email centralizzata (1,5–2 giorni)
 
 ### Tasks
 
+**Hardening pre-freeze (entra nel baseline congelato):**
+- Funzione `public.is_tenant_owner()` `SECURITY DEFINER` + riscrittura policy di scrittura admin (owner vs `public.tenants`) in `create_schema_from_template.sql`; migrazione per applicarla al `template` esistente
+- Colonna `site_settings.timezone TEXT NOT NULL DEFAULT 'Europe/Rome'` + guard booking (`getAvailableTimeSlots`/`createBooking`) in ora locale del tenant
+- Estendere `docs/operations/audit_rls.sql` ai GRANT minimi + presenza di `is_tenant_owner()`
+
+**Freeze:**
+- Parametrizzare `create_schema_from_template.sql` (`:schema`/`:owner_uuid`, niente `template`/owner hardcoded)
 - Eseguire checklist pulizia pre-freeze (vedi [[mvp]])
 - Finalizzare `schema.sql` dallo stato attuale dello schema `template`
 - Creare `migrations/001_init.sql` = contenuto di `schema.sql`
-- Verificare che `create_schema_from_template.sql` sia allineato con `schema.sql`
 - Testare `create_schema_from_template.sql` su uno schema di prova (`test_freeze`)
 - Dichiarare freeze: aggiornare `status: LOCKED` nei file rilevanti
+
+**Email (parallelo, infra tenant-agnostica):**
+- Verifica dominio `foras.*` su Resend (one-time)
+- Edge Function `send-booking-email` (conferma cliente + notifica gestore) + wiring `apps/web` dopo `createBooking`
 
 ### Done when
 
 - Tutti e tre i criteri di freeze soddisfatti (vedi [[mvp]])
-- `create_schema_from_template.sql` crea uno schema funzionante end-to-end
-- Audit RLS pulito sullo schema `test_freeze`
+- `create_schema_from_template.sql` crea uno schema funzionante end-to-end con RLS hardened
+- Audit RLS pulito (RLS + GRANT) sullo schema `test_freeze`
 - Schema `test_freeze` eliminato dopo il test
+- Email conferma + notifica inviate via Edge Function su una prenotazione di prova
 
 ---
 

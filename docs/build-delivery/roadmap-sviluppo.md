@@ -40,8 +40,8 @@ Solo dopo il freeze del template: UI custom per ogni cliente, ottimizzazioni, fe
 - Esecuzione `create_schema_from_template.sql` sullo schema `template`
 - RLS attiva e verificata su tutte le tabelle
 - Test di isolamento cross-tenant
-- Tipi TypeScript generati da Supabase CLI
-- `getVerifiedTenantClient()` implementata nel middleware admin
+- Tipi TypeScript generati via `postgres-meta` HTTP (no CLI Supabase — vedi decision-log 2026-05-20)
+- `getVerifiedTenantClient()` implementata nel proxy admin
 
 ### Fase 2 — Service Layer
 
@@ -61,8 +61,9 @@ Solo dopo il freeze del template: UI custom per ogni cliente, ottimizzazioni, fe
 
 - Form prenotazione con validazione Zod e controllo coperti
 - Conferma automatica e `cancellation_token`
-- Edge function Resend: email al cliente e notifica al gestore
 - Test unique constraint e cancellazione
+
+> **Nota (2026-05-21/22):** l'email (conferma cliente + notifica gestore) è stata **demandata fuori da Fase 4** e ridefinita come Edge Function centralizzata con dominio di servizio condiviso `foras.*`, costruita in Fase 6 in parallelo al freeze. Vedi decision-log voci *Email prenotazioni* (2026-05-21 e 2026-05-22).
 
 ### Fase 5 — Admin panel
 
@@ -71,11 +72,15 @@ Solo dopo il freeze del template: UI custom per ogni cliente, ottimizzazioni, fe
 - Drag-and-drop ordinamento con bulk update `position`
 - Vista prenotazioni per data/turno
 
-### Fase 6 — Template freeze
+### Fase 6 — Template freeze + email centralizzata
 
+- Hardening RLS scrittura (owner vs `public.tenants` via `is_tenant_owner()`) nel baseline
+- Colonna `site_settings.timezone` + guard booking in ora locale del tenant
+- `audit_rls.sql` esteso ai GRANT
 - Checklist pulizia pre-freeze eseguita
-- `schema.sql` e `migrations/001_init.sql` finalizzati
-- `create_schema_from_template.sql` testato end-to-end
+- `create_schema_from_template.sql` parametrizzato (`:schema`/`:owner_uuid`) e testato end-to-end su schema usa-e-getta
+- `schema.sql` e `migrations/001_init.sql` finalizzati dallo stato del `template`
+- Edge Function `send-booking-email` (Resend, dominio `foras.*`) — in parallelo, infra tenant-agnostica
 - Template dichiarato frozen — nessuna modifica strutturale senza migrazione
 
 ### Fase 7 — Onboarding e UI custom primo cliente
