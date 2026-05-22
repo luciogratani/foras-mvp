@@ -141,6 +141,34 @@ export async function createBooking(
   return { id: data.id, cancellation_token: data.cancellation_token }
 }
 
+export type BookingAdmin = Tables<{ schema: 'template' }, 'bookings'>
+
+export async function getBookingsAdmin(
+  client: TenantClient,
+  filters?: { date?: string; time_slot_id?: string }
+): Promise<BookingAdmin[]> {
+  let query = client
+    .from('bookings')
+    .select('*')
+    .order('date', { ascending: false })
+    .order('time_slot_id', { ascending: true })
+
+  if (filters?.date) query = query.eq('date', filters.date)
+  if (filters?.time_slot_id) query = query.eq('time_slot_id', filters.time_slot_id)
+
+  const { data, error } = await query
+  if (error) throw new Error(`getBookingsAdmin failed: ${error.message}`)
+  return data ?? []
+}
+
+export async function cancelBookingAdmin(client: TenantClient, id: string): Promise<void> {
+  const { error } = await client
+    .from('bookings')
+    .update({ status: 'cancelled' })
+    .eq('id', id)
+  if (error) throw new Error(`cancelBookingAdmin failed: ${error.message}`)
+}
+
 /**
  * Cancella una prenotazione confermata dato il suo token.
  *
