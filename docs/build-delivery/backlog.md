@@ -219,6 +219,8 @@ Done when:
 
 **Goal:** template congelato, primo cliente reale onboardato.
 
+> **Strategia aggiornata (2026-05-22):** il **freeze è posticipato**. Prima si fanno smoke test approfonditi + valutazione UX di `apps/web` e `apps/admin`; è probabile che ne emergano mini-implementazioni comode (vedi appunti privati di Lucio) **schema-affecting** — es. orari di apertura spezzati e orario di prenotazione custom — che vanno fatte *prima* del freeze per non trasformarle in migrazioni post-freeze su ogni schema cliente. Conseguenze: **A1 (RLS hardening) è parcheggiato** col freeze (trigger "2° tenant o freeze", nessuno imminente — prompt già scritto e pronto). L'unico lavoro che procede ora è lo Stream B (email), perché tenant-agnostico e a prova di futuro — e viene costruito **dormiente** (vedi B2). Ordine A2/A3/A4 invariato ma differito a dopo le decisioni UX.
+
 **Decisioni master all'apertura** (2026-05-22, dettaglio nel `decision-log/decisioni.md`):
 - **RLS hardening scrittura** → owner verificato contro `public.tenants` via funzione `public.is_tenant_owner()` `SECURITY DEFINER` (chiude il debito 2026-05-20). Entra nel baseline congelato + applicata al `template`.
 - **Progetto Supabase** → ri-confermato condiviso (il vettore cross-tenant lo chiude l'hardening RLS).
@@ -234,9 +236,9 @@ Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
 - A3: pulizia pre-freeze schema `template` (checklist [[mvp]] — operativo)
 - A4: genera `schema.sql` + `migrations/001_init.sql`, test su schema usa-e-getta (`test_freeze`), audit pulito, drop, freeze `LOCKED`
 
-**Stream B — Email** (parallelo, infra tenant-agnostica):
-- B1: account Resend + verifica dominio `foras.*` (operativo)
-- B2: Edge Function `send-booking-email` + wiring `apps/web`
+**Stream B — Email** (parallelo, infra tenant-agnostica) — **in corso ora, costruita dormiente**:
+- B1: account Resend + verifica dominio `foras.*` (operativo) — **differito** (Lucio non ha ancora il dominio)
+- B2: Edge Function `send-booking-email` + wiring `apps/web` — **default OFF / no-op se non configurato, mai blocca una prenotazione** (l'email darebbe fastidio agli smoke test). Attivazione = solo flip di config quando dominio+deploy pronti.
 
 **Stream C — Onboarding cliente #1** (dopo freeze + email):
 - Creare schema, utente admin (`user_metadata.schema`), deploy su dominio custom
