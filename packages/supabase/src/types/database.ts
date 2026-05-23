@@ -82,16 +82,19 @@ export type Database = {
       closed_dates: {
         Row: {
           date: string
+          end_date: string | null
           id: string
           reason: string | null
         }
         Insert: {
           date: string
+          end_date?: string | null
           id?: string
           reason?: string | null
         }
         Update: {
           date?: string
+          end_date?: string | null
           id?: string
           reason?: string | null
         }
@@ -228,11 +231,16 @@ export type Database = {
           bio: string | null
           description: string | null
           email: string | null
+          extra_data: Json
           id: string
+          maintenance_mode: boolean
           og_image: string | null
           opening_hours: Json
           phone: string | null
           slogan: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_whatsapp: string | null
           title: string | null
         }
         Insert: {
@@ -240,11 +248,16 @@ export type Database = {
           bio?: string | null
           description?: string | null
           email?: string | null
+          extra_data?: Json
           id?: string
+          maintenance_mode?: boolean
           og_image?: string | null
           opening_hours?: Json
           phone?: string | null
           slogan?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_whatsapp?: string | null
           title?: string | null
         }
         Update: {
@@ -252,11 +265,16 @@ export type Database = {
           bio?: string | null
           description?: string | null
           email?: string | null
+          extra_data?: Json
           id?: string
+          maintenance_mode?: boolean
           og_image?: string | null
           opening_hours?: Json
           phone?: string | null
           slogan?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_whatsapp?: string | null
           title?: string | null
         }
         Relationships: []

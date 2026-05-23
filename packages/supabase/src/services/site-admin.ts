@@ -72,11 +72,12 @@ export async function getClosedDates(client: TenantClient): Promise<ClosedDate[]
 export async function addClosedDate(
   client: TenantClient,
   date: string,
-  reason?: string
+  reason?: string,
+  end_date?: string
 ): Promise<ClosedDate> {
   const { data, error } = await client
     .from('closed_dates')
-    .insert({ date, reason: reason ?? null })
+    .insert({ date, reason: reason ?? null, end_date: end_date ?? null })
     .select('*')
     .single()
   if (error) throw new Error(`addClosedDate failed: ${error.message}`)

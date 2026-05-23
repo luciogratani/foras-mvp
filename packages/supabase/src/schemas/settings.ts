@@ -38,5 +38,24 @@ export const SiteSettingsUpdateSchema = z.object({
   phone: z.string().nullable().optional(),
   email: z.string().email('Email non valida').nullable().optional(),
   opening_hours: OpeningHoursSchema.optional(),
+  extra_data: z.record(z.unknown()).optional(),
+  social_whatsapp: z.string().nullable().optional(),
+  social_instagram: z.string().nullable().optional(),
+  social_facebook: z.string().nullable().optional(),
+  maintenance_mode: z.boolean().optional(),
 })
 export type SiteSettingsUpdate = z.infer<typeof SiteSettingsUpdateSchema>
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+export const ClosedDateCreateSchema = z
+  .object({
+    date: z.string().regex(ISO_DATE, 'Formato YYYY-MM-DD'),
+    reason: z.string().nullable().optional(),
+    end_date: z.string().regex(ISO_DATE, 'Formato YYYY-MM-DD').nullable().optional(),
+  })
+  .refine(
+    (v) => v.end_date == null || v.end_date >= v.date,
+    { message: 'end_date deve essere >= date', path: ['end_date'] }
+  )
+export type ClosedDateCreate = z.infer<typeof ClosedDateCreateSchema>

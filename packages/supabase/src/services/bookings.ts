@@ -58,7 +58,13 @@ export async function getAvailableTimeSlots(
       .eq('date', date)
       .eq('status', 'confirmed'),
     client.from('site_settings').select('opening_hours').limit(1).maybeSingle(),
-    client.from('closed_dates').select('id').eq('date', date).limit(1).maybeSingle(),
+    client
+      .from('closed_dates')
+      .select('id')
+      .lte('date', date)
+      .or(`end_date.is.null,end_date.gte.${date}`)
+      .limit(1)
+      .maybeSingle(),
   ])
 
   if (slotsRes.error) throw new Error(`getAvailableTimeSlots (slots) failed: ${slotsRes.error.message}`)
