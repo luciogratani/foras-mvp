@@ -58,6 +58,16 @@ Feature escluse consapevolmente dallo scope MVP, documentate per non perderle.
 
 ---
 
+## Validazione `preferred_time` nel form prenotazione
+
+**Cosa:** il campo "Orario preferito" (`preferred_time`, introdotto in UX-fix C3) accetta un orario qualsiasi — non valida contro il turno selezionato né contro la finestra `open`/`close` del giorno (`opening_hours`). Un cliente può chiedere le 03:00 con l'attività chiusa.
+
+**Perché escluso ora:** è un campo *indicativo* per il gestore (testo libero orientativo, non un vincolo di prenotazione — la capienza è governata dal turno + `max_covers`). Validarlo richiederebbe legare il campo al turno scelto e alla finestra oraria del giorno, lato client e server.
+
+**Quando riconsiderare:** se i gestori segnalano richieste fuori orario fastidiose. Fix naturale: clampare `preferred_time` alla finestra `open`/`close` del giorno (o all'intervallo del turno) in `createBooking` + nel form. Verificato come pecca nei test browser del 2026-05-22 (test 3).
+
+---
+
 ## Migrazione verifica owner a Edge Function Supabase
 
 **Cosa:** spostare la logica di `getVerifiedTenantClient` (oggi in `apps/admin/lib/auth.ts`, Server Component Next.js) in un'Edge Function Supabase. L'admin app chiama l'edge function passando il JWT utente; la function usa la `service_role` per leggere `public.tenants` e ritorna `{ verified, schema }`.

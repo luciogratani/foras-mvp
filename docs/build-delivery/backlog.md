@@ -215,28 +215,28 @@ Done when:
 
 ---
 
-## Intermezzo UX-fix — Fix pre-freeze (2026-05-22, APERTO)
+## Intermezzo UX-fix — Fix pre-freeze (2026-05-22 → CHIUSO 2026-05-23)
 
 **Goal:** correggere tre lacune rilevate dall'audit esterno (`docs/audit/03_fit-modello-dati-realta-bar.md`) prima del freeze del template. Sono modifiche schema-affecting: farle ora costa una migrazione su 1 schema, farle dopo costa una migrazione su ogni schema cliente.
 
-> **Fuori sprint.** Questo intermezzo non era pianificato. È stato introdotto dopo che l'audit esterno ha rilevato che orari e prenotazioni producono informazioni false per la realtà operativa italiana. Il freeze è sospeso finché i 3 task non sono chiusi.
+> **Fuori sprint.** Questo intermezzo non era pianificato. È stato introdotto dopo che l'audit esterno ha rilevato che orari e prenotazioni producono informazioni false per la realtà operativa italiana. ~~Il freeze è sospeso finché i 3 task non sono chiusi.~~ I 3 task sono chiusi e i 4 test browser superati (2026-05-23) — l'intermezzo non è più un blocco. (Il freeze resta comunque posticipato per le valutazioni UX, vedi Sprint 6.)
 
 Piano a 3 sub-task in `docs/ai-playbooks/prompts/2026-05-22_ux-fix/`. C1 e C3 sono indipendenti; C2 è indipendente da entrambi. Ordine suggerito: C1 → C3 → C2 (dalla più chirurgica alla più articolata). Esecuzione sequenziale, un sub-task per volta.
 
-- [x] **C1** — Orari spezzati — tsc + build verdi (2026-05-22). ⚠ test browser pendente
-- [x] **C3** — `preferred_time` + label `max_covers` — tsc + build verdi (2026-05-22). ⚠ test browser pendente
-- [x] **C2** — `closed_dates` — SQL applicato, tsc + build verdi (2026-05-22). ⚠ test browser pendente
+- [x] **C1** — Orari spezzati — tsc + build verdi (2026-05-22). ✓ test browser superato (2026-05-23)
+- [x] **C3** — `preferred_time` + label `max_covers` — tsc + build verdi (2026-05-22). ✓ test browser superato (2026-05-23)
+- [x] **C2** — `closed_dates` — SQL applicato, tsc + build verdi (2026-05-22). ✓ test browser superato (2026-05-23)
 
-**⚠ TEST BROWSER PENDENTI — eseguire all'inizio della prossima sessione prima di qualsiasi altra cosa:**
-1. Admin `/dashboard/orari` → imposta 2 fasce per un giorno (es. 12:00–15:00 e 19:00–23:00), salva → homepage mostra "12:00 – 15:00 · 19:00 – 23:00"
-2. Admin `/dashboard/orari` → aggiungi data odierna in "Chiusure straordinarie" → `/booking?date=<oggi>` mostra "Nessun turno disponibile" → rimuovi e verifica ripristino
-3. `/booking` → prenota compilando "Orario preferito" → admin `/dashboard/prenotazioni` mostra il valore nella colonna
-4. Admin `/dashboard/orari` → dialog crea/modifica turno → sotto "Coperti massimi" appare testo esplicativo
+**✓ TEST BROWSER SUPERATI (2026-05-23, tutti e 4 verdi):**
+1. Admin `/dashboard/orari` → 2 fasce per un giorno → homepage mostra entrambe — ✓
+2. Admin `/dashboard/orari` → chiusura straordinaria data odierna → `/booking?date=<oggi>` "Nessun turno disponibile", ripristino dopo rimozione — ✓
+3. `/booking` → "Orario preferito" → admin `/dashboard/prenotazioni` mostra il valore — ✓ (pecca nota: `preferred_time` non validato contro turno/orari apertura → tracciato in `product-scope/post-mvp.md`)
+4. Admin `/dashboard/orari` → dialog turno → testo esplicativo sotto "Coperti massimi" — ✓
 
 Done when:
 - [x] I 3 task sono chiusi e committati
 - [x] `pnpm -r exec tsc --noEmit` + build `web` e `admin` verdi
-- [ ] 4 test browser superati da Lucio
+- [x] 4 test browser superati da Lucio (2026-05-23)
 
 ---
 
