@@ -240,6 +240,36 @@ Done when:
 
 ---
 
+## Intermezzo Admin-fix — Miglioramenti UX backoffice (2026-05-23, APERTO)
+
+**Goal:** correggere le lacune operative emerse dalla valutazione UX del backoffice e aggiungere feature schema-affecting prima del freeze. Identificate tramite audit esterno (`docs/audit/02_ux-workflow-admin-gestore.md`) e richieste dirette di Lucio.
+
+> **Fuori sprint.** Lavoro pre-freeze: modifiche schema e UI che farebbero migrazioni costose se fatte dopo il freeze.
+
+Piano a 3 sub-task in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/`:
+
+- [x] **01** — Fix prenotazioni + route cleanup — `fix(admin)` commit `c45f92b` (2026-05-23)
+  - Ordinamento per orario turno (non UUID), default data odierna, colonne Telefono/Orario pref./Note, intestazione turno con coperti/capienza, rimossa route morta `/dashboard/novita`
+- [x] **02** — Schema esteso — `feat(supabase)` commit `15341eb` (2026-05-23)
+  - `site_settings`: +`extra_data` JSONB, +`social_whatsapp/instagram/facebook` TEXT, +`maintenance_mode` BOOLEAN. `closed_dates`: +`end_date` DATE (range multi-day). SQL applicato su schema `template`.
+- [x] **03** — UI admin + pagina manutenzione web — `feat(admin)` commit `705d818` (2026-05-23)
+  - Impostazioni: social links, toggle manutenzione (pannello evidenziato), editor JSONB `extra_data` con accordion. Orari: chiusure straordinarie multi-day. `apps/web`: pagina `/maintenance` + redirect da layout quando `maintenance_mode=true`.
+
+**⚠ SMOKE TEST PENDENTI:**
+1. Social links — inserisci WhatsApp + Instagram → salva → ricarica → valori persistono
+2. Toggle manutenzione ON → `apps/web` redireziona su `/maintenance`; toggle OFF → homepage torna normale
+3. Editor JSONB — salva JSON valido → persiste; JSON non valido → errore inline
+4. Chiusure range — aggiungi chiusura con data fine → compare come range; `/booking?date=<data>` → "Nessun turno disponibile"
+
+**Nota refactor DnD menu:** rimandato a sprint dedicato (stub in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/FUTURO_dnd-menu-refactor.md`).
+
+Done when:
+- [x] 3 sub-task committati
+- [x] tsc + build `web` e `admin` verdi
+- [ ] 4 smoke test superati da Lucio
+
+---
+
 ## Sprint 6 — Template freeze + onboarding primo cliente
 
 **Goal:** template congelato, primo cliente reale onboardato.
@@ -250,7 +280,7 @@ Done when:
 - **RLS hardening scrittura** → owner verificato contro `public.tenants` via funzione `public.is_tenant_owner()` `SECURITY DEFINER` (chiude il debito 2026-05-20). Entra nel baseline congelato + applicata al `template`.
 - **Progetto Supabase** → ri-confermato condiviso (il vettore cross-tenant lo chiude l'hardening RLS).
 - **Email** → Edge Function centralizzata `send-booking-email` + dominio di servizio unico `foras.*` (no DNS per-cliente; `RESEND_API_KEY` fuori da ogni Vercel). Costruita in parallelo al freeze.
-- **Timezone** → `site_settings.timezone` + guard booking in ora locale del tenant (anticipato da post-MVP; è modifica di schema → nel baseline).
+- **Timezone** → `site_settings.timezone` + guard booking in ora locale del tenant (anticipato da post-MVP; è modifica di schema → nel baseline). **Nota:** `maintenance_mode`, `extra_data`, social columns sono stati aggiunti nell'Intermezzo Admin-fix (2026-05-23) — non entrano più in A1b.
 
 Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
 
