@@ -25,7 +25,9 @@ export function BookingFilters({ slotOptions, currentDate, currentSlotId }: Prop
   }
 
   function handleReset() {
-    router.push(pathname)
+    // Fix 2: reset to today, not to empty (avoids showing all bookings from every day)
+    const today = new Date().toISOString().slice(0, 10)
+    router.push(`${pathname}?date=${today}`)
   }
 
   return (
