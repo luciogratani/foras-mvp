@@ -127,12 +127,20 @@ export async function addClosedDateAction(
 ): Promise<SettingsActionState> {
   const { tenant } = await requireTenantClient()
   const date = formData.get('date') as string
+  const end_date = (formData.get('end_date') as string) || undefined
   const reason = (formData.get('reason') as string) || undefined
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return { status: 'error', message: 'Data non valida.' }
+  const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+  if (!date || !ISO_DATE.test(date)) {
+    return { status: 'error', message: 'Data di inizio non valida.' }
+  }
+  if (end_date !== undefined && !ISO_DATE.test(end_date)) {
+    return { status: 'error', message: 'Data di fine non valida.' }
+  }
+  if (end_date !== undefined && end_date < date) {
+    return { status: 'error', message: 'La data di fine deve essere uguale o successiva alla data di inizio.' }
   }
   try {
-    await addClosedDate(tenant, date, reason)
+    await addClosedDate(tenant, date, reason, end_date)
     revalidatePath('/dashboard/orari')
     return { status: 'success' }
   } catch {
