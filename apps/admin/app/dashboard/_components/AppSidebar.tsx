@@ -47,7 +47,7 @@ export function AppSidebar({ email, siteUrl }: Props) {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex h-10 items-center px-2">
-          <span className="text-sm font-semibold truncate">Foras Admin</span>
+          <span className="text-sm font-semibold truncate group-data-[collapsible=icon]:hidden">Foras Admin</span>
         </div>
       </SidebarHeader>
 

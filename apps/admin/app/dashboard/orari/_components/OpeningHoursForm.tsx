@@ -93,7 +93,7 @@ export function OpeningHoursForm({ initialHours }: { initialHours: OpeningHours 
                   onCheckedChange={(v) => toggleClosed(day, !v)}
                 />
                 <Label htmlFor={`${day}-open`} className="text-sm text-muted-foreground">
-                  Aperto
+                  {dayState.closed ? 'Chiuso' : 'Aperto'}
                 </Label>
               </div>
             </div>
