@@ -181,20 +181,35 @@ export async function deleteItemAction(
   }
 }
 
-export async function reorderSectionsAction(orderedIds: string[]): Promise<void> {
+export async function reorderSectionsAction(orderedIds: string[]): Promise<{ ok: boolean }> {
   const { tenant } = await requireTenantClient()
-  await reorderMenuSections(tenant, orderedIds)
-  revalidatePath('/dashboard/menu')
+  try {
+    await reorderMenuSections(tenant, orderedIds)
+    revalidatePath('/dashboard/menu')
+    return { ok: true }
+  } catch {
+    return { ok: false }
+  }
 }
 
-export async function reorderCategoriesAction(orderedIds: string[]): Promise<void> {
+export async function reorderCategoriesAction(orderedIds: string[]): Promise<{ ok: boolean }> {
   const { tenant } = await requireTenantClient()
-  await reorderMenuCategories(tenant, orderedIds)
-  revalidatePath('/dashboard/menu')
+  try {
+    await reorderMenuCategories(tenant, orderedIds)
+    revalidatePath('/dashboard/menu')
+    return { ok: true }
+  } catch {
+    return { ok: false }
+  }
 }
 
-export async function reorderItemsAction(orderedIds: string[]): Promise<void> {
+export async function reorderItemsAction(orderedIds: string[]): Promise<{ ok: boolean }> {
   const { tenant } = await requireTenantClient()
-  await reorderMenuItems(tenant, orderedIds)
-  revalidatePath('/dashboard/menu')
+  try {
+    await reorderMenuItems(tenant, orderedIds)
+    revalidatePath('/dashboard/menu')
+    return { ok: true }
+  } catch {
+    return { ok: false }
+  }
 }

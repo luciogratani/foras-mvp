@@ -212,3 +212,58 @@ export async function reorderMenuItems(client: TenantClient, orderedIds: string[
     )
   )
 }
+
+export async function moveItemToCategory(
+  client: TenantClient,
+  itemId: string,
+  newCategoryId: string
+): Promise<void> {
+  // 1. Fetch the current item to get its category_id
+  const { data: item, error: itemErr } = await client
+    .from('menu_items')
+    .select('id, category_id')
+    .eq('id', itemId)
+    .single()
+  if (itemErr) throw new Error(`moveItemToCategory (fetch item) failed: ${itemErr.message}`)
+
+  // 2. Fetch section_id of the source category
+  const { data: srcCat, error: srcErr } = await client
+    .from('menu_categories')
+    .select('id, section_id')
+    .eq('id', item.category_id)
+    .single()
+  if (srcErr) throw new Error(`moveItemToCategory (fetch source category) failed: ${srcErr.message}`)
+
+  // 3. Fetch section_id of the destination category
+  const { data: dstCat, error: dstErr } = await client
+    .from('menu_categories')
+    .select('id, section_id')
+    .eq('id', newCategoryId)
+    .single()
+  if (dstErr) throw new Error(`moveItemToCategory (fetch destination category) failed: ${dstErr.message}`)
+
+  // 4. Guard: only allow moves within the same section
+  if (srcCat.section_id !== dstCat.section_id) {
+    throw new Error('moveItemToCategory: spostamento consentito solo nella stessa sezione')
+  }
+
+  // 5. Compute the next position in the destination category (append to end)
+  const { data: dstItems, error: posErr } = await client
+    .from('menu_items')
+    .select('position')
+    .eq('category_id', newCategoryId)
+    .order('position', { ascending: false, nullsFirst: false })
+    .limit(1)
+  if (posErr) throw new Error(`moveItemToCategory (fetch max position) failed: ${posErr.message}`)
+  const maxPosition = dstItems && dstItems.length > 0 && dstItems[0].position != null
+    ? dstItems[0].position
+    : -1
+  const newPosition = maxPosition + 1
+
+  // 6. Update the item: new category and new position
+  const { error: updateErr } = await client
+    .from('menu_items')
+    .update({ category_id: newCategoryId, position: newPosition })
+    .eq('id', itemId)
+  if (updateErr) throw new Error(`moveItemToCategory (update item) failed: ${updateErr.message}`)
+}

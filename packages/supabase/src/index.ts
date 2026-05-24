@@ -40,6 +40,7 @@ export {
   reorderMenuSections,
   reorderMenuCategories,
   reorderMenuItems,
+  moveItemToCategory,
 } from './services/menu'
 
 export {
