@@ -348,7 +348,7 @@ Done when:
 
 Piano a 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`:
 
-- [ ] **01** — Service (`sonnet`/medium): `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione) + i `reorder*Action` ritornano un esito verificabile dalla UI. Nessuna migrazione.
+- [x] **01** — Service — commit `b8567e0` (subchat Sonnet/medium; tsc -r + build `admin` verdi; smoke leggero pendente): `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione, append in fondo) + i `reorder*Action` ritornano `{ ok: boolean }` (revalidate solo al successo). Nessuna migrazione.
 - [ ] **02** — Accordion + conteggi (`sonnet`/high): sezioni/categorie collassabili con conteggio voci; solo la sezione aperta monta le voci. Ossatura strutturale.
 - [ ] **03** — Riordino a frecce + rollback + toast (`sonnet`/high): rimozione `@dnd-kit` dal menu, frecce `↑/↓` accessibili, riordino con `await` + ripristino su errore, toast Sonner.
 - [ ] **04** — "Sposta in categoria" + toast scritture inline (`sonnet`/medium): selettore nel dialog modifica voce (usa `moveItemToCategory`); toast su toggle/salvataggi.
