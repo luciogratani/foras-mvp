@@ -321,6 +321,25 @@ Done when:
 
 ---
 
+## Intermezzo Web-UX-funnel — UX del funnel prenotazione `apps/web` (2026-05-24 → APERTO)
+
+**Goal:** chiudere i rilievi **UI-neutri** dell'audit `docs/audit/01_ux-funnel-prenotazione-web.md` (comportamento, copy, accessibilità, correttezza) sul funnel di prenotazione pubblico, lasciando congelata l'estetica fino al primo onboarding.
+
+> **Fuori sprint.** Trigger: la **UI** di `apps/web` è congelata fino al primo onboarding cliente, ma la **UX** del funnel è azionabile ora (è il percorso che genera valore). Distinzione decisa con Lucio. Triage completo nella sezione "Note del master" dell'audit 01 (secchi A/B/C). Solo il Secchio A entra qui; B è rimandato al consolidamento UI, C è gated sulla decisione email (B2).
+
+Piano a 2 sub-task in `docs/ai-playbooks/prompts/2026-05-24_web-ux-funnel/`:
+
+- [ ] **01** — Raggiungibilità funnel + UX form (`sonnet`/medium): link "Prenota" minimale in Hero/Footer (P0.1), `min` data + auto-submit (P1.1/P2.3), errori per-campo + GDPR visibile + ripopolamento valori (P1.4/P0.3-cheap), data leggibile IT (P2.2), messaggi "nessun turno" differenziati cheap (P1.2). Solo `apps/web`, nessuna modifica service.
+- [ ] **02** — Annullamento a due passi (`sonnet`/high): nuova `getBookingByToken` (sola lettura) nel service, server action `confirmCancelAction`, riscrittura `cancel/[token]/page.tsx` (GET mostra dettagli, POST cancella). Chiude P0.2 — bug latente che diventa critico all'attivazione dell'email B2.
+
+**Rimandati (documentati nell'audit):** Secchio B (CTA stilizzato, select→card, trust su `/booking`, galleria skeleton, disponibilità "Disponibile/Completo") → consolidamento UI al primo onboarding. Secchio C (persistenza token, telefono obbligatorio) → con la decisione email B2. Follow-up: P1.2 ricco richiede cambio firma `getAvailableTimeSlots`.
+
+Done when:
+- [ ] Sub-task 01/02 committati + tsc -r e build `web` verdi
+- [ ] Smoke test da Lucio
+
+---
+
 ## Sprint 6 — Template freeze + onboarding primo cliente
 
 **Goal:** template congelato, primo cliente reale onboardato.

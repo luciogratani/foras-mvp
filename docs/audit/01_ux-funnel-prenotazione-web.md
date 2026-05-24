@@ -166,4 +166,20 @@ OUTPUT ATTESO
 
 ## Note del master (sintesi / azioni)
 
-<!-- Dopo la risposta: cosa teniamo, cosa scartiamo, cosa diventa task. -->
+**Triage 2026-05-24.** Verificato l'audit contro il codice attuale: da maggio è entrato solo `preferred_time` (C3 dell'intermezzo UX-fix), tutto il resto è ancora aperto. I rilievi sono ordinati su tre secchi secondo la distinzione **UI (congelata fino al primo onboarding) vs UX (azionabile ora)**, decisa con Lucio.
+
+**Secchio A — comportamento/correttezza, UI-neutri → si fanno ora.** Confluiscono nell'**Intermezzo Web-UX-funnel** (`docs/ai-playbooks/prompts/2026-05-24_web-ux-funnel/`):
+- P0.2 (cancel su GET) → **sub-task 02**. Trattato come bug, non polish: una mutazione nel render di un GET è scorretta a prescindere, e diventa distruttore silenzioso di prenotazioni quando si accende l'email B2 (il link viaggia via email, soggetto a prefetch).
+- P0.1 (nessun link a `/booking`) → **sub-task 01**, in forma *minimale* (link non stilizzato): l'esistenza del percorso è UX/architettura; il CTA curato è UI e si rimanda.
+- P1.1 + P2.3 (data: `min` + auto-submit, via il bottone "Aggiorna") → sub-task 01.
+- P1.4 (errori per-campo + GDPR visibile) + P0.3-parte-cheap (ripopolamento valori + `defaultValue` coperti) → sub-task 01.
+- P2.2 (data leggibile in italiano) → sub-task 01.
+- P1.2 versione *cheap* (distinguere "tutto pieno" da "nessun turno") → sub-task 01. La versione ricca (motivo esatto chiuso/passato + prossima data utile) richiede di toccare la firma di `getAvailableTimeSlots` → follow-up sotto.
+
+**Secchio B — intrecciati con la UI congelata → rimandati al consolidamento UI (primo onboarding).** CTA stilizzato/sticky (forma visiva di P0.1), `<select>`→card per turno (P1.3), header/footer di trust su `/booking` (P2.1), galleria skeleton finta in produzione (P2.5), disponibilità esatta vs "Disponibile/Ultimi posti/Completo" (P2.7), microcopy "conferma immediata" (P1.5, micro ma da fare col redesign del form).
+
+**Secchio C — gated sulla decisione email (B2 dormiente).** Persistenza del token / pagina di conferma bookmarkabile (P0.3 vera soluzione), telefono obbligatorio come unico canale di recupero (P2.6). Da decidere insieme a *quando* accendere l'email — non sovra-investire ora in workaround che l'email rende ridondanti.
+
+**Follow-up tecnici annotati:**
+- P1.2 ricco: `getAvailableTimeSlots` collassa chiuso/passato/pieno ad array vuoto; differenziare i motivi richiede un cambio di firma (la funzione è usata anche da `createBooking`). Da valutare a parte.
+- Nota di sistema (oltre la UX): `createBooking` ha capacità-check + insert non atomici ("RACE CONDITION NOTA (MVP)", `services/bookings.ts`). Già accettato per MVP; trigger di revisione = primo overbooking reale.
