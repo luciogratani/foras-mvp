@@ -27,6 +27,9 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
     )
   }
 
+  const v = state.status === 'error' ? state.values : undefined
+  const fe = state.status === 'error' ? state.fieldErrors : undefined
+  const today = new Date().toISOString().slice(0, 10)
   const hasAvailableSlots = slots.some((s) => s.available_covers > 0)
 
   return (
@@ -34,9 +37,14 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
       <form method="GET" action="/booking">
         <label>
           Data:{' '}
-          <input type="date" name="date" defaultValue={date} />
+          <input
+            type="date"
+            name="date"
+            min={today}
+            defaultValue={date}
+            onChange={(e) => e.currentTarget.form?.requestSubmit()}
+          />
         </label>
-        <button type="submit">Aggiorna</button>
       </form>
 
       {state.status === 'error' && (
@@ -45,63 +53,121 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
         </div>
       )}
 
-      {slots.length === 0 || !hasAvailableSlots ? (
-        <p>Nessun turno disponibile per questa data. Seleziona un&apos;altra data.</p>
+      {slots.length === 0 ? (
+        <p>Nessun turno disponibile per questa data (potremmo essere chiusi). Prova un&apos;altra data.</p>
+      ) : !hasAvailableSlots ? (
+        <p>Tutti i turni sono al completo per questa data. Prova un&apos;altra data.</p>
       ) : (
         <form action={formAction}>
           <input type="hidden" name="date" value={date} />
 
           <div>
             <label htmlFor="time_slot_id">Turno</label>
-            <select id="time_slot_id" name="time_slot_id" required>
+            <select
+              id="time_slot_id"
+              name="time_slot_id"
+              required
+              defaultValue={v?.time_slot_id ?? ''}
+              aria-describedby={fe?.time_slot_id ? 'time_slot_id-error' : undefined}
+            >
+              <option value="" disabled>
+                Seleziona un turno
+              </option>
               {slots.map((slot) => (
                 <option
                   key={slot.time_slot_id}
                   value={slot.time_slot_id}
                   disabled={slot.available_covers === 0}
                 >
-                  {slot.label} ({slot.time}) — {slot.available_covers} coperti disponibili
+                  {slot.label} ({slot.time})
+                  {slot.available_covers === 0 ? ' — Completo' : ''}
                 </option>
               ))}
             </select>
+            {fe?.time_slot_id && (
+              <p id="time_slot_id-error" role="alert">{fe.time_slot_id[0]}</p>
+            )}
           </div>
 
           <div>
             <label htmlFor="preferred_time">Orario preferito (facoltativo)</label>
-            <input id="preferred_time" type="time" name="preferred_time" />
+            <input
+              id="preferred_time"
+              type="time"
+              name="preferred_time"
+              defaultValue={v?.preferred_time}
+            />
             <p><small>Indicaci a che ora vorresti sederti. Sarà mostrato al gestore come preferenza.</small></p>
           </div>
 
           <div>
             <label htmlFor="name">Nome</label>
-            <input id="name" type="text" name="name" required />
+            <input
+              id="name"
+              type="text"
+              name="name"
+              required
+              defaultValue={v?.name}
+              aria-describedby={fe?.name ? 'name-error' : undefined}
+            />
+            {fe?.name && <p id="name-error" role="alert">{fe.name[0]}</p>}
           </div>
 
           <div>
             <label htmlFor="email">Email</label>
-            <input id="email" type="email" name="email" required />
+            <input
+              id="email"
+              type="email"
+              name="email"
+              required
+              defaultValue={v?.email}
+              aria-describedby={fe?.email ? 'email-error' : undefined}
+            />
+            {fe?.email && <p id="email-error" role="alert">{fe.email[0]}</p>}
           </div>
 
           <div>
             <label htmlFor="phone">Telefono (opzionale)</label>
-            <input id="phone" type="tel" name="phone" />
+            <input
+              id="phone"
+              type="tel"
+              name="phone"
+              defaultValue={v?.phone}
+              aria-describedby={fe?.phone ? 'phone-error' : undefined}
+            />
+            {fe?.phone && <p id="phone-error" role="alert">{fe.phone[0]}</p>}
           </div>
 
           <div>
             <label htmlFor="covers">Numero di coperti</label>
-            <input id="covers" type="number" name="covers" min="1" max="50" required />
+            <input
+              id="covers"
+              type="number"
+              name="covers"
+              min="1"
+              max="50"
+              required
+              defaultValue={v?.covers || '2'}
+              aria-describedby={fe?.covers ? 'covers-error' : undefined}
+            />
+            {fe?.covers && <p id="covers-error" role="alert">{fe.covers[0]}</p>}
           </div>
 
           <div>
             <label htmlFor="notes">Note (opzionale)</label>
-            <textarea id="notes" name="notes" />
+            <textarea id="notes" name="notes" defaultValue={v?.notes} />
           </div>
 
           <div>
             <label>
-              <input type="checkbox" name="gdpr_consent" required />
+              <input type="checkbox" name="gdpr_consent" required defaultChecked={v?.gdpr_consent} />
               {' '}Acconsento al trattamento dei miei dati personali per la gestione della prenotazione.
             </label>
+            {fe?.gdpr_consent && (
+              <p id="gdpr_consent-error" role="alert">
+                Devi acconsentire al trattamento dei dati per prenotare.
+              </p>
+            )}
           </div>
 
           <button type="submit" disabled={isPending}>

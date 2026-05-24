@@ -1,4 +1,5 @@
 import type { SiteSettings } from '@repo/supabase'
+import { buttonVariants } from '@repo/ui'
 
 export function Hero({ settings }: { settings: SiteSettings | null }) {
   const title = settings?.title ?? 'Nome del locale'
@@ -7,6 +8,9 @@ export function Hero({ settings }: { settings: SiteSettings | null }) {
       <div className="aspect-[16/9] w-full bg-muted" aria-hidden="true" />
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">{title}</h1>
+        <a href="/booking" className={`${buttonVariants()} mt-6`}>
+          Prenota un tavolo
+        </a>
       </div>
     </section>
   )

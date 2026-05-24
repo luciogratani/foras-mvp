@@ -27,10 +27,17 @@ export default async function BookingPage({
     )
   }
 
+  const dateLabel = new Intl.DateTimeFormat('it-IT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(`${date}T00:00:00`))
+
   return (
     <main>
       <h1>Prenota un tavolo</h1>
-      <p>Data selezionata: {date}</p>
+      <p>Data selezionata: {dateLabel}</p>
       <BookingForm slots={slots} date={date} />
     </main>
   )

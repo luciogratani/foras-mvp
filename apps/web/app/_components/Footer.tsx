@@ -24,6 +24,7 @@ export function Footer({ settings }: { settings: SiteSettings | null }) {
         <div className="space-y-1">
           {settings?.phone && <p>Tel: <a href={`tel:${settings.phone}`} className="hover:underline">{settings.phone}</a></p>}
           {settings?.email && <p>Email: <a href={`mailto:${settings.email}`} className="hover:underline">{settings.email}</a></p>}
+          <p><a href="/booking" className="font-medium hover:underline">Prenota un tavolo →</a></p>
         </div>
         <div className="text-muted-foreground">
           © {new Date().getFullYear()} {settings?.title ?? 'Foras'}
