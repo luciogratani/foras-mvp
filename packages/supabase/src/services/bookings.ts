@@ -262,6 +262,53 @@ export async function getDashboardStats(client: TenantClient): Promise<Dashboard
  * Richiede client privilegiato (RLS: bookings_admin_update).
  * Non throw per token non trovato: è un esito normale per un link riusato.
  */
+export type BookingSummary = {
+  name: string
+  date: string
+  covers: number
+  status: string
+  slot_label: string | null
+  slot_time: string | null
+}
+
+/**
+ * Riepilogo di una prenotazione dato il suo token, in sola lettura (nessuna
+ * mutazione). Serve alla pagina di annullamento per mostrare i dettagli su GET
+ * senza cancellare: la cancellazione avviene solo su POST via cancelBookingByToken.
+ *
+ * Richiede client privilegiato (RLS: SELECT su bookings bloccato ad anon).
+ * Ritorna null se il token non corrisponde a nessuna prenotazione.
+ */
+export async function getBookingByToken(
+  client: TenantClient,
+  token: string
+): Promise<BookingSummary | null> {
+  CancelBookingTokenSchema.parse(token)
+
+  const { data, error } = await client
+    .from('bookings')
+    .select('name, date, covers, status, time_slots(label, time)')
+    .eq('cancellation_token', token)
+    .maybeSingle()
+
+  if (error) throw new Error(`getBookingByToken failed: ${error.message}`)
+  if (!data) return null
+
+  const slot = (Array.isArray(data.time_slots) ? data.time_slots[0] : data.time_slots) as
+    | { label: string; time: string }
+    | null
+    | undefined
+
+  return {
+    name: data.name,
+    date: data.date,
+    covers: data.covers,
+    status: data.status,
+    slot_label: slot?.label ?? null,
+    slot_time: slot?.time ?? null,
+  }
+}
+
 export async function cancelBookingByToken(
   client: TenantClient,
   token: string
