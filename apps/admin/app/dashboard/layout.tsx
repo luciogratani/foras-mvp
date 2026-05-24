@@ -1,22 +1,7 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { getSupabaseServerClient } from '../../lib/supabaseServer'
-
-const navLinks = [
-  { label: 'Home', href: '/dashboard' },
-  { label: 'Menu', href: '/dashboard/menu' },
-  { label: 'Novità', href: '/dashboard/news' },
-  { label: 'Orari & coperti', href: '/dashboard/orari' },
-  { label: 'Impostazioni', href: '/dashboard/impostazioni' },
-  { label: 'Prenotazioni', href: '/dashboard/prenotazioni' },
-]
-
-async function logout() {
-  'use server'
-  const supabase = await getSupabaseServerClient()
-  await supabase.auth.signOut()
-  redirect('/')
-}
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@repo/ui'
+import { AppSidebar } from './_components/AppSidebar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await getSupabaseServerClient()
@@ -28,44 +13,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="w-56 shrink-0 border-r border-border bg-muted/40 flex flex-col">
-        <div className="px-4 py-6">
-          <p className="text-sm font-semibold text-foreground mb-6">Foras Admin</p>
-          <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-          {siteUrl && (
-            <a
-              href={siteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
-            >
-              Vedi il sito ↗
-            </a>
-          )}
-        </div>
-        <div className="mt-auto px-4 py-4 border-t border-border">
-          <form action={logout}>
-            <button
-              type="submit"
-              className="w-full rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
-            >
-              Esci
-            </button>
-          </form>
-        </div>
-      </aside>
-      <main className="flex-1 p-8">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar email={user.email} siteUrl={siteUrl} />
+      <SidebarInset>
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+        </header>
+        <main className="p-8">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

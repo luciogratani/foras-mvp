@@ -88,12 +88,12 @@ export function OpeningHoursForm({ initialHours }: { initialHours: OpeningHours 
                 <input type="hidden" name={`${day}_closed`} value={dayState.closed.toString()} />
                 <input type="hidden" name={`${day}_ranges_count`} value={dayState.ranges.length.toString()} />
                 <Switch
-                  id={`${day}-closed`}
-                  checked={dayState.closed}
-                  onCheckedChange={(v) => toggleClosed(day, v)}
+                  id={`${day}-open`}
+                  checked={!dayState.closed}
+                  onCheckedChange={(v) => toggleClosed(day, !v)}
                 />
-                <Label htmlFor={`${day}-closed`} className="text-sm text-muted-foreground">
-                  Chiuso
+                <Label htmlFor={`${day}-open`} className="text-sm text-muted-foreground">
+                  Aperto
                 </Label>
               </div>
             </div>
