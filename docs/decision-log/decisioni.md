@@ -504,6 +504,8 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 
 ### 2026-05-24 — Refactor `/dashboard/menu`: accordion + hardening, riordino a frecce, no DnD
 
+> **REVISIONE 2026-05-25:** dopo lo smoke del sub-task 02 (accordion), con le liste accorciate dal collasso il DnD è tornato usabile e Lucio ha scelto di **tenerlo** (no frecce). Inoltre le 6 sezioni passano a **CRUD completo**. Vedi voce 2026-05-25 più sotto, che aggiorna i punti "riordino a frecce/no DnD" e "6 sezioni fisse" di questa voce. Resta valido: Strada A (accordion), no master/detail, no modifiche schema.
+
 **Contesto:** la pagina menu monta in un colpo solo l'intero albero sezioni → categorie → tutte le voci (`Promise.all` annidati, nessun collasso/paginazione), il riordino è solo drag-and-drop `PointerSensor` (nessuna alternativa tastiera/bottoni, impraticabile su tablet dove il drag compete con lo scroll), spostare una voce tra categorie richiede elimina+ricrea (perdita allergeni/descrizione/prezzo), e i riordini sono `void reorder*Action(...)` fire-and-forget (divergenza silenziosa UI↔DB se il server rifiuta). Rilievi audit `02_ux-workflow-admin-gestore.md` P1-1/P2-5. Era tracciato come stub `FUTURO_dnd-menu-refactor.md`.
 
 **Opzioni considerate (modello d'interazione):**
@@ -515,6 +517,20 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 
 **Rationale:** per la scala reale di un bar (6 sezioni fisse, poche categorie, ~10-30 voci ciascuna) il master/detail con routing è sovra-ingegnerizzazione; il collo di bottiglia non è la quantità di dati ma il *tutto-montato-insieme + DnD-only + sposta-per-eliminazione*. Le frecce eliminano i `DndContext` annidati e i relativi bug React 19, sono accessibili e funzionano su tablet (device dichiarato del gestore). Nessuna modifica schema: le colonne `position` esistono già → compatibile col pre-freeze.
 
-**Conseguenza operativa (intermezzo dedicato, 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`):**
+**Conseguenza operativa (intermezzo dedicato, sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`):**
 - Service: `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione); `reorder*Action` ritornano un esito verificabile dalla UI. Nessuna migrazione.
-- UI: accordion + conteggi; riordino a frecce con rollback ottimistico; selettore "sposta in categoria" nel dialog voce; toast Sonner (già in `@repo/ui`) su tutte le scritture; densità riga compatta su mobile + link "Vedi sul sito".
+- UI: accordion + conteggi; riordino robusto con rollback ottimistico; selettore "sposta in categoria" nel dialog voce; toast Sonner (già in `@repo/ui`) su tutte le scritture; densità riga compatta su mobile + link "Vedi sul sito". (Il riordino resta a DnD — vedi revisione 2026-05-25.)
+
+### 2026-05-25 — Menu: DnD mantenuto (no frecce) + sezioni a CRUD completo
+
+**Contesto:** revisione della direzione 2026-05-24 dopo lo smoke del sub-task 02. (1) Con l'accordion, le liste riordinabili sono ora corte (una categoria espansa per volta) e il DnD è tornato fluido; Lucio preferisce tenerlo. (2) Domanda di Lucio sul perché le 6 sezioni non siano creabili/eliminabili: emerso che la motivazione storica "consistenza tra tenant" (voce gerarchia menu) **non è load-bearing** nel modello schema-per-tenant — non esiste alcuna feature cross-tenant che la richieda.
+
+**Decisione (Lucio, 2026-05-25):**
+- **DnD mantenuto** nel menu (niente frecce ↑/↓). Il sub-task 03 si riconverte da "rimozione DnD + frecce" a **solo hardening**: consumo dell'esito `{ ok }` delle reorder action con **rollback ottimistico** su errore + **toast** Sonner su riordino/toggle/salvataggi; opzionale `KeyboardSensor` (a11y) e `TouchSensor` con activation delay (drag vs scroll su tablet). Annulla il punto "rimozione completa del DnD" del 2026-05-24.
+- **Sezioni a CRUD completo**: il tenant può **creare ed eliminare** le sezioni, non solo rinominarle/disattivarle. Annulla "Section predefinite (non creabili da zero)" della voce gerarchia menu. Le 6 sezioni standard restano il **seed** iniziale di ogni nuovo tenant.
+
+**Rationale:** (DnD) il problema originale era il drag su liste lunghe piatte + sposta-per-eliminazione; l'accordion risolve il primo e il selettore "sposta in categoria" (sub-task 01/04) il secondo, quindi le frecce non servono più — ma il fix di robustezza (no fire-and-forget) e i toast restano necessari a prescindere. (Sezioni) nessun vincolo tecnico le tiene fisse; il valore "consistenza" è teorico in un modello a fork-per-cliente. Si sceglie la flessibilità. Costo: più superficie (create/delete + cascade + stati vuoti) ma **nessuna migrazione** (la tabella `menu_sections` supporta già insert/delete; le 6 restano seed).
+
+**Conseguenza operativa:**
+- Sub-task 03 riconvertito (hardening, DnD mantenuto). Nuovo **sub-task 06**: `createMenuSection`/`deleteMenuSection` nel service + UI (crea sezione, elimina con conferma cascade sezione→categorie→voci) + stato vuoto sul sito pubblico (home con 0 sezioni attive). `create_schema_from_template.sql` continua a seedare le 6 sezioni standard.
+- Guardrail UX da curare nel 06: la `delete` di una sezione cancella a cascata categorie e voci → conferma esplicita con conteggio di cosa si perde.

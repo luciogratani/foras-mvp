@@ -349,15 +349,16 @@ Done when:
 Piano a 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`:
 
 - [x] **01** — Service — commit `b8567e0` (subchat Sonnet/medium; tsc -r + build `admin` verdi; smoke leggero pendente): `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione, append in fondo) + i `reorder*Action` ritornano `{ ok: boolean }` (revalidate solo al successo). Nessuna migrazione.
-- [x] **02** — Accordion + conteggi — commit `7936db4` (subchat Sonnet/high + fix master nesting DOM; tsc -r + build `admin` verdi; smoke di Lucio pendente): sezioni/categorie collassabili (default collassate) con conteggio voci; figli montati solo se espansi; toggle accessibile distinto dal grip DnD (DnD ancora attivo fino al 03).
-- [ ] **03** — Riordino a frecce + rollback + toast (`sonnet`/high): rimozione `@dnd-kit` dal menu, frecce `↑/↓` accessibili, riordino con `await` + ripristino su errore, toast Sonner.
-- [ ] **04** — "Sposta in categoria" + toast scritture inline (`sonnet`/medium): selettore nel dialog modifica voce (usa `moveItemToCategory`); toast su toggle/salvataggi.
+- [x] **02** — Accordion + conteggi — commit `7936db4` (subchat Sonnet/high + fix master nesting DOM; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**): sezioni/categorie collassabili (default collassate) con conteggio voci; figli montati solo se espansi; toggle accessibile distinto dal grip DnD.
+- [ ] **03** — Riordino: hardening (`sonnet`/high) — **riconvertito 2026-05-25: il DnD si MANTIENE** (vedi decision-log voce 2026-05-25). Consumo dell'esito `{ ok }` delle reorder action con **rollback ottimistico** su errore + **toast** Sonner su riordino/toggle/salvataggi; opzionale `KeyboardSensor` + `TouchSensor` con activation delay. Niente frecce.
+- [ ] **04** — "Sposta in categoria" + toast scritture inline (`sonnet`/medium): selettore nel dialog modifica voce (usa `moveItemToCategory`); toast su toggle/salvataggi (se non già coperti dal 03).
 - [ ] **05** — Densità mobile/tablet + "Vedi sul sito" (`sonnet`/medium): azioni di riga compattate (overflow) su schermi stretti; link al sito pubblico.
+- [ ] **06** — Sezioni a CRUD completo (`sonnet`/high) — **aggiunto 2026-05-25** (decisione Lucio, vedi decision-log): `createMenuSection`/`deleteMenuSection` nel service + UI (crea sezione; elimina con **conferma cascade** sezione→categorie→voci) + stato vuoto sul sito pubblico (home con 0 sezioni attive). Le 6 sezioni restano il seed di `create_schema_from_template.sql`. Nessuna migrazione (la tabella supporta già insert/delete).
 
-> I prompt 02-05 si scrivono dopo che il sub-task precedente è atterrato (il codice su cui si appoggiano cambia). Si parte dal 01.
+> I prompt si scrivono dopo che il sub-task precedente è atterrato (il codice su cui si appoggiano cambia). 06 è indipendente da 03-05 e può essere fatto in qualsiasi momento.
 
 Done when:
-- [ ] Sub-task 01-05 committati + tsc -r e build `admin` verdi
+- [ ] Sub-task 01-06 committati + tsc -r e build `admin` verdi
 - [ ] Smoke test da Lucio (per sub-task)
 
 ---
