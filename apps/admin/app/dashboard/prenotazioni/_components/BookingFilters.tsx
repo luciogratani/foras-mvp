@@ -9,6 +9,10 @@ type Props = {
   currentSlotId: string
 }
 
+function dateOffset(days: number) {
+  return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
+}
+
 export function BookingFilters({ slotOptions, currentDate, currentSlotId }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -24,59 +28,87 @@ export function BookingFilters({ slotOptions, currentDate, currentSlotId }: Prop
     router.push(`${pathname}?${params.toString()}`)
   }
 
-  function handleReset() {
-    // Fix 2: reset to today, not to empty (avoids showing all bookings from every day)
-    const today = new Date().toISOString().slice(0, 10)
-    router.push(`${pathname}?date=${today}`)
+  function goToDate(date: string) {
+    router.push(`${pathname}?date=${date}`)
   }
 
+  const today = dateOffset(0)
+  const tomorrow = dateOffset(1)
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="date" className="text-xs font-medium text-muted-foreground">
-          Data
-        </label>
-        <input
-          id="date"
-          name="date"
-          type="date"
-          defaultValue={currentDate}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="time_slot_id" className="text-xs font-medium text-muted-foreground">
-          Turno
-        </label>
-        <select
-          id="time_slot_id"
-          name="time_slot_id"
-          defaultValue={currentSlotId}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="date" className="text-xs font-medium text-muted-foreground">
+            Data
+          </label>
+          <input
+            id="date"
+            name="date"
+            type="date"
+            defaultValue={currentDate}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="time_slot_id" className="text-xs font-medium text-muted-foreground">
+            Turno
+          </label>
+          <select
+            id="time_slot_id"
+            name="time_slot_id"
+            defaultValue={currentSlotId}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="">Tutti i turni</option>
+            {slotOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
         >
-          <option value="">Tutti i turni</option>
-          {slotOptions.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <button
-        type="submit"
-        className="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
-      >
-        Filtra
-      </button>
-      {(currentDate || currentSlotId) && (
+          Filtra
+        </button>
+        {(currentDate || currentSlotId) && (
+          <button
+            type="button"
+            onClick={() => goToDate(today)}
+            className="h-9 rounded-md border border-input px-4 text-sm text-muted-foreground hover:bg-muted"
+          >
+            Rimuovi filtri
+          </button>
+        )}
+      </form>
+
+      <div className="flex gap-2">
         <button
           type="button"
-          onClick={handleReset}
-          className="h-9 rounded-md border border-input px-4 text-sm text-muted-foreground hover:bg-muted"
+          onClick={() => goToDate(today)}
+          className={`h-9 rounded-md border px-4 text-sm font-medium transition-colors ${
+            currentDate === today
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-input bg-background text-foreground hover:bg-muted'
+          }`}
         >
-          Rimuovi filtri
+          Oggi
         </button>
-      )}
-    </form>
+        <button
+          type="button"
+          onClick={() => goToDate(tomorrow)}
+          className={`h-9 rounded-md border px-4 text-sm font-medium transition-colors ${
+            currentDate === tomorrow
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-input bg-background text-foreground hover:bg-muted'
+          }`}
+        >
+          Domani
+        </button>
+      </div>
+    </div>
   )
 }
