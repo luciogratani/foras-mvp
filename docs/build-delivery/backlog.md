@@ -340,6 +340,28 @@ Done when:
 
 ---
 
+## Intermezzo Menu-refactor — `/dashboard/menu` accordion + hardening (2026-05-24 → APERTO)
+
+**Goal:** rendere la gestione del menu comprensibile e usabile da tablet per un gestore non tecnico, su menu reali (decine di voci). Esegue lo stub `FUTURO_dnd-menu-refactor.md`.
+
+> **Fuori sprint.** Trigger: Lucio ha scelto di affrontare ora il "mostro". Decisione di direzione nel `decision-log/decisioni.md` (voce 2026-05-24 *Refactor /dashboard/menu*): **Strada A** (accordion + hardening sulla pagina unica), **riordino solo a frecce ↑/↓, DnD rimosso dal menu**. Nessuna modifica schema (le colonne `position` esistono già) → compatibile col pre-freeze. Ancorato all'audit `02_ux-workflow-admin-gestore.md` (P1-1, P2-5, P2-6).
+
+Piano a 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`:
+
+- [ ] **01** — Service (`sonnet`/medium): `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione) + i `reorder*Action` ritornano un esito verificabile dalla UI. Nessuna migrazione.
+- [ ] **02** — Accordion + conteggi (`sonnet`/high): sezioni/categorie collassabili con conteggio voci; solo la sezione aperta monta le voci. Ossatura strutturale.
+- [ ] **03** — Riordino a frecce + rollback + toast (`sonnet`/high): rimozione `@dnd-kit` dal menu, frecce `↑/↓` accessibili, riordino con `await` + ripristino su errore, toast Sonner.
+- [ ] **04** — "Sposta in categoria" + toast scritture inline (`sonnet`/medium): selettore nel dialog modifica voce (usa `moveItemToCategory`); toast su toggle/salvataggi.
+- [ ] **05** — Densità mobile/tablet + "Vedi sul sito" (`sonnet`/medium): azioni di riga compattate (overflow) su schermi stretti; link al sito pubblico.
+
+> I prompt 02-05 si scrivono dopo che il sub-task precedente è atterrato (il codice su cui si appoggiano cambia). Si parte dal 01.
+
+Done when:
+- [ ] Sub-task 01-05 committati + tsc -r e build `admin` verdi
+- [ ] Smoke test da Lucio (per sub-task)
+
+---
+
 ## Sprint 6 — Template freeze + onboarding primo cliente
 
 **Goal:** template congelato, primo cliente reale onboardato.

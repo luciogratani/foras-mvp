@@ -501,3 +501,20 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 - `packages/supabase/src/services/site-admin.ts`: `setTimeSlotArchived(client, id, archived)`.
 - `packages/supabase/src/services/bookings.ts`: aggiunto `.is('archived_at', null)` in `getAvailableTimeSlots`.
 - Admin UI: `TimeSlotCard` con due branch (attivo/archiviato); `TimeSlotList` con sezione collassabile "Turni archiviati (N)".
+
+### 2026-05-24 — Refactor `/dashboard/menu`: accordion + hardening, riordino a frecce, no DnD
+
+**Contesto:** la pagina menu monta in un colpo solo l'intero albero sezioni → categorie → tutte le voci (`Promise.all` annidati, nessun collasso/paginazione), il riordino è solo drag-and-drop `PointerSensor` (nessuna alternativa tastiera/bottoni, impraticabile su tablet dove il drag compete con lo scroll), spostare una voce tra categorie richiede elimina+ricrea (perdita allergeni/descrizione/prezzo), e i riordini sono `void reorder*Action(...)` fire-and-forget (divergenza silenziosa UI↔DB se il server rifiuta). Rilievi audit `02_ux-workflow-admin-gestore.md` P1-1/P2-5. Era tracciato come stub `FUTURO_dnd-menu-refactor.md`.
+
+**Opzioni considerate (modello d'interazione):**
+- (A) **Accordion + hardening sulla pagina unica**: sezioni/categorie collassabili con conteggi (solo l'aperta monta le voci), riordino a frecce `↑/↓`, "sposta in categoria" via selettore, riordini robusti (await + rollback) + toast.
+- (B) **Drill-down master/detail** con route per livello (Sezioni → Categorie → Voci): scala a menu enormi, ottimo da mobile, ma routing nuovo e refactor grosso.
+- (C) **Vista tabellare/foglio** con filtri e modifica inline: efficiente per editing massivo prezzi/disponibilità, ma pesante e scomoda su mobile.
+
+**Decisione (Lucio, 2026-05-24):** (A). In più, **rimozione completa del drag-and-drop dal menu** — riordino solo con frecce `↑/↓` (accessibile da tastiera, identico desktop/tablet); `@dnd-kit` resta installato per altri usi ma esce da `SectionList`/`SectionCard`/`CategoryRow`/`ItemRow`.
+
+**Rationale:** per la scala reale di un bar (6 sezioni fisse, poche categorie, ~10-30 voci ciascuna) il master/detail con routing è sovra-ingegnerizzazione; il collo di bottiglia non è la quantità di dati ma il *tutto-montato-insieme + DnD-only + sposta-per-eliminazione*. Le frecce eliminano i `DndContext` annidati e i relativi bug React 19, sono accessibili e funzionano su tablet (device dichiarato del gestore). Nessuna modifica schema: le colonne `position` esistono già → compatibile col pre-freeze.
+
+**Conseguenza operativa (intermezzo dedicato, 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`):**
+- Service: `moveItemToCategory(client, itemId, newCategoryId)` (guard stessa sezione); `reorder*Action` ritornano un esito verificabile dalla UI. Nessuna migrazione.
+- UI: accordion + conteggi; riordino a frecce con rollback ottimistico; selettore "sposta in categoria" nel dialog voce; toast Sonner (già in `@repo/ui`) su tutte le scritture; densità riga compatta su mobile + link "Vedi sul sito".
