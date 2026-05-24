@@ -49,7 +49,7 @@ export function CreateCategoryDialog({
               checked={isActive}
               onCheckedChange={setIsActive}
             />
-            <Label htmlFor="create-cat-active">Attiva</Label>
+            <Label htmlFor="create-cat-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

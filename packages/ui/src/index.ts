@@ -28,3 +28,5 @@ export {
 export { Switch } from './components/ui/switch'
 export { Textarea } from './components/ui/textarea'
 export { Checkbox } from './components/ui/checkbox'
+export { Toaster } from './components/ui/sonner'
+export { toast } from 'sonner'

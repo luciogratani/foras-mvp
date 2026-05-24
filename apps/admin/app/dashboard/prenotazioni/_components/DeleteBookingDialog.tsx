@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useEffect, useState } from 'react'
+import { useState, useTransition } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@repo/ui'
-import { Button } from '@repo/ui'
-import { cancelBookingAction, type BookingActionState } from '../actions'
+import { Button, toast } from '@repo/ui'
+import { cancelBookingAction } from '../actions'
 
 type Props = {
   id: string
@@ -19,15 +19,28 @@ type Props = {
   slotLabel: string
 }
 
-const initialState: BookingActionState = { status: 'idle' }
-
 export function DeleteBookingDialog({ id, name, date, slotLabel }: Props) {
   const [open, setOpen] = useState(false)
-  const [state, formAction, pending] = useActionState(cancelBookingAction, initialState)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
 
-  useEffect(() => {
-    if (state.status === 'success') setOpen(false)
-  }, [state])
+  function handleConfirm() {
+    setError(null)
+    const fd = new FormData()
+    fd.set('id', id)
+    startTransition(async () => {
+      const res = await cancelBookingAction({ status: 'idle' }, fd)
+      if (res.status === 'success') {
+        toast.success(`Prenotazione di ${name} cancellata`, {
+          description: `${date} — turno ${slotLabel}`,
+          duration: 6000,
+        })
+        setOpen(false)
+      } else if (res.status === 'error') {
+        setError(res.message)
+      }
+    })
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -44,19 +57,18 @@ export function DeleteBookingDialog({ id, name, date, slotLabel }: Props) {
             <strong>{slotLabel}</strong>. Questa azione non è reversibile.
           </DialogDescription>
         </DialogHeader>
-        {state.status === 'error' && (
-          <p className="text-sm text-destructive">{state.message}</p>
-        )}
+        <p className="text-sm text-muted-foreground">
+          Il cliente <strong>non</strong> riceve una notifica automatica: se vuoi avvisarlo,
+          contattalo tu (es. telefono).
+        </p>
+        {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
-          <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+          <Button variant="outline" type="button" onClick={() => setOpen(false)} disabled={pending}>
             Annulla
           </Button>
-          <form action={formAction}>
-            <input type="hidden" name="id" value={id} />
-            <Button variant="destructive" type="submit" disabled={pending}>
-              {pending ? 'Cancellazione…' : 'Conferma cancellazione'}
-            </Button>
-          </form>
+          <Button variant="destructive" type="button" onClick={handleConfirm} disabled={pending}>
+            {pending ? 'Cancellazione…' : 'Conferma cancellazione'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

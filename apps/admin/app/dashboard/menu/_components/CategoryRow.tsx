@@ -18,12 +18,14 @@ export function CategoryRow({
   category,
   items,
   allergens,
+  sectionActive,
   onEdit,
   onDelete,
 }: {
   category: MenuCategory
   items: MenuItem[]
   allergens: Allergen[]
+  sectionActive: boolean
   onEdit: (cat: MenuCategory) => void
   onDelete: (cat: MenuCategory) => void
 }) {
@@ -84,6 +86,8 @@ export function CategoryRow({
               checked={category.is_active}
               disabled={isToggling}
               onCheckedChange={() => formRef.current?.requestSubmit()}
+              aria-label="Visibile sul sito"
+              title="Visibile sul sito"
             />
           </form>
           <Button variant="outline" size="sm" onClick={() => onEdit(category)}>
@@ -96,6 +100,11 @@ export function CategoryRow({
       </div>
 
       <div className="border-t px-3 py-2">
+        {sectionActive && !category.is_active && localItems.length > 0 && (
+          <p className="mb-2 text-xs text-muted-foreground">
+            Categoria disattivata: le voci qui sotto <strong>non compaiono sul sito</strong>.
+          </p>
+        )}
         {localItems.length === 0 ? (
           <p className="mb-2 text-sm text-muted-foreground">Nessun item.</p>
         ) : (
@@ -187,6 +196,8 @@ function ItemRow({
             checked={item.is_active}
             disabled={isToggling}
             onCheckedChange={() => formRef.current?.requestSubmit()}
+            aria-label="Visibile sul sito"
+            title="Visibile sul sito"
           />
         </form>
         <Button variant="outline" size="sm" onClick={() => onEdit(item)}>

@@ -85,11 +85,12 @@ CREATE TABLE menu_items (
 
 -- Turni disponibili (configurati dal gestore)
 CREATE TABLE time_slots (
-  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
-  label       TEXT    NOT NULL,   -- es. "Pranzo", "Cena"
-  time        TIME    NOT NULL,
-  max_covers  INTEGER NOT NULL,
-  is_active   BOOLEAN NOT NULL DEFAULT true
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  label       TEXT        NOT NULL,   -- es. "Pranzo", "Cena"
+  time        TIME        NOT NULL,
+  max_covers  INTEGER     NOT NULL,
+  is_active   BOOLEAN     NOT NULL DEFAULT true,
+  archived_at TIMESTAMPTZ            -- NULL = attivo; valorizzato = archiviato (nascosto da admin/sito, storico conservato)
 );
 
 -- Prenotazioni

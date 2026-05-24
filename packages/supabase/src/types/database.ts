@@ -281,6 +281,7 @@ export type Database = {
       }
       time_slots: {
         Row: {
+          archived_at: string | null
           id: string
           is_active: boolean
           label: string
@@ -288,6 +289,7 @@ export type Database = {
           time: string
         }
         Insert: {
+          archived_at?: string | null
           id?: string
           is_active?: boolean
           label: string
@@ -295,6 +297,7 @@ export type Database = {
           time: string
         }
         Update: {
+          archived_at?: string | null
           id?: string
           is_active?: boolean
           label?: string

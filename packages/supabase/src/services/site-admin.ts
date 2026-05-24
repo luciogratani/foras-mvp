@@ -44,6 +44,30 @@ export async function deleteTimeSlot(client: TenantClient, id: string): Promise<
   if (error) throw new Error(`deleteTimeSlot failed: ${error.message}`)
 }
 
+/**
+ * Archivia o ripristina un turno. Archiviare = nasconderlo da admin e sito
+ * senza perdere lo storico prenotazioni (la riga resta, la FK regge).
+ * In archiviazione disattiva anche is_active così il sito pubblico (che filtra
+ * su is_active) lo esclude comunque.
+ */
+export async function setTimeSlotArchived(
+  client: TenantClient,
+  id: string,
+  archived: boolean
+): Promise<TimeSlotAdmin> {
+  const patch = archived
+    ? { archived_at: new Date().toISOString(), is_active: false }
+    : { archived_at: null }
+  const { data, error } = await client
+    .from('time_slots')
+    .update(patch)
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) throw new Error(`setTimeSlotArchived failed: ${error.message}`)
+  return data
+}
+
 export async function updateSiteSettings(
   client: TenantClient,
   patch: SiteSettingsUpdate

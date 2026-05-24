@@ -95,6 +95,7 @@ Turni disponibili configurati dal gestore nel backoffice.
 | `time` | time | orario del turno |
 | `max_covers` | integer | capacità massima coperti per turno |
 | `is_active` | boolean | default true |
+| `archived_at` | timestamptz nullable | NULL = attivo; non-null = archiviato (nascosto da admin e sito). Archiviare imposta anche `is_active = false`. La riga resta per preservare la FK `bookings → time_slots`. |
 
 ### `bookings`
 
@@ -107,6 +108,7 @@ Turni disponibili configurati dal gestore nel backoffice.
 | `email` | text | |
 | `phone` | text nullable | |
 | `covers` | integer | coperti richiesti |
+| `preferred_time` | text nullable | orario preferito indicato dal cliente (libero, indicativo per il gestore; non validato contro turno né finestra oraria) |
 | `notes` | text nullable | richieste speciali |
 | `cancellation_token` | uuid | token per cancellazione senza autenticazione |
 | `status` | text | `confirmed` / `cancelled` |
@@ -138,23 +140,43 @@ Configurazione del sito e SEO, gestita dal backoffice.
 | `address` | text nullable | indirizzo per footer e Google Maps |
 | `phone` | text nullable | |
 | `email` | text nullable | |
-| `opening_hours` | jsonb | orari per giorno della settimana |
+| `social_instagram` | text nullable | URL profilo Instagram |
+| `social_facebook` | text nullable | URL profilo Facebook |
+| `social_whatsapp` | text nullable | URL o numero WhatsApp |
+| `maintenance_mode` | boolean | default false; se true `apps/web` redireziona tutte le route su `/maintenance` |
+| `extra_data` | jsonb | dati arbitrari per personalizzazioni future (default `{}`) |
+| `opening_hours` | jsonb | orari per giorno della settimana (struttura multi-fascia, vedi sotto) |
 
 **Struttura attesa di `opening_hours`:**
 
 ```json
 {
-  "monday":    { "open": "08:00", "close": "22:00", "closed": false },
-  "tuesday":   { "open": "08:00", "close": "22:00", "closed": false },
-  "wednesday": { "open": "08:00", "close": "22:00", "closed": false },
-  "thursday":  { "open": "08:00", "close": "22:00", "closed": false },
-  "friday":    { "open": "08:00", "close": "23:00", "closed": false },
-  "saturday":  { "open": "09:00", "close": "23:00", "closed": false },
-  "sunday":    { "open": null,    "close": null,    "closed": true  }
+  "monday":    { "closed": false, "ranges": [{ "open": "08:00", "close": "14:30" }, { "open": "18:00", "close": "23:00" }] },
+  "tuesday":   { "closed": false, "ranges": [{ "open": "08:00", "close": "22:00" }] },
+  "wednesday": { "closed": false, "ranges": [{ "open": "08:00", "close": "22:00" }] },
+  "thursday":  { "closed": false, "ranges": [{ "open": "08:00", "close": "22:00" }] },
+  "friday":    { "closed": false, "ranges": [{ "open": "08:00", "close": "23:00" }] },
+  "saturday":  { "closed": false, "ranges": [{ "open": "09:00", "close": "23:00" }] },
+  "sunday":    { "closed": true,  "ranges": [] }
 }
 ```
 
-Chiavi fisse (7 giorni in inglese lowercase). Quando `closed: true`, i campi `open` e `close` sono `null`. Il form nel backoffice mostra un toggle per giorno + input orario abilitato solo se `closed: false`. L'homepage pubblica legge questa struttura per renderizzare la sezione orari.
+Chiavi fisse (7 giorni in inglese lowercase). Ogni giorno ha `closed` (boolean) e `ranges` (array, max 2 fasce `{ open, close }`). Quando `closed: true`, `ranges` è vuoto. Se `ranges` è vuoto e `closed: false`, nessuna restrizione oraria per quel giorno. I turni di prenotazione vengono filtrati per cadere all'interno di almeno una fascia.
+
+---
+
+## Tabella `closed_dates`
+
+Chiusure straordinarie (festività, eventi privati, ferie) che sovrascrivono gli orari settimanali ricorrenti. Gestita dal backoffice nella sezione Orari.
+
+| Campo | Tipo | Note |
+|---|---|---|
+| `id` | uuid | PK |
+| `date` | date | data di inizio chiusura (ISO 8601) |
+| `end_date` | date nullable | data di fine inclusa; NULL = chiusura di un solo giorno |
+| `reason` | text nullable | descrizione facoltativa (es. "Ferragosto", "Evento privato") |
+
+Se una data rientra in un intervallo `[date, end_date]` (o coincide con `date` se `end_date` è NULL), `getAvailableTimeSlots` restituisce `[]` per quella data.
 
 ---
 

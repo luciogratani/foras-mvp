@@ -56,7 +56,7 @@ export function EditCategoryDialog({
               checked={isActive}
               onCheckedChange={setIsActive}
             />
-            <Label htmlFor="edit-cat-active">Attiva</Label>
+            <Label htmlFor="edit-cat-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

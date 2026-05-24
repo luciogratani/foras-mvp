@@ -47,11 +47,12 @@ export {
   createBooking,
   cancelBookingByToken,
   getBookingsAdmin,
+  getBookingCountsBySlot,
   cancelBookingAdmin,
   OverbookingError,
   DuplicateBookingError,
 } from './services/bookings'
-export type { TimeSlot, Booking, AvailableTimeSlot, BookingAdmin } from './services/bookings'
+export type { TimeSlot, Booking, AvailableTimeSlot, BookingAdmin, SlotBookingCounts } from './services/bookings'
 
 export { CreateBookingInputSchema, CancelBookingTokenSchema } from './schemas/bookings'
 export type { CreateBookingInput } from './schemas/bookings'
@@ -75,7 +76,7 @@ export type { NewsSlide as NewsSlideAdmin } from './services/news'
 export { NewsSlideCreateSchema, NewsSlideUpdateSchema } from './schemas/news'
 export type { NewsSlideCreate, NewsSlideUpdate } from './schemas/news'
 
-export { getTimeSlotsAdmin, createTimeSlot, updateTimeSlot, deleteTimeSlot, updateSiteSettings, getClosedDates, addClosedDate, removeClosedDate } from './services/site-admin'
+export { getTimeSlotsAdmin, createTimeSlot, updateTimeSlot, deleteTimeSlot, setTimeSlotArchived, updateSiteSettings, getClosedDates, addClosedDate, removeClosedDate } from './services/site-admin'
 export type { TimeSlotAdmin, ClosedDate } from './services/site-admin'
 export { TimeSlotCreateSchema, TimeSlotUpdateSchema, SiteSettingsUpdateSchema, OpeningHoursSchema } from './schemas/settings'
 export type { TimeSlotCreate, TimeSlotUpdate, SiteSettingsUpdate, OpeningHours } from './schemas/settings'

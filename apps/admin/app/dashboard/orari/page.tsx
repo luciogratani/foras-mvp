@@ -1,5 +1,5 @@
 import { requireTenantClient } from '../../../lib/auth'
-import { getSiteSettings, getTimeSlotsAdmin, getClosedDates } from '@repo/supabase'
+import { getSiteSettings, getTimeSlotsAdmin, getClosedDates, getBookingCountsBySlot } from '@repo/supabase'
 import type { OpeningHours } from '@repo/supabase'
 import { OpeningHoursForm } from './_components/OpeningHoursForm'
 import { TimeSlotList } from './_components/TimeSlotList'
@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic'
 
 export default async function OrariPage() {
   const { tenant } = await requireTenantClient()
-  const [settings, slots, closedDates] = await Promise.all([
+  const [settings, slots, closedDates, bookingCounts] = await Promise.all([
     getSiteSettings(tenant),
     getTimeSlotsAdmin(tenant),
     getClosedDates(tenant),
+    getBookingCountsBySlot(tenant),
   ])
 
   return (
@@ -27,7 +28,7 @@ export default async function OrariPage() {
           <h2 className="text-xl font-semibold">Turni prenotazione</h2>
           <CreateTimeSlotButton />
         </div>
-        <TimeSlotList slots={slots} />
+        <TimeSlotList slots={slots} bookingCounts={bookingCounts} />
       </section>
       <section className="space-y-4">
         <div>

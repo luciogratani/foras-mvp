@@ -98,6 +98,8 @@ export function SectionCard({
                     checked={section.is_active}
                     disabled={isToggling}
                     onCheckedChange={() => sectionFormRef.current?.requestSubmit()}
+                    aria-label="Visibile sul sito"
+                    title="Visibile sul sito"
                   />
                 </form>
                 <Button variant="outline" size="sm" onClick={() => setRenameOpen(true)}>
@@ -107,6 +109,12 @@ export function SectionCard({
             </div>
           </CardHeader>
           <CardContent>
+            {!section.is_active && (
+              <p className="mb-3 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                Sezione disattivata: categorie e voci qui dentro <strong>non compaiono sul sito</strong>,
+                anche se risultano attive.
+              </p>
+            )}
             {cats.length === 0 ? (
               <p className="mb-3 text-sm text-muted-foreground">
                 Nessuna categoria. Aggiungine una.
@@ -121,6 +129,7 @@ export function SectionCard({
                         category={cat}
                         items={itemsByCategory[cat.id] ?? []}
                         allergens={allergens}
+                        sectionActive={section.is_active}
                         onEdit={setEditCategory}
                         onDelete={setDeleteCategory}
                       />

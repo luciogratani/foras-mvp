@@ -58,6 +58,9 @@ export function CreateItemDialog({
               min="0"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Usa il punto per i decimali, es. <strong>8.50</strong>.
+            </p>
           </div>
           <div className="space-y-1">
             <Label htmlFor="create-item-description">Descrizione</Label>
@@ -80,7 +83,7 @@ export function CreateItemDialog({
           </fieldset>
           <div className="flex items-center gap-2">
             <Switch id="create-item-active" checked={isActive} onCheckedChange={setIsActive} />
-            <Label htmlFor="create-item-active">Attivo</Label>
+            <Label htmlFor="create-item-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

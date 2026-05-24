@@ -25,6 +25,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   } = await supabase.auth.getUser()
   if (!user) redirect('/?reason=unauthenticated')
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+
   return (
     <div className="flex min-h-screen">
       <aside className="w-56 shrink-0 border-r border-border bg-muted/40 flex flex-col">
@@ -41,6 +43,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </Link>
             ))}
           </nav>
+          {siteUrl && (
+            <a
+              href={siteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Vedi il sito ↗
+            </a>
+          )}
         </div>
         <div className="mt-auto px-4 py-4 border-t border-border">
           <form action={logout}>

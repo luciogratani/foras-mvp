@@ -72,7 +72,7 @@ export function EditSlideDialog({
           </div>
           <div className="flex items-center gap-2">
             <Switch id="edit-slide-active" checked={isActive} onCheckedChange={setIsActive} />
-            <Label htmlFor="edit-slide-active">Attiva</Label>
+            <Label htmlFor="edit-slide-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

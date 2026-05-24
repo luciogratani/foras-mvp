@@ -77,7 +77,7 @@ export function EditTimeSlotDialog({
           </div>
           <div className="flex items-center gap-2">
             <Switch id="edit-slot-active" checked={isActive} onCheckedChange={setIsActive} />
-            <Label htmlFor="edit-slot-active">Attivo</Label>
+            <Label htmlFor="edit-slot-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

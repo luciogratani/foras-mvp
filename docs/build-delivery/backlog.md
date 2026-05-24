@@ -246,7 +246,7 @@ Done when:
 
 > **Fuori sprint.** Lavoro pre-freeze: modifiche schema e UI che farebbero migrazioni costose se fatte dopo il freeze.
 
-Piano a 3 sub-task in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/`:
+Piano a 3 sub-task in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/` + una seconda sessione (2026-05-24):
 
 - [x] **01** — Fix prenotazioni + route cleanup — `fix(admin)` commit `c45f92b` (2026-05-23)
   - Ordinamento per orario turno (non UUID), default data odierna, colonne Telefono/Orario pref./Note, intestazione turno con coperti/capienza, rimossa route morta `/dashboard/novita`
@@ -254,19 +254,33 @@ Piano a 3 sub-task in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/`:
   - `site_settings`: +`extra_data` JSONB, +`social_whatsapp/instagram/facebook` TEXT, +`maintenance_mode` BOOLEAN. `closed_dates`: +`end_date` DATE (range multi-day). SQL applicato su schema `template`.
 - [x] **03** — UI admin + pagina manutenzione web — `feat(admin)` commit `705d818` (2026-05-23)
   - Impostazioni: social links, toggle manutenzione (pannello evidenziato), editor JSONB `extra_data` con accordion. Orari: chiusure straordinarie multi-day. `apps/web`: pagina `/maintenance` + redirect da layout quando `maintenance_mode=true`.
+- [x] **04** — UX audit P0-4 + P1-2 + P1-5 + P2 + archiviazione turni (2026-05-24, non committato separatamente)
+  - **Sonner toast** (`sonner@2.0.7`) aggiunto a `@repo/ui`; `<Toaster>` montato in `apps/admin/app/layout.tsx`. Pattern: `startTransition(async () => { await action(); toast.success(...) })` per sopravvivere al `revalidatePath` unmount.
+  - **P0-4** — `getBookingCountsBySlot` (`{ total, upcoming }`) nel service; `TimeSlotCard` mostra "N prenotazioni in arrivo"; `DeleteTimeSlotDialog` mostra banner FK-block se `total > 0`, nasconde il pulsante Elimina.
+  - **P1-2** — Tutti gli switch (`aria-label/title="Visibile sul sito"`); banner sezione inattiva in `SectionCard`; `CategoryRow` avvisa quando sezione attiva + categoria inattiva.
+  - **P1-5** — Toast `"Prenotazione di X cancellata — data / turno"` (6 s) + nota "Il cliente non riceve notifica automatica" in `DeleteBookingDialog`. Fix React key: `<Fragment key={slotId}>` in `BookingList`.
+  - **P2-1** — Link "Vedi il sito ↗" in sidebar (da `NEXT_PUBLIC_SITE_URL`).
+  - **P2-3** — Hint "Usa il punto per i decimali, es. 8.50" in `CreateItemDialog`/`EditItemDialog`.
+  - **Archiviazione turni** — Turni con storico prenotazioni non eliminabili (FK); nuovo pulsante "Archivia" (`setTimeSlotArchived` + `archived_at TIMESTAMPTZ`); `TimeSlotList` collassa archiviati in sezione espandibile "Turni archiviati (N)"; ripristino con toast; eliminazione definitiva solo per turni senza prenotazioni collegate.
+  - **Schema**: `time_slots.archived_at TIMESTAMPTZ` aggiunto su `template` (script `docs/operations/migration-2026-05-24-time-slot-archive.sql`); `create_schema_from_template.sql` aggiornato per nuovi tenant.
 
 **✓ SMOKE TEST SUPERATI (2026-05-24):**
 1. Social links — ✓
 2. Toggle manutenzione — ✓ (fix React 19 `startTransition` commit `dcf5640`)
 3. Editor JSONB — ✓
 4. Chiusure range — ✓
+5. Toast cancellazione prenotazione — ✓
+6. P0-4: dialog turno blocco FK + "N prenotazioni in arrivo" — ✓
+7. P1-2: switch labels + banner sezione inattiva — ✓
+8. Archiviazione turni: archivia/ripristina/sezione collassabile — ✓
 
 **Nota refactor DnD menu:** rimandato a sprint dedicato (stub in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/FUTURO_dnd-menu-refactor.md`).
 
 Done when:
-- [x] 3 sub-task committati
+- [x] Sub-task 01/02/03 committati
+- [x] Sub-task 04 committato (pending — da fare al termine di questa sessione)
 - [x] tsc + build `web` e `admin` verdi
-- [x] 4 smoke test superati da Lucio (2026-05-24)
+- [x] Tutti i smoke test superati da Lucio (2026-05-24)
 
 ---
 

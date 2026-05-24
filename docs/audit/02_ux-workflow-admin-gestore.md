@@ -168,4 +168,22 @@ La sidebar (`dashboard/layout.tsx`) punta a `/dashboard/news`. Ma esiste ancora 
 
 ## Note del master (sintesi / azioni)
 
-<!-- Dopo la risposta: cosa teniamo, cosa scartiamo, cosa diventa task. -->
+Tutti i rilievi sono stati processati negli Intermezzi Admin-fix e UX-fix (2026-05-23/24). Stato per ciascuno:
+
+| ID | Titolo | Stato |
+|---|---|---|
+| P0-1 | Tel + totale coperti per turno | ✅ Risolto (Intermezzo Admin-fix 01): colonna Telefono aggiunta; intestazione per turno con `prenotati / capienza`; ordinamento per orario turno |
+| P0-2 | Ordine prenotazioni per UUID turno | ✅ Risolto (Intermezzo Admin-fix 01): `getBookingsAdmin` ordina per `time_slot.time` + default data odierna |
+| P0-3 | Nessuna chiusura straordinaria | ✅ Risolto (Intermezzo UX-fix C2): tabella `closed_dates` + sezione admin; range multi-day con `end_date` |
+| P0-4 | Elimina turno: errore a posteriori senza contesto | ✅ Risolto (Intermezzo Admin-fix, sessione 2): `getBookingCountsBySlot` aggiunto; `DeleteTimeSlotDialog` mostra totale prenotazioni collegate prima della conferma; `TimeSlotCard` mostra "N prenotazioni in arrivo"; introdotta archiviazione turni come alternativa all'eliminazione |
+| P1-1 | DnD inaccessibile su liste lunghe | ⏳ Rimandato: stub in `docs/ai-playbooks/prompts/2026-05-23_admin-ux-fix/FUTURO_dnd-menu-refactor.md`. Non bloccante per MVP. |
+| P1-2 | Switch senza etichetta né spiegazione effetto pubblico | ✅ Risolto (Intermezzo Admin-fix, sessione 2): tutti gli switch ora hanno `aria-label/title="Visibile sul sito"`; sezione inattiva mostra banner; `CategoryRow` avvisa quando la categoria è disattivata |
+| P1-3 | Immagini solo via URL | ⏳ Post-MVP (Sprint 7: upload su Storage). Non bloccante per primo cliente. |
+| P1-4 | Rotta `/dashboard/novita` morta | ✅ Risolto (Intermezzo Admin-fix 01): rimossa |
+| P1-5 | Cancellazione prenotazione senza feedback né info email | ✅ Risolto (Intermezzo Admin-fix, sessione 2): toast sonner "Prenotazione di X cancellata — data / turno"; testo esplicito "Il cliente non riceve notifica automatica" |
+| P2-1 | Nessun link "vedi sito" | ✅ Risolto (Intermezzo Admin-fix, sessione 2): link "Vedi il sito ↗" in sidebar (da `NEXT_PUBLIC_SITE_URL`) |
+| P2-2 | Errori generici "Riprova" | ⏳ Non prioritizzato: messagi contestuali già dove significativo (FK block turni, overbooking, duplicato). Miglioramento incrementale. |
+| P2-3 | Hint prezzo (virgola vs punto) | ✅ Risolto (Intermezzo Admin-fix, sessione 2): hint "Usa il punto per i decimali, es. 8.50" aggiunto in `CreateItemDialog`/`EditItemDialog` |
+| P2-4 | 14 checkbox allergeni in dialog | ⏳ Post-MVP: accettabile per MVP. |
+| P2-5 | Densità lista menu | ⚠️ Parziale: banner sezione inattiva aggiunto; contatori e collasso categoria rimandati (vedi P1-1 stub). |
+| P2-6 | Layout mobile/tablet non verificato | ⏳ Non verificato: da testare prima del primo cliente. |

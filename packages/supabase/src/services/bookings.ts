@@ -51,7 +51,7 @@ export async function getAvailableTimeSlots(
   if (date < today) return []
 
   const [slotsRes, bookedRes, settingsRes, closedDateRes] = await Promise.all([
-    client.from('time_slots').select('*').eq('is_active', true).order('time', { ascending: true }),
+    client.from('time_slots').select('*').eq('is_active', true).is('archived_at', null).order('time', { ascending: true }),
     client
       .from('bookings')
       .select('time_slot_id, covers')
@@ -172,6 +172,38 @@ export async function getBookingsAdmin(
   const { data, error } = await query
   if (error) throw new Error(`getBookingsAdmin failed: ${error.message}`)
   return data ?? []
+}
+
+export type SlotBookingCounts = {
+  /** Tutte le prenotazioni collegate al turno (qualsiasi stato/data). È ciò che
+   *  la FK bookings_time_slot_id_fkey impedisce di eliminare. */
+  total: number
+  /** Prenotazioni confermate con data >= oggi: i clienti effettivamente in arrivo. */
+  upcoming: number
+}
+
+/**
+ * Conta le prenotazioni collegate a ciascun turno, distinguendo il totale
+ * (qualsiasi stato/data — incluse cancellate e passate, conservate nello storico)
+ * dalle "in arrivo" (confermate e future). Serve all'admin per avvisare prima di
+ * eliminare/disattivare un turno: l'eliminazione è bloccata dalla FK finché
+ * esiste anche una sola prenotazione collegata.
+ */
+export async function getBookingCountsBySlot(
+  client: TenantClient
+): Promise<Record<string, SlotBookingCounts>> {
+  const today = new Date().toISOString().slice(0, 10)
+  const { data, error } = await client
+    .from('bookings')
+    .select('time_slot_id, status, date')
+  if (error) throw new Error(`getBookingCountsBySlot failed: ${error.message}`)
+  const counts: Record<string, SlotBookingCounts> = {}
+  for (const row of data ?? []) {
+    const entry = (counts[row.time_slot_id] ??= { total: 0, upcoming: 0 })
+    entry.total += 1
+    if (row.status === 'confirmed' && row.date >= today) entry.upcoming += 1
+  }
+  return counts
 }
 
 export async function cancelBookingAdmin(client: TenantClient, id: string): Promise<void> {

@@ -478,3 +478,26 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Conseguenza di scope (intersezione col freeze):** `site_settings.timezone` è una **colonna nuova** → entra nel baseline congelato (`create_schema_from_template.sql`, `schema.sql`, `migrations/001_init.sql`) e va applicata allo schema `template` esistente. Il fix è quindi parte degli artefatti freeze, non un task isolato. La logica del guard (`getAvailableTimeSlots`, guard data-passata in `createBooking`) è un cambiamento al service layer in `@repo/supabase`.
 
 **Rationale:** un cliente reale con prenotazioni serali rende il bug concreto, non teorico. Il costo è piccolo (una colonna + conversione tz nel guard, senza nuove dipendenze: `Intl.DateTimeFormat` con `timeZone` copre il calcolo data/ora locale). Farlo ora evita una migrazione immediata post-freeze. Il campo per-tenant (non hardcoded) copre clienti futuri in altre timezone senza ulteriori modifiche di schema.
+
+---
+
+### 2026-05-24 — Time slot archiving: soft delete via `archived_at` per preservare storico prenotazioni
+
+**Contesto:** la FK `bookings_time_slot_id_fkey` (`bookings.time_slot_id → time_slots.id`) impedisce l'eliminazione di un turno finché esiste almeno una prenotazione collegata (incluse passate e cancellate, conservate nello storico). Il gestore non ha modo di "togliere di mezzo" un turno inutilizzato senza ricevere un errore FK. Un approccio cascade-delete eliminerebbe la storia delle prenotazioni.
+
+**Opzioni considerate:**
+- (a) **`archived_at TIMESTAMPTZ`** (soft delete): il turno resta nella tabella, la FK regge, ma viene nascosto da admin e sito pubblico. Ripristino possibile. Eliminazione definitiva solo per turni senza prenotazioni.
+- (b) **Scollegare le prenotazioni** (`bookings.time_slot_id` → nullable, null su archivio): preserva i booking ma perde il link al turno, compromettendo lo storico.
+- (c) **Forzare la cascade-delete**: perde lo storico prenotazioni, inaccettabile per GDPR e reportistica.
+
+**Decisione (Lucio, 2026-05-24):** (a). Nuova colonna `time_slots.archived_at TIMESTAMPTZ` (NULL = attivo, non-null = archiviato). Archivare imposta anche `is_active = false` (così la query pubblica, che filtra su `is_active = true`, esclude il turno senza ulteriori modifiche). L'UI mostra "Archivia" al posto di "Elimina" per i turni con storico; "Elimina" rimane solo per turni senza prenotazioni collegate.
+
+**Rationale:** non esiste UNIQUE su `time_slots.label` (il PK è UUID) → il gestore può ricreare un turno con lo stesso nome dopo l'archivio senza collisioni. Il soft delete è il pattern minimo invasivo: nessuna migrazione alle prenotazioni, nessun cambio alle query pubbliche già scritte (filtrano `is_active`), e preserva tutta la storia. Il `getAvailableTimeSlots` riceve un ulteriore filtro `.is('archived_at', null)` come guard difensivo, oltre al già presente `.eq('is_active', true)`.
+
+**Conseguenza operativa:**
+- `docs/operations/migration-2026-05-24-time-slot-archive.sql`: `ALTER TABLE template.time_slots ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;`
+- `docs/operations/create_schema_from_template.sql`: aggiunta colonna alla `CREATE TABLE time_slots` per nuovi tenant.
+- `packages/supabase/src/types/database.ts`: `archived_at: string | null` in Row/Insert/Update.
+- `packages/supabase/src/services/site-admin.ts`: `setTimeSlotArchived(client, id, archived)`.
+- `packages/supabase/src/services/bookings.ts`: aggiunto `.is('archived_at', null)` in `getAvailableTimeSlots`.
+- Admin UI: `TimeSlotCard` con due branch (attivo/archiviato); `TimeSlotList` con sezione collassabile "Turni archiviati (N)".

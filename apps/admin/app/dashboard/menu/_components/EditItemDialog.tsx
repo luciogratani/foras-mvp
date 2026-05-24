@@ -60,6 +60,9 @@ export function EditItemDialog({
               defaultValue={item.price}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Usa il punto per i decimali, es. <strong>8.50</strong>.
+            </p>
           </div>
           <div className="space-y-1">
             <Label htmlFor="edit-item-description">Descrizione</Label>
@@ -93,7 +96,7 @@ export function EditItemDialog({
           </fieldset>
           <div className="flex items-center gap-2">
             <Switch id="edit-item-active" checked={isActive} onCheckedChange={setIsActive} />
-            <Label htmlFor="edit-item-active">Attivo</Label>
+            <Label htmlFor="edit-item-active">Visibile sul sito</Label>
           </div>
           {state.status === 'error' && (
             <p className="text-sm text-destructive">{state.message}</p>

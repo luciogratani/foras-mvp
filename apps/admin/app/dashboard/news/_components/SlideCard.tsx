@@ -59,6 +59,8 @@ export function SlideCard({ slide }: { slide: NewsSlideAdmin }) {
             checked={slide.is_active}
             disabled={isToggling}
             onCheckedChange={() => formRef.current?.requestSubmit()}
+            aria-label="Visibile sul sito"
+            title="Visibile sul sito"
           />
         </form>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>

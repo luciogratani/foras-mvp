@@ -5,6 +5,7 @@ import {
   createTimeSlot,
   updateTimeSlot,
   deleteTimeSlot,
+  setTimeSlotArchived,
   updateSiteSettings,
   addClosedDate,
   removeClosedDate,
@@ -85,6 +86,26 @@ export async function deleteTimeSlotAction(
       return { status: 'error', message: 'Impossibile eliminare: esistono prenotazioni per questo turno.' }
     }
     return { status: 'error', message: 'Eliminazione turno fallita. Riprova.' }
+  }
+}
+
+export async function setTimeSlotArchivedAction(
+  _prev: SettingsActionState,
+  formData: FormData
+): Promise<SettingsActionState> {
+  const { tenant } = await requireTenantClient()
+  const id = formData.get('id') as string
+  const archived = formData.get('archived') === 'true'
+  if (!id) return { status: 'error', message: 'ID turno mancante.' }
+  try {
+    await setTimeSlotArchived(tenant, id, archived)
+    revalidatePath('/dashboard/orari')
+    return { status: 'success' }
+  } catch {
+    return {
+      status: 'error',
+      message: archived ? 'Archiviazione fallita. Riprova.' : 'Ripristino fallito. Riprova.',
+    }
   }
 }
 

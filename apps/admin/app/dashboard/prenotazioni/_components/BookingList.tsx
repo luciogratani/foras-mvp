@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { BookingAdmin, TimeSlotAdmin } from '@repo/supabase'
 import { DeleteBookingDialog } from './DeleteBookingDialog'
 
@@ -133,10 +134,9 @@ function BookingTable({
             const maxCovers = slotMaxCovers[slotId] ?? 0
 
             return (
-              <>
+              <Fragment key={slotId}>
                 {hasMultipleSlots && (
                   <SlotHeader
-                    key={`header-${slotId}`}
                     label={label}
                     bookedCovers={bookedCovers}
                     maxCovers={maxCovers}
@@ -151,7 +151,7 @@ function BookingTable({
                     showAction={showAction}
                   />
                 ))}
-              </>
+              </Fragment>
             )
           })}
         </tbody>
