@@ -1,12 +1,20 @@
 'use client'
 import { useRef, useState, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronRight, ChevronDown } from 'lucide-react'
 import type { Allergen, MenuCategory, MenuItem } from '@repo/supabase'
-import { Button, Switch } from '@repo/ui'
+import { Button, Switch, toast } from '@repo/ui'
 import { updateCategoryAction, updateItemAction, reorderItemsAction, type MenuActionState } from '../actions'
 import { CreateItemDialog } from './CreateItemDialog'
 import { EditItemDialog } from './EditItemDialog'
@@ -30,7 +38,7 @@ export function CategoryRow({
   onDelete: (cat: MenuCategory) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [, toggleAction, isToggling] = useActionState(updateCategoryAction, idle)
+  const [toggleState, toggleAction, isToggling] = useActionState(updateCategoryAction, idle)
   const formRef = useRef<HTMLFormElement>(null)
   const [createItemOpen, setCreateItemOpen] = useState(false)
   const [editItem, setEditItem] = useState<MenuItem | null>(null)
@@ -42,10 +50,23 @@ export function CategoryRow({
     setLocalItems(items)
   }, [items])
 
+  // Toast sul toggle attivo/inattivo categoria — evita il toast al primo render (status 'idle')
+  useEffect(() => {
+    if (toggleState.status === 'success') {
+      toast.success('Modifica salvata')
+    } else if (toggleState.status === 'error') {
+      toast.error(toggleState.message ?? 'Operazione non riuscita')
+    }
+  }, [toggleState])
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: category.id })
   const style = { transform: CSS.Transform.toString(transform), transition }
 
-  const itemSensors = useSensors(useSensor(PointerSensor))
+  const itemSensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const itemsDndId = useId()
 
   function handleItemDragEnd(event: DragEndEvent) {
@@ -53,10 +74,17 @@ export function CategoryRow({
     if (!over || active.id === over.id) return
     const oldIndex = localItems.findIndex((it) => it.id === active.id)
     const newIndex = localItems.findIndex((it) => it.id === over.id)
+    const previous = localItems
     const reordered = arrayMove(localItems, oldIndex, newIndex)
     setLocalItems(reordered)
-    startTransition(() => {
-      void reorderItemsAction(reordered.map((it) => it.id))
+    startTransition(async () => {
+      const res = await reorderItemsAction(reordered.map((it) => it.id))
+      if (!res.ok) {
+        setLocalItems(previous)
+        toast.error('Riordino non salvato. Riprova.')
+      } else {
+        toast.success('Ordine aggiornato')
+      }
     })
   }
 
@@ -179,8 +207,17 @@ function ItemRow({
   onEdit: (item: MenuItem) => void
   onDelete: (item: MenuItem) => void
 }) {
-  const [, toggleAction, isToggling] = useActionState(updateItemAction, idle)
+  const [toggleState, toggleAction, isToggling] = useActionState(updateItemAction, idle)
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Toast sul toggle attivo/inattivo voce — evita il toast al primo render (status 'idle')
+  useEffect(() => {
+    if (toggleState.status === 'success') {
+      toast.success('Modifica salvata')
+    } else if (toggleState.status === 'error') {
+      toast.error(toggleState.message ?? 'Operazione non riuscita')
+    }
+  }, [toggleState])
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id })
   const style = { transform: CSS.Transform.toString(transform), transition }
 

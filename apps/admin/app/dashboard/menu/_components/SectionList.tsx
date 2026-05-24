@@ -1,8 +1,17 @@
 'use client'
 import { useState, useTransition, useId, useEffect } from 'react'
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Allergen, MenuCategory, MenuItem, MenuSection } from '@repo/supabase'
+import { toast } from '@repo/ui'
 import { reorderSectionsAction } from '../actions'
 import { SectionCard } from './SectionCard'
 
@@ -23,7 +32,12 @@ export function SectionList({
   useEffect(() => {
     setSections(initialSections)
   }, [initialSections])
-  const sensors = useSensors(useSensor(PointerSensor))
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const dndId = useId()
 
   function handleDragEnd(event: DragEndEvent) {
@@ -31,10 +45,17 @@ export function SectionList({
     if (!over || active.id === over.id) return
     const oldIndex = sections.findIndex((s) => s.id === active.id)
     const newIndex = sections.findIndex((s) => s.id === over.id)
+    const previous = sections
     const reordered = arrayMove(sections, oldIndex, newIndex)
     setSections(reordered)
-    startTransition(() => {
-      void reorderSectionsAction(reordered.map((s) => s.id))
+    startTransition(async () => {
+      const res = await reorderSectionsAction(reordered.map((s) => s.id))
+      if (!res.ok) {
+        setSections(previous)
+        toast.error('Riordino non salvato. Riprova.')
+      } else {
+        toast.success('Ordine aggiornato')
+      }
     })
   }
 

@@ -1,8 +1,16 @@
 'use client'
 import { useState, useRef, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, ChevronRight, ChevronDown } from 'lucide-react'
 import type { Allergen, MenuSection, MenuCategory, MenuItem } from '@repo/supabase'
@@ -12,6 +20,7 @@ import {
   CardContent,
   CardHeader,
   Switch,
+  toast,
 } from '@repo/ui'
 import { updateSectionAction, reorderCategoriesAction, type MenuActionState } from '../actions'
 import { CategoryRow } from './CategoryRow'
@@ -45,13 +54,26 @@ export function SectionCard({
     setCats(categories)
   }, [categories])
 
-  const [, toggleAction, isToggling] = useActionState(updateSectionAction, idle)
+  const [toggleState, toggleAction, isToggling] = useActionState(updateSectionAction, idle)
   const sectionFormRef = useRef<HTMLFormElement>(null)
+
+  // Toast sul toggle attivo/inattivo — evita il toast al primo render (status 'idle')
+  useEffect(() => {
+    if (toggleState.status === 'success') {
+      toast.success('Modifica salvata')
+    } else if (toggleState.status === 'error') {
+      toast.error(toggleState.message ?? 'Operazione non riuscita')
+    }
+  }, [toggleState])
 
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.id })
   const style = { transform: CSS.Transform.toString(transform), transition }
 
-  const sensors = useSensors(useSensor(PointerSensor))
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const catsDndId = useId()
 
   // Total item count across all categories of this section (active + inactive)
@@ -65,10 +87,17 @@ export function SectionCard({
     if (!over || active.id === over.id) return
     const oldIndex = cats.findIndex((c) => c.id === active.id)
     const newIndex = cats.findIndex((c) => c.id === over.id)
+    const previous = cats
     const reordered = arrayMove(cats, oldIndex, newIndex)
     setCats(reordered)
-    startTransition(() => {
-      void reorderCategoriesAction(reordered.map((c) => c.id))
+    startTransition(async () => {
+      const res = await reorderCategoriesAction(reordered.map((c) => c.id))
+      if (!res.ok) {
+        setCats(previous)
+        toast.error('Riordino non salvato. Riprova.')
+      } else {
+        toast.success('Ordine aggiornato')
+      }
     })
   }
 
