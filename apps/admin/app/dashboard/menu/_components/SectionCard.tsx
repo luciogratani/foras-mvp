@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronRight, ChevronDown } from 'lucide-react'
+import { GripVertical, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
 import type { Allergen, MenuSection, MenuCategory, MenuItem } from '@repo/supabase'
 import {
   Button,
@@ -151,8 +151,9 @@ export function SectionCard({
                     title="Visibile sul sito"
                   />
                 </form>
-                <Button variant="outline" size="sm" onClick={() => setRenameOpen(true)}>
-                  Rinomina
+                <Button variant="outline" size="sm" aria-label="Rinomina" onClick={() => setRenameOpen(true)}>
+                  <Pencil size={14} />
+                  <span className="hidden sm:inline">Rinomina</span>
                 </Button>
               </div>
             </div>

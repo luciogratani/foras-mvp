@@ -7,10 +7,12 @@ import {
 } from '@repo/supabase'
 import type { MenuItem } from '@repo/supabase'
 import { SectionList } from './_components/SectionList'
+import { ExternalLink } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export default async function MenuPage() {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
   const { tenant } = await requireTenantClient()
   const sections = await getMenuSectionsAdmin(tenant)
   const categoriesBySection = await Promise.all(
@@ -28,7 +30,20 @@ export default async function MenuPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold">Menu</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <h1 className="text-2xl font-semibold">Menu</h1>
+        {siteUrl && (
+          <a
+            href={siteUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:underline"
+          >
+            <ExternalLink size={14} />
+            Vedi sul sito
+          </a>
+        )}
+      </div>
       <SectionList
         sections={sections}
         categoriesBySection={Object.fromEntries(sections.map((s, i) => [s.id, categoriesBySection[i] ?? []]))}

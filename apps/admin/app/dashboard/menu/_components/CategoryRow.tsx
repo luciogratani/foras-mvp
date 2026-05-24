@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronRight, ChevronDown } from 'lucide-react'
+import { GripVertical, ChevronRight, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import type { Allergen, MenuCategory, MenuItem } from '@repo/supabase'
 import { Button, Switch, toast } from '@repo/ui'
 import { updateCategoryAction, updateItemAction, reorderItemsAction, type MenuActionState } from '../actions'
@@ -137,11 +137,13 @@ export function CategoryRow({
               title="Visibile sul sito"
             />
           </form>
-          <Button variant="outline" size="sm" onClick={() => onEdit(category)}>
-            Modifica
+          <Button variant="outline" size="sm" aria-label="Modifica" onClick={() => onEdit(category)}>
+            <Pencil size={14} />
+            <span className="hidden sm:inline">Modifica</span>
           </Button>
-          <Button variant="destructive" size="sm" onClick={() => onDelete(category)}>
-            Elimina
+          <Button variant="destructive" size="sm" aria-label="Elimina" onClick={() => onDelete(category)}>
+            <Trash2 size={14} />
+            <span className="hidden sm:inline">Elimina</span>
           </Button>
         </div>
       </div>
@@ -260,11 +262,13 @@ function ItemRow({
             title="Visibile sul sito"
           />
         </form>
-        <Button variant="outline" size="sm" onClick={() => onEdit(item)}>
-          Modifica
+        <Button variant="outline" size="sm" aria-label="Modifica" onClick={() => onEdit(item)}>
+          <Pencil size={14} />
+          <span className="hidden sm:inline">Modifica</span>
         </Button>
-        <Button variant="destructive" size="sm" onClick={() => onDelete(item)}>
-          Elimina
+        <Button variant="destructive" size="sm" aria-label="Elimina" onClick={() => onDelete(item)}>
+          <Trash2 size={14} />
+          <span className="hidden sm:inline">Elimina</span>
         </Button>
       </div>
     </li>
