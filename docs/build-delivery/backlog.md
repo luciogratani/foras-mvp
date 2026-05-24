@@ -284,6 +284,39 @@ Done when:
 
 ---
 
+## Intermezzo Admin-UX-2 — Migliorie UX backoffice (2026-05-24 → IN CORSO)
+
+**Goal:** migliorare l'esperienza d'uso quotidiana del pannello admin: dashboard operativa, sidebar moderna, fix ambiguità UI, filtri rapidi prenotazioni.
+
+> **Fuori sprint.** Nessuna modifica schema DB. Lavoro interamente UI/service layer.
+
+Piano a 4 sub-task in `docs/ai-playbooks/prompts/2026-05-24_admin-ux2/`:
+
+- [x] **01** — Fix Orari switch ambiguo + reorder nav — commit `adf1cf2` (incluso in 01+02)
+  - Switch orari: semantica "Aperto" (checked = giorno aperto), label dinamica
+  - Nav sidebar: Prenotazioni seconda voce, Impostazioni ultima
+- [x] **02** — Sidebar shadcn completa — commit `adf1cf2` (2026-05-24)
+  - `npx shadcn add sidebar` → `@repo/ui`; nuovi primitivi: Sidebar, Separator, Sheet, Tooltip
+  - `AppSidebar` client component con `usePathname` per active state, icone Lucide, SidebarRail
+  - `logoutAction` estratto in `dashboard/actions.ts`; sidebar CSS vars in `apps/admin/globals.css`
+- [x] **03** — Dashboard redesign — commit `e60d4f7` (2026-05-24)
+  - `getDashboardStats()` nel service: prenotazioni/coperti oggi + prossimi 7gg + turni attivi
+  - `dashboard/page.tsx`: 4 stat card + 3 quick link; rimossa card "da sviluppatore"
+- [x] **04** — Prenotazioni filtri rapidi — commit `3dfb9f7` (2026-05-24)
+  - Bottoni "Oggi" / "Domani" ancorati a destra, navigazione immediata senza submit
+  - Bottone attivo evidenziato con colore primary
+
+**FUTURO (stub documentati, non implementati):**
+- `FUTURO_polling-prenotazioni.md` — auto-refresh + Sonner toast + suono notifica
+- `FUTURO_dnd-menu-refactor.md` (già esistente, invariato) — refactor gerarchia menu
+
+Done when:
+- [x] Sub-task 01/02/03/04 committati
+- [x] tsc + build `admin` verdi
+- [ ] Smoke test da Lucio
+
+---
+
 ## Sprint 6 — Template freeze + onboarding primo cliente
 
 **Goal:** template congelato, primo cliente reale onboardato.
