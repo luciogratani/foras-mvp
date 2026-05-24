@@ -284,7 +284,7 @@ Done when:
 
 ---
 
-## Intermezzo Admin-UX-2 — Migliorie UX backoffice (2026-05-24 → IN CORSO)
+## Intermezzo Admin-UX-2 — Migliorie UX backoffice (2026-05-24 → CHIUSO 2026-05-24)
 
 **Goal:** migliorare l'esperienza d'uso quotidiana del pannello admin: dashboard operativa, sidebar moderna, fix ambiguità UI, filtri rapidi prenotazioni.
 
@@ -313,7 +313,11 @@ Piano a 4 sub-task in `docs/ai-playbooks/prompts/2026-05-24_admin-ux2/`:
 Done when:
 - [x] Sub-task 01/02/03/04 committati
 - [x] tsc + build `admin` verdi
-- [ ] Smoke test da Lucio
+- [x] Smoke test da Lucio — 16/16 verdi (2026-05-24)
+
+**Nit UI da smoke test, fixati in `0a5cc7b` (2026-05-24):**
+- Sidebar collassata: titolo "Foras Admin" si troncava a "F..." → nascosto in modalità icona (`group-data-[collapsible=icon]:hidden`).
+- `/dashboard/orari`: label dello switch ora dinamica `Aperto`/`Chiuso` (prima sempre "Aperto", solo spenta visivamente).
 
 ---
 
