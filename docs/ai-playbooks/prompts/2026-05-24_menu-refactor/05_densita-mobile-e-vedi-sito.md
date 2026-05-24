@@ -1,6 +1,7 @@
 ---
-status: TODO
+status: DONE
 created: 2026-05-25
+completed: 2026-05-25
 area: ai-playbooks
 type: prompt
 topic: menu-refactor
