@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useState } from 'react'
+import { useActionState, useState, startTransition } from 'react'
 import type { SiteSettings } from '@repo/supabase'
 import { Button, Input, Label, Textarea, Switch } from '@repo/ui'
 import {
@@ -19,7 +19,7 @@ function MaintenancePanel({ settings }: { settings: SiteSettings | null }) {
     setIsOn(checked)
     const fd = new FormData()
     fd.set('maintenance_mode', String(checked))
-    formAction(fd)
+    startTransition(() => { formAction(fd) })
   }
 
   return (
