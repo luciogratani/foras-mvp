@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical } from 'lucide-react'
+import { GripVertical, ChevronRight, ChevronDown } from 'lucide-react'
 import type { Allergen, MenuCategory, MenuItem } from '@repo/supabase'
 import { Button, Switch } from '@repo/ui'
 import { updateCategoryAction, updateItemAction, reorderItemsAction, type MenuActionState } from '../actions'
@@ -29,6 +29,7 @@ export function CategoryRow({
   onEdit: (cat: MenuCategory) => void
   onDelete: (cat: MenuCategory) => void
 }) {
+  const [open, setOpen] = useState(false)
   const [, toggleAction, isToggling] = useActionState(updateCategoryAction, idle)
   const formRef = useRef<HTMLFormElement>(null)
   const [createItemOpen, setCreateItemOpen] = useState(false)
@@ -59,10 +60,13 @@ export function CategoryRow({
     })
   }
 
+  const itemCount = items.length
+
   return (
     <li ref={setNodeRef} style={style} className="rounded-md border">
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-2">
+          {/* DnD grip — handles drag only, no toggle */}
           <button
             type="button"
             className="cursor-grab text-muted-foreground"
@@ -71,12 +75,25 @@ export function CategoryRow({
           >
             <GripVertical size={16} />
           </button>
-          <span className={`text-sm font-medium ${!category.is_active ? 'opacity-50' : ''}`}>
-            {category.name}
-            {!category.is_active && (
-              <span className="ml-2 text-xs text-muted-foreground">(inattiva)</span>
-            )}
-          </span>
+          {/* Accordion toggle — distinct from the grip */}
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={open ? `Comprimi categoria ${category.name}` : `Espandi categoria ${category.name}`}
+            className="flex items-center gap-1 text-left"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span className={`text-sm font-medium ${!category.is_active ? 'opacity-50' : ''}`}>
+              {category.name}
+              {!category.is_active && (
+                <span className="ml-2 text-xs text-muted-foreground">(inattiva)</span>
+              )}
+            </span>
+            <span className="ml-1 text-xs text-muted-foreground">
+              · {itemCount} {itemCount === 1 ? 'voce' : 'voci'}
+            </span>
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <form ref={formRef} action={toggleAction}>
@@ -99,29 +116,32 @@ export function CategoryRow({
         </div>
       </div>
 
-      <div className="border-t px-3 py-2">
-        {sectionActive && !category.is_active && localItems.length > 0 && (
-          <p className="mb-2 text-xs text-muted-foreground">
-            Categoria disattivata: le voci qui sotto <strong>non compaiono sul sito</strong>.
-          </p>
-        )}
-        {localItems.length === 0 ? (
-          <p className="mb-2 text-sm text-muted-foreground">Nessun item.</p>
-        ) : (
-          <DndContext id={itemsDndId} sensors={itemSensors} onDragEnd={handleItemDragEnd}>
-            <SortableContext items={localItems.map((it) => it.id)} strategy={verticalListSortingStrategy}>
-              <ul className="mb-2 space-y-1">
-                {localItems.map((item) => (
-                  <ItemRow key={item.id} item={item} onEdit={setEditItem} onDelete={setDeleteItem} />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-        )}
-        <Button variant="outline" size="sm" onClick={() => setCreateItemOpen(true)}>
-          + Aggiungi item
-        </Button>
-      </div>
+      {/* Body — mounted only when expanded */}
+      {open && (
+        <div className="border-t px-3 py-2">
+          {sectionActive && !category.is_active && localItems.length > 0 && (
+            <p className="mb-2 text-xs text-muted-foreground">
+              Categoria disattivata: le voci qui sotto <strong>non compaiono sul sito</strong>.
+            </p>
+          )}
+          {localItems.length === 0 ? (
+            <p className="mb-2 text-sm text-muted-foreground">Nessun item.</p>
+          ) : (
+            <DndContext id={itemsDndId} sensors={itemSensors} onDragEnd={handleItemDragEnd}>
+              <SortableContext items={localItems.map((it) => it.id)} strategy={verticalListSortingStrategy}>
+                <ul className="mb-2 space-y-1">
+                  {localItems.map((item) => (
+                    <ItemRow key={item.id} item={item} onEdit={setEditItem} onDelete={setDeleteItem} />
+                  ))}
+                </ul>
+              </SortableContext>
+            </DndContext>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setCreateItemOpen(true)}>
+            + Aggiungi item
+          </Button>
+        </div>
+      )}
 
       {createItemOpen && (
         <CreateItemDialog
