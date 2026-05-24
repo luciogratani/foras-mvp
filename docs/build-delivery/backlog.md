@@ -329,14 +329,14 @@ Done when:
 
 Piano a 2 sub-task in `docs/ai-playbooks/prompts/2026-05-24_web-ux-funnel/`:
 
-- [x] **01** — Raggiungibilità funnel + UX form — commit `b483b47` (tsc + build `web` verdi; smoke browser di Lucio pendente): link "Prenota" minimale in Hero/Footer (P0.1), `min` data + auto-submit (P1.1/P2.3), errori per-campo + GDPR visibile + ripopolamento valori (P1.4/P0.3-cheap), data leggibile IT (P2.2), messaggi "nessun turno" differenziati cheap (P1.2). Solo `apps/web`, nessuna modifica service. **Estensione minore in-spirit:** aggiunto placeholder "Seleziona un turno" + label "Completo" sui turni pieni (al posto di "0 coperti disponibili") — sfiora P2.7/Secchio B ma copy-only, no redesign; il redesign select→card resta in Secchio B.
-- [ ] **02** — Annullamento a due passi (`sonnet`/high): nuova `getBookingByToken` (sola lettura) nel service, server action `confirmCancelAction`, riscrittura `cancel/[token]/page.tsx` (GET mostra dettagli, POST cancella). Chiude P0.2 — bug latente che diventa critico all'attivazione dell'email B2.
+- [x] **01** — Raggiungibilità funnel + UX form — commit `b483b47` (tsc + build `web` verdi; **smoke browser di Lucio verde 2026-05-24**): link "Prenota" minimale in Hero/Footer (P0.1), `min` data + auto-submit (P1.1/P2.3), errori per-campo + GDPR visibile + ripopolamento valori (P1.4/P0.3-cheap), data leggibile IT (P2.2), messaggi "nessun turno" differenziati cheap (P1.2). Solo `apps/web`, nessuna modifica service. **Estensione minore in-spirit:** aggiunto placeholder "Seleziona un turno" + label "Completo" sui turni pieni (al posto di "0 coperti disponibili") — sfiora P2.7/Secchio B ma copy-only, no redesign; il redesign select→card resta in Secchio B.
+- [x] **02** — Annullamento a due passi — commit `1cbe429` (tsc -r + build `web` verdi; smoke browser di Lucio pendente): nuova `getBookingByToken` (sola lettura, join `time_slots`) + tipo `BookingSummary` nel service, server action `confirmCancelAction` su POST, riscrittura `cancel/[token]/page.tsx` (GET mostra dettagli, POST cancella) + `CancelConfirm` client component. Chiude P0.2 — bug latente che diventa critico all'attivazione dell'email B2.
 
 **Rimandati (documentati nell'audit):** Secchio B (CTA stilizzato, select→card, trust su `/booking`, galleria skeleton, disponibilità "Disponibile/Completo") → consolidamento UI al primo onboarding. Secchio C (persistenza token, telefono obbligatorio) → con la decisione email B2. Follow-up: P1.2 ricco richiede cambio firma `getAvailableTimeSlots`.
 
 Done when:
-- [ ] Sub-task 01/02 committati + tsc -r e build `web` verdi
-- [ ] Smoke test da Lucio
+- [x] Sub-task 01/02 committati + tsc -r e build `web` verdi
+- [~] Smoke test da Lucio — 01 verde (2026-05-24); 02 pendente
 
 ---
 
