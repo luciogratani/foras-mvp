@@ -187,6 +187,7 @@ export function SectionCard({
                           items={itemsByCategory[cat.id] ?? []}
                           allergens={allergens}
                           sectionActive={section.is_active}
+                          sectionCategories={cats}
                           onEdit={setEditCategory}
                           onDelete={setDeleteCategory}
                         />

@@ -27,6 +27,7 @@ export function CategoryRow({
   items,
   allergens,
   sectionActive,
+  sectionCategories,
   onEdit,
   onDelete,
 }: {
@@ -34,6 +35,7 @@ export function CategoryRow({
   items: MenuItem[]
   allergens: Allergen[]
   sectionActive: boolean
+  sectionCategories: MenuCategory[]
   onEdit: (cat: MenuCategory) => void
   onDelete: (cat: MenuCategory) => void
 }) {
@@ -184,6 +186,7 @@ export function CategoryRow({
           key={editItem.id}
           item={editItem}
           allergens={allergens}
+          categories={sectionCategories}
           onClose={() => setEditItem(null)}
         />
       )}

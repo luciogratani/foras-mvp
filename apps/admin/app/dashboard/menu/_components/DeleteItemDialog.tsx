@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  toast,
 } from '@repo/ui'
 import { deleteItemAction, type MenuActionState } from '../actions'
 
@@ -25,8 +26,13 @@ export function DeleteItemDialog({
   const [state, formAction, isPending] = useActionState(deleteItemAction, idle)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Voce eliminata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

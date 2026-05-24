@@ -11,6 +11,7 @@ import {
   DialogTitle,
   Input,
   Label,
+  toast,
 } from '@repo/ui'
 import { updateSectionAction, type MenuActionState } from '../actions'
 
@@ -26,8 +27,13 @@ export function RenameSectionDialog({
   const [state, formAction, isPending] = useActionState(updateSectionAction, idle)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Sezione rinominata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

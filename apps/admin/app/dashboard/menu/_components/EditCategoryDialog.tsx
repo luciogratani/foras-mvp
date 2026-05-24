@@ -12,6 +12,7 @@ import {
   Input,
   Label,
   Switch,
+  toast,
 } from '@repo/ui'
 import { updateCategoryAction, type MenuActionState } from '../actions'
 
@@ -28,8 +29,13 @@ export function EditCategoryDialog({
   const [isActive, setIsActive] = useState(category.is_active)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Categoria salvata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

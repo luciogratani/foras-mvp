@@ -11,6 +11,7 @@ import {
   Input,
   Label,
   Switch,
+  toast,
 } from '@repo/ui'
 import { createCategoryAction, type MenuActionState } from '../actions'
 
@@ -27,8 +28,13 @@ export function CreateCategoryDialog({
   const [isActive, setIsActive] = useState(true)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Categoria creata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

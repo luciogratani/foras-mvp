@@ -14,6 +14,7 @@ import {
   Label,
   Switch,
   Textarea,
+  toast,
 } from '@repo/ui'
 import { createItemAction, type MenuActionState } from '../actions'
 
@@ -32,8 +33,13 @@ export function CreateItemDialog({
   const [isActive, setIsActive] = useState(true)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Voce creata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

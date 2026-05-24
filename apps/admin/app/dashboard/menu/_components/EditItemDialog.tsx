@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useActionState } from 'react'
-import type { Allergen, MenuItem } from '@repo/supabase'
+import type { Allergen, MenuCategory, MenuItem } from '@repo/supabase'
 import {
   Button,
   Checkbox,
@@ -14,33 +14,55 @@ import {
   Label,
   Switch,
   Textarea,
+  toast,
 } from '@repo/ui'
-import { updateItemAction, type MenuActionState } from '../actions'
+import { updateItemAction, moveItemToCategoryAction, type MenuActionState } from '../actions'
 
 const idle: MenuActionState = { status: 'idle' }
 
 export function EditItemDialog({
   item,
   allergens,
+  categories,
   onClose,
 }: {
   item: MenuItem
   allergens: Allergen[]
+  categories: MenuCategory[]
   onClose: () => void
 }) {
   const [state, formAction, isPending] = useActionState(updateItemAction, idle)
   const [isActive, setIsActive] = useState(item.is_active)
   const selected = new Set(item.allergen_ids)
 
+  const [moveState, moveFormAction, isMoving] = useActionState(moveItemToCategoryAction, idle)
+  const [selectedCategoryId, setSelectedCategoryId] = useState(item.category_id)
+
+  // Toast + close on edit success/error
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Voce salvata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
+
+  // Toast + close on move success/error
+  useEffect(() => {
+    if (moveState.status === 'success') {
+      toast.success('Voce spostata')
+      onClose()
+    } else if (moveState.status === 'error') {
+      toast.error(moveState.message ?? 'Spostamento non riuscito')
+    }
+  }, [moveState.status, moveState, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Modifica item</DialogTitle>
+          <DialogTitle>Modifica voce</DialogTitle>
         </DialogHeader>
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="id" value={item.id} />
@@ -110,6 +132,39 @@ export function EditItemDialog({
             </Button>
           </DialogFooter>
         </form>
+
+        {/* Selettore "Sposta in categoria" — separato dal form di modifica */}
+        {categories.length > 1 && (
+          <div className="mt-2 border-t pt-4">
+            <p className="mb-2 text-sm font-medium">Sposta in un'altra categoria (stessa sezione)</p>
+            <form action={moveFormAction} className="flex items-center gap-2">
+              <input type="hidden" name="id" value={item.id} />
+              <select
+                name="new_category_id"
+                value={selectedCategoryId}
+                onChange={(e) => setSelectedCategoryId(e.target.value)}
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                disabled={isMoving || selectedCategoryId === item.category_id}
+              >
+                {isMoving ? 'Spostamento…' : 'Sposta'}
+              </Button>
+            </form>
+            {moveState.status === 'error' && (
+              <p className="mt-1 text-sm text-destructive">{moveState.message}</p>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

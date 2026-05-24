@@ -9,6 +9,7 @@ import {
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
+  moveItemToCategory,
   reorderMenuSections,
   reorderMenuCategories,
   reorderMenuItems,
@@ -178,6 +179,22 @@ export async function deleteItemAction(
     return { status: 'success' }
   } catch {
     return { status: 'error', message: 'Eliminazione item fallita. Riprova.' }
+  }
+}
+
+export async function moveItemToCategoryAction(
+  _prevState: MenuActionState,
+  formData: FormData
+): Promise<MenuActionState> {
+  const { tenant } = await requireTenantClient()
+  const id = formData.get('id') as string
+  const newCategoryId = formData.get('new_category_id') as string
+  try {
+    await moveItemToCategory(tenant, id, newCategoryId)
+    revalidatePath('/dashboard/menu')
+    return { status: 'success' }
+  } catch {
+    return { status: 'error', message: 'Spostamento non riuscito. Riprova.' }
   }
 }
 

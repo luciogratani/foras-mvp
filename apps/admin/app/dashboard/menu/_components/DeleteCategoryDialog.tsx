@@ -10,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  toast,
 } from '@repo/ui'
 import { deleteCategoryAction, type MenuActionState } from '../actions'
 
@@ -25,8 +26,13 @@ export function DeleteCategoryDialog({
   const [state, formAction, isPending] = useActionState(deleteCategoryAction, idle)
 
   useEffect(() => {
-    if (state.status === 'success') onClose()
-  }, [state.status, onClose])
+    if (state.status === 'success') {
+      toast.success('Categoria eliminata')
+      onClose()
+    } else if (state.status === 'error') {
+      toast.error(state.message ?? 'Operazione non riuscita')
+    }
+  }, [state.status, state, onClose])
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
