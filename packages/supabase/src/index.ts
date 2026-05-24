@@ -49,10 +49,11 @@ export {
   getBookingsAdmin,
   getBookingCountsBySlot,
   cancelBookingAdmin,
+  getDashboardStats,
   OverbookingError,
   DuplicateBookingError,
 } from './services/bookings'
-export type { TimeSlot, Booking, AvailableTimeSlot, BookingAdmin, SlotBookingCounts } from './services/bookings'
+export type { TimeSlot, Booking, AvailableTimeSlot, BookingAdmin, SlotBookingCounts, DashboardStats } from './services/bookings'
 
 export { CreateBookingInputSchema, CancelBookingTokenSchema } from './schemas/bookings'
 export type { CreateBookingInput } from './schemas/bookings'

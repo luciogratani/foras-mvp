@@ -214,6 +214,48 @@ export async function cancelBookingAdmin(client: TenantClient, id: string): Prom
   if (error) throw new Error(`cancelBookingAdmin failed: ${error.message}`)
 }
 
+export type DashboardStats = {
+  todayConfirmed: number
+  todayCancelled: number
+  todayCovers: number
+  upcomingWeek: number
+  activeSlots: number
+}
+
+export async function getDashboardStats(client: TenantClient): Promise<DashboardStats> {
+  const today = new Date().toISOString().slice(0, 10)
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
+  const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
+
+  const [bookingsRes, slotsRes] = await Promise.all([
+    client.from('bookings').select('status, covers, date').gte('date', today).lte('date', nextWeek),
+    client
+      .from('time_slots')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .is('archived_at', null),
+  ])
+
+  if (bookingsRes.error) throw new Error(`getDashboardStats failed: ${bookingsRes.error.message}`)
+  if (slotsRes.error) throw new Error(`getDashboardStats failed: ${slotsRes.error.message}`)
+
+  let todayConfirmed = 0
+  let todayCancelled = 0
+  let todayCovers = 0
+  let upcomingWeek = 0
+
+  for (const b of bookingsRes.data ?? []) {
+    if (b.date === today) {
+      if (b.status === 'confirmed') { todayConfirmed++; todayCovers += b.covers ?? 0 }
+      else if (b.status === 'cancelled') todayCancelled++
+    } else if (b.date >= tomorrow && b.status === 'confirmed') {
+      upcomingWeek++
+    }
+  }
+
+  return { todayConfirmed, todayCancelled, todayCovers, upcomingWeek, activeSlots: slotsRes.count ?? 0 }
+}
+
 /**
  * Cancella una prenotazione confermata dato il suo token.
  *
