@@ -557,3 +557,11 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 - **01** (schema + admin): `ALTER TABLE time_slots ADD COLUMN end_time TIME` nel baseline `create_schema_from_template.sql` + hand-edit `types/database.ts`; Zod `TimeSlot*Schema` con `end_time` opzionale + `.refine(end_time > time)`; admin orari (Create/Edit dialog + `TimeSlotCard` mostra la finestra). **Step manuale master:** `ALTER` sullo schema `template` nel SQL editor prima dello smoke.
 - **02** (web): `getAvailableTimeSlots` ritorna `end_time`; `createBooking` enforce `preferred_time` nella finestra quando settata (capacità invariata); `BookingForm` rende `preferred_time` richiesto con `min`/`max` sui turni con finestra; `actions.ts` mappa l'errore a field error.
 - È modifica di schema → la colonna entra nel **baseline congelato** (insieme a `end_time` su `template`).
+
+### 2026-05-25 — Capienza su tavoli + coperti rimandata a post-onboarding
+
+**Contesto:** dagli appunti del meeting con James (22 mag) era emersa l'idea di gestire la capacità su **due valori — tavoli e coperti** (l'admin definisce le sedute per tavolo; si esaurisce sul primo dei due che si satura). Sarebbe una modifica **schema-affecting** (nuovo modello capacità su `time_slots`/`bookings`), quindi candidata a entrare *prima* del freeze insieme agli altri item pre-freeze.
+
+**Decisione (Lucio, 2026-05-25):** **rimandata a dopo il primo onboarding.** La proposta di James è valida ma **troppo stringente per alcuni locali**; per scegliere il modello giusto servono **dati reali, clienti reali e un gestore reale** che mostrino qual è il workflow di capienza effettivamente usato. Decidere ora rischierebbe di congelare nel baseline un modello sbagliato.
+
+**Conseguenza:** i tre candidati schema-affecting pre-freeze sono **tutti risolti**: (a) orari spezzati su più fasce → fatto in UX-fix C1 (`opening_hours` array, cap 2 fasce/giorno); (b) DnD menu usabile → fatto in Menu-refactor (accordion); (c) prenotazione a orario libero → fatto in Booking-orario-libero. La capienza tavoli+coperti **non** blocca il freeze: se servirà sarà una migrazione post-freeze, accettata consapevolmente come costo (sarà informata da dati reali). **Il freeze (Sprint 6 / Stream A) non è più trattenuto da lavoro schema-affecting in sospeso.**
