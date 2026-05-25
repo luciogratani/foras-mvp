@@ -16,9 +16,20 @@ import { createTimeSlotAction, type SettingsActionState } from '../actions'
 
 const idle: SettingsActionState = { status: 'idle' }
 
+// Suggerisce una fine = inizio + 2h (clampata a 23:59), così il campo time
+// non viene mai mostrato vuoto (evita il rendering "fantasma" del browser).
+function suggestEndTime(start: string): string {
+  const m = /^(\d{2}):(\d{2})$/.exec(start)
+  if (!m) return ''
+  const total = Math.min(Number(m[1]) * 60 + Number(m[2]) + 120, 23 * 60 + 59)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 export function CreateTimeSlotDialog({ onClose }: { onClose: () => void }) {
   const [state, formAction, isPending] = useActionState(createTimeSlotAction, idle)
   const [isActive, setIsActive] = useState(true)
+  const [time, setTime] = useState('')
+  const [endTime, setEndTime] = useState('')
 
   useEffect(() => {
     if (state.status === 'success') onClose()
@@ -38,13 +49,47 @@ export function CreateTimeSlotDialog({ onClose }: { onClose: () => void }) {
           </div>
           <div className="space-y-1">
             <Label htmlFor="create-slot-time">Orario</Label>
-            <Input id="create-slot-time" name="time" type="time" required />
+            <Input
+              id="create-slot-time"
+              name="time"
+              type="time"
+              required
+              value={time}
+              onChange={(e) => setTime(e.currentTarget.value)}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="create-slot-end-time">Fine turno (facoltativo)</Label>
-            <Input id="create-slot-end-time" name="end_time" type="time" />
+            {endTime ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  id="create-slot-end-time"
+                  name="end_time"
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.currentTarget.value)}
+                />
+                <Button type="button" variant="ghost" size="sm" onClick={() => setEndTime('')}>
+                  Rimuovi
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!time}
+                onClick={() => setEndTime(suggestEndTime(time))}
+              >
+                + Aggiungi fine turno
+              </Button>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
-              Lascia vuoto per un orario fisso. Imposta una fine per far scegliere ai clienti l&apos;orario di arrivo nella finestra (es. 20:00–23:00).
+              {endTime
+                ? 'I clienti scelgono l’orario di arrivo tra l’inizio e questa fine.'
+                : time
+                  ? 'Orario fisso: i clienti prenotano all’orario d’inizio. Aggiungi una fine per dare una finestra in cui scelgono l’arrivo.'
+                  : 'Imposta prima l’orario d’inizio per poter aggiungere una fine.'}
             </p>
           </div>
           <div className="space-y-1">
