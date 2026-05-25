@@ -29,6 +29,8 @@ export type { MenuSection, MenuCategory, MenuItem, Allergen, MenuCategoryWithIte
 export {
   getMenuSectionsAdmin,
   getMenuCategoriesAdmin,
+  createMenuSection,
+  deleteMenuSection,
   updateMenuSection,
   createMenuCategory,
   updateMenuCategory,
@@ -60,6 +62,7 @@ export type { TimeSlot, Booking, AvailableTimeSlot, BookingSummary, BookingAdmin
 export { CreateBookingInputSchema, CancelBookingTokenSchema } from './schemas/bookings'
 export type { CreateBookingInput } from './schemas/bookings'
 export {
+  MenuSectionCreateSchema,
   MenuSectionUpdateSchema,
   MenuCategoryCreateSchema,
   MenuCategoryUpdateSchema,
@@ -67,6 +70,7 @@ export {
   MenuItemUpdateSchema,
 } from './schemas/menu'
 export type {
+  MenuSectionCreate,
   MenuSectionUpdate,
   MenuCategoryCreate,
   MenuCategoryUpdate,

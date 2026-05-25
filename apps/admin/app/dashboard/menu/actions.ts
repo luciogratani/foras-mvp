@@ -2,6 +2,8 @@
 import { revalidatePath } from 'next/cache'
 import { requireTenantClient } from '../../../lib/auth'
 import {
+  createMenuSection,
+  deleteMenuSection,
   updateMenuSection,
   createMenuCategory,
   updateMenuCategory,
@@ -13,6 +15,7 @@ import {
   reorderMenuSections,
   reorderMenuCategories,
   reorderMenuItems,
+  MenuSectionCreateSchema,
   MenuSectionUpdateSchema,
   MenuCategoryCreateSchema,
   MenuCategoryUpdateSchema,
@@ -24,6 +27,40 @@ export type MenuActionState =
   | { status: 'idle' }
   | { status: 'success' }
   | { status: 'error'; message: string }
+
+export async function createSectionAction(
+  _prevState: MenuActionState,
+  formData: FormData
+): Promise<MenuActionState> {
+  const { tenant } = await requireTenantClient()
+  const raw = { name: (formData.get('name') as string | null)?.trim() ?? '' }
+  const parsed = MenuSectionCreateSchema.safeParse(raw)
+  if (!parsed.success) {
+    return { status: 'error', message: parsed.error.errors[0]?.message ?? 'Dati non validi.' }
+  }
+  try {
+    await createMenuSection(tenant, parsed.data.name)
+    revalidatePath('/dashboard/menu')
+    return { status: 'success' }
+  } catch {
+    return { status: 'error', message: 'Creazione sezione fallita. Riprova.' }
+  }
+}
+
+export async function deleteSectionAction(
+  _prevState: MenuActionState,
+  formData: FormData
+): Promise<MenuActionState> {
+  const { tenant } = await requireTenantClient()
+  const id = formData.get('id') as string
+  try {
+    await deleteMenuSection(tenant, id)
+    revalidatePath('/dashboard/menu')
+    return { status: 'success' }
+  } catch {
+    return { status: 'error', message: 'Eliminazione sezione fallita. Riprova.' }
+  }
+}
 
 export async function updateSectionAction(
   _prevState: MenuActionState,

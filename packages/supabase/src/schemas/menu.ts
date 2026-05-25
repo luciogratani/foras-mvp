@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+export const MenuSectionCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Il nome è obbligatorio').max(100, 'Il nome è troppo lungo'),
+})
+
 export const MenuSectionUpdateSchema = z.object({
   name: z.string().min(1, 'Il nome è obbligatorio').optional(),
   is_active: z.boolean().optional(),
@@ -33,6 +37,7 @@ export const MenuItemCreateSchema = z.object({
 
 export const MenuItemUpdateSchema = MenuItemCreateSchema.partial().omit({ category_id: true })
 
+export type MenuSectionCreate = z.infer<typeof MenuSectionCreateSchema>
 export type MenuSectionUpdate = z.infer<typeof MenuSectionUpdateSchema>
 export type MenuCategoryCreate = z.infer<typeof MenuCategoryCreateSchema>
 export type MenuCategoryUpdate = z.infer<typeof MenuCategoryUpdateSchema>

@@ -11,9 +11,10 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { Allergen, MenuCategory, MenuItem, MenuSection } from '@repo/supabase'
-import { toast } from '@repo/ui'
+import { Button, toast } from '@repo/ui'
 import { reorderSectionsAction } from '../actions'
 import { SectionCard } from './SectionCard'
+import { CreateSectionDialog } from './CreateSectionDialog'
 
 export function SectionList({
   sections: initialSections,
@@ -27,6 +28,7 @@ export function SectionList({
   allergens: Allergen[]
 }) {
   const [sections, setSections] = useState(initialSections)
+  const [createOpen, setCreateOpen] = useState(false)
   const [, startTransition] = useTransition()
 
   useEffect(() => {
@@ -60,20 +62,35 @@ export function SectionList({
   }
 
   return (
-    <DndContext id={dndId} sensors={sensors} onDragEnd={handleDragEnd}>
-      <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-4">
-          {sections.map((section) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              categories={categoriesBySection[section.id] ?? []}
-              itemsByCategory={itemsByCategory}
-              allergens={allergens}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <>
+      <DndContext id={dndId} sensors={sensors} onDragEnd={handleDragEnd}>
+        <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-4">
+            {sections.map((section) => (
+              <SectionCard
+                key={section.id}
+                section={section}
+                categories={categoriesBySection[section.id] ?? []}
+                itemsByCategory={itemsByCategory}
+                allergens={allergens}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      <div className="mt-4">
+        <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+          + Aggiungi sezione
+        </Button>
+      </div>
+
+      {createOpen && (
+        <CreateSectionDialog
+          key="create-section"
+          onClose={() => setCreateOpen(false)}
+        />
+      )}
+    </>
   )
 }

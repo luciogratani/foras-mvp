@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
+import { GripVertical, ChevronRight, ChevronDown, Pencil, Trash2 } from 'lucide-react'
 import type { Allergen, MenuSection, MenuCategory, MenuItem } from '@repo/supabase'
 import {
   Button,
@@ -28,6 +28,7 @@ import { RenameSectionDialog } from './RenameSectionDialog'
 import { CreateCategoryDialog } from './CreateCategoryDialog'
 import { EditCategoryDialog } from './EditCategoryDialog'
 import { DeleteCategoryDialog } from './DeleteCategoryDialog'
+import { DeleteSectionDialog } from './DeleteSectionDialog'
 
 const idle: MenuActionState = { status: 'idle' }
 
@@ -44,6 +45,7 @@ export function SectionCard({
 }) {
   const [open, setOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [editCategory, setEditCategory] = useState<MenuCategory | null>(null)
   const [deleteCategory, setDeleteCategory] = useState<MenuCategory | null>(null)
@@ -155,6 +157,16 @@ export function SectionCard({
                   <Pencil size={14} />
                   <span className="hidden sm:inline">Rinomina</span>
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label="Elimina sezione"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 size={14} />
+                  <span className="hidden sm:inline">Elimina</span>
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -210,6 +222,15 @@ export function SectionCard({
           key={`rename-${section.id}`}
           section={section}
           onClose={() => setRenameOpen(false)}
+        />
+      )}
+      {deleteOpen && (
+        <DeleteSectionDialog
+          key={`delete-section-${section.id}`}
+          section={section}
+          categoryCount={cats.length}
+          itemCount={totalItems}
+          onClose={() => setDeleteOpen(false)}
         />
       )}
       {createOpen && (

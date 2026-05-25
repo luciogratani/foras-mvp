@@ -109,6 +109,35 @@ export async function updateMenuSection(
   return data
 }
 
+export async function createMenuSection(
+  client: TenantClient,
+  name: string
+): Promise<MenuSection> {
+  // Compute next position (append to end)
+  const { data: last, error: posErr } = await client
+    .from('menu_sections')
+    .select('position')
+    .order('position', { ascending: false, nullsFirst: false })
+    .limit(1)
+  if (posErr) throw new Error(`createMenuSection (fetch max position) failed: ${posErr.message}`)
+  const maxPosition =
+    last && last.length > 0 && last[0].position != null ? last[0].position : -1
+  const newPosition = maxPosition + 1
+
+  const { data, error } = await client
+    .from('menu_sections')
+    .insert({ name, is_active: true, position: newPosition })
+    .select('*')
+    .single()
+  if (error) throw new Error(`createMenuSection failed: ${error.message}`)
+  return data
+}
+
+export async function deleteMenuSection(client: TenantClient, id: string): Promise<void> {
+  const { error } = await client.from('menu_sections').delete().eq('id', id)
+  if (error) throw new Error(`deleteMenuSection failed: ${error.message}`)
+}
+
 export async function createMenuCategory(
   client: TenantClient,
   input: MenuCategoryCreate
