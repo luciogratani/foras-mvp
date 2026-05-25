@@ -340,7 +340,7 @@ Done when:
 
 ---
 
-## Intermezzo Menu-refactor — `/dashboard/menu` accordion + hardening (2026-05-24 → APERTO)
+## Intermezzo Menu-refactor — `/dashboard/menu` accordion + hardening (2026-05-24 → CHIUSO 2026-05-25)
 
 **Goal:** rendere la gestione del menu comprensibile e usabile da tablet per un gestore non tecnico, su menu reali (decine di voci). Esegue lo stub `FUTURO_dnd-menu-refactor.md`.
 
@@ -353,13 +353,13 @@ Piano a 5 sub-task in `docs/ai-playbooks/prompts/2026-05-24_menu-refactor/`:
 - [x] **03** — Riordino: hardening — commit `1a12a2c` (subchat Sonnet/high + fix master sensori; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**). **DnD mantenuto**: rollback ottimistico su `{ ok:false }` + toast su riordino e toggle (3 livelli); `KeyboardSensor` (a11y) + `TouchSensor` con delay; `PointerSensor`→`MouseSensor` (evita doppia attivazione touch). Niente frecce.
 - [x] **04** — "Sposta in categoria" + toast dialog — commit `1312b79` (subchat Sonnet/medium; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**): `moveItemToCategoryAction` + selettore "sposta (stessa sezione)" in EditItemDialog (plumbing `sectionCategories`); toast di conferma/errore su tutti i dialog CRUD.
 - [x] **05** — Densità mobile/tablet + "Vedi sul sito" — commit `1e935b5` (subchat Sonnet/medium; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**): azioni di riga come bottoni-icona (testo da `sm`, `aria-label`) → niente wrapping su mobile; link "Vedi sul sito" nell'header se `NEXT_PUBLIC_SITE_URL` settata. No DropdownMenu/dipendenze nuove.
-- [x] **06** — Sezioni a CRUD completo (`sonnet`/high) — commit `ac8981a` (subchat Sonnet/high; tsc -r + build `admin` verdi; **smoke di Lucio pendente**): `createMenuSection` (append in fondo) / `deleteMenuSection` nel service + Zod `MenuSectionCreateSchema`; `createSectionAction`/`deleteSectionAction`; `CreateSectionDialog` (bottone "+ Aggiungi sezione" in fondo a `SectionList`, fuori dal DnD context) + `DeleteSectionDialog` (**conferma cascade** con conteggi reali categorie+voci). Stato vuoto sito pubblico già gestito in `MenuClient` (`sections.length === 0 → null`), invariato. Le 6 sezioni restano il seed di `create_schema_from_template.sql`. Nessuna migrazione (insert/delete + cascade FK già presenti).
+- [x] **06** — Sezioni a CRUD completo (`sonnet`/high) — commit `ac8981a` (subchat Sonnet/high; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**): `createMenuSection` (append in fondo) / `deleteMenuSection` nel service + Zod `MenuSectionCreateSchema`; `createSectionAction`/`deleteSectionAction`; `CreateSectionDialog` (bottone "+ Aggiungi sezione" in fondo a `SectionList`, fuori dal DnD context) + `DeleteSectionDialog` (**conferma cascade** con conteggi reali categorie+voci). Stato vuoto sito pubblico già gestito in `MenuClient` (`sections.length === 0 → null`), invariato. Le 6 sezioni restano il seed di `create_schema_from_template.sql`. Nessuna migrazione (insert/delete + cascade FK già presenti).
 
 > I prompt si scrivono dopo che il sub-task precedente è atterrato (il codice su cui si appoggiano cambia). 06 è indipendente da 03-05 e può essere fatto in qualsiasi momento.
 
 Done when:
-- [ ] Sub-task 01-06 committati + tsc -r e build `admin` verdi
-- [ ] Smoke test da Lucio (per sub-task)
+- [x] Sub-task 01-06 committati + tsc -r e build `admin` verdi
+- [x] Smoke test da Lucio (per sub-task) — tutti verdi 2026-05-25; stato menu-vuoto sito pubblico confermato live (0 sezioni attive → `MenuClient` null, nessun titolo orfano)
 
 ---
 
