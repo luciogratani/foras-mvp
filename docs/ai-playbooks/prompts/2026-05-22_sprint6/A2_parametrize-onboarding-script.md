@@ -13,7 +13,7 @@ owner: master-chat
 
 > **Dipendenze:** eseguire **dopo** A1 (policy hardened con `is_tenant_owner()`) e A1b (se l'opzione A aggiunge la colonna `timezone`), così la parametrizzazione cattura lo stato finale del baseline. La baseline è già stata ri-allineata il 2026-05-25 (migration schema-extras ripiegata: `site_settings` extras + `closed_dates.end_date`).
 >
-> **DECISIONE DI MECCANISMO — il master conferma prima di delegare.** Raccomandazione del master: **variabili `psql -v`** (vedi sotto). Alternativa: funzione `plpgsql` con SQL dinamico (eseguibile dal SQL editor). La scelta cambia la forma dello script.
+> **MECCANISMO DECISO (Lucio, 2026-05-25): variabili `psql -v`.** Vedi `decision-log/decisioni.md` voce *Freeze Stream A: parametrizzazione onboarding*. Implementa **solo** questa via (lo script resta DDL statico leggibile). L'alternativa "funzione `plpgsql` con SQL dinamico" è scartata — non implementarla. Conseguenza: l'onboarding si esegue da terminale (`psql`), non dal Supabase SQL editor.
 
 ## Contesto
 
@@ -38,7 +38,7 @@ owner: master-chat
 - Aggiornare l'header dello script con l'uso reale e rimuovere la nota "⚠️ schema e owner già impostati per template".
 - **Mantenere uno snippet per ricreare il `template` stesso** (es. `-v schema=template -v owner_uuid=1c486961-12b2-47d0-8aef-0aee30df083c`) documentato nell'header, così il template resta ricreabile in modo identico.
 
-> **Caveat SQL editor:** le variabili `:var` funzionano in `psql`, **non** nel Supabase SQL editor. L'onboarding diventa quindi un'operazione da CLI (`psql $DATABASE_URL -v schema=... -v owner_uuid=... -f ...`). Se il master preferisce restare nel SQL editor, usare l'**alternativa**: una funzione `public.create_tenant_schema(p_schema text, p_owner uuid)` `LANGUAGE plpgsql` `SECURITY DEFINER` che esegue tutto via `EXECUTE format('… %I …', p_schema)` (identificatori) e `format('… %L …', p_owner)` (literal), richiamabile con `SELECT public.create_tenant_schema('bar_rossi','<uuid>');`. È più verbosa (ogni DDL diventa una stringa `format`) ma gira nel SQL editor. **Non implementare entrambe**: usa quella confermata dal master.
+> **Caveat operativo (accettato nella decisione):** le variabili `:var` funzionano in `psql`, **non** nel Supabase SQL editor. L'onboarding è quindi un'operazione da CLI (`psql $DATABASE_URL -v schema=... -v owner_uuid=... -f ...`), eseguita dal master/dev. Va bene così: è un'operazione rara. (L'alternativa "funzione `plpgsql` con SQL dinamico", che girava nel SQL editor, è stata scartata per non rendere lo script verboso.)
 
 ### 2. Test su schema usa-e-getta
 

@@ -11,7 +11,7 @@ owner: master-chat
 
 # Sprint 6 / A1b — Timezone-correctness del calcolo "oggi/ora"
 
-> **DECISIONE APERTA — il master conferma prima di delegare.** Questo prompt implementa l'**opzione (B)** raccomandata dal master (vedi `decision-log/decisioni.md`, da scrivere alla conferma): *correggere il bug UTC usando una costante `'Europe/Rome'`, senza colonna nuova → NON schema-affecting, fuori dal perimetro freeze.* Se invece si sceglie l'**opzione (A)** (timezone per-tenant configurabile = colonna `site_settings.timezone`), lo scope cambia: vedi l'**Addendum (A)** in fondo. Per l'MVP sardo Europe/Rome è universale → (B) è la scelta di default.
+> **DECISIONE PRESA (Lucio, 2026-05-25): opzione B.** Vedi `decision-log/decisioni.md` voce *Freeze Stream A: timezone (opzione B)*. Questo prompt è lo scope definitivo: *correggere il bug UTC usando una costante `'Europe/Rome'`, senza colonna nuova → NON schema-affecting, fuori dal perimetro freeze.* L'opzione A (timezone per-tenant) è rimandata a post-MVP (resta documentata come **Addendum** in fondo solo come riferimento futuro — **non in scope ora**).
 
 ## Contesto
 
@@ -66,9 +66,9 @@ owner: master-chat
 
 ---
 
-## Addendum — se il master sceglie l'opzione (A): timezone per-tenant
+## Addendum — opzione (A) timezone per-tenant *(POST-MVP, NON in scope ora)*
 
-Scope **aggiuntivo** rispetto a (B), e **schema-affecting** (entra nel baseline congelato):
+> Rimandata (decisione 2026-05-25). Conservata qui come riferimento per quando arriverà un tenant fuori dalla fascia `Europe/Rome`. Scope **aggiuntivo** rispetto a (B), e **schema-affecting** (entra nel baseline congelato):
 
 - **Schema:** aggiungere `site_settings.timezone TEXT NOT NULL DEFAULT 'Europe/Rome'` (additiva, come `end_time`) a `create_schema_from_template.sql` §2 + a `types/database.ts` (hand-edit Row/Insert/Update) + uno script `ALTER TABLE template.site_settings ADD COLUMN timezone TEXT NOT NULL DEFAULT 'Europe/Rome';` per il `template` esistente (step manuale master).
 - **Threading della tz:** le funzioni del service che calcolano "oggi/ora" devono ricevere la tz del tenant. `getAvailableTimeSlots` già interroga `site_settings` → leggere lì anche `timezone` e passarlo all'helper. `createBooking` chiama `getAvailableTimeSlots`, ma fa anche un suo check `date < today` → o legge `timezone` con una select dedicata o lo deriva dallo stesso fetch. `getDashboardStats`/`getBookingCountsBySlot` (admin) → una select di `site_settings.timezone`. I `today` lato pagine app non hanno facile accesso alla tz tenant in SSR senza un fetch → valutare se per quei `min`/filtri basta `'Europe/Rome'` (UI hint, il server resta la verità) o se fetchare la tz.

@@ -155,8 +155,8 @@ Template freeze + onboarding primo cliente. **Operativo, non di sviluppo.** Cart
 
 **Stream A (freeze) — tutti i prompt scritti (DRAFT), in ordine di esecuzione A1 → A1b → A2 → A3 → A4:**
 - `A1_rls-hardening` (DRAFT, **revisionato 2026-05-25**) — hardening RLS scrittura (`is_tenant_owner()` `SECURITY DEFINER` + **10** policy, `closed_dates_admin_all` inclusa + applicazione al `template`) + estensione `audit_rls.sql` ai GRANT. Pronto per la prossima chat master.
-- `A1b_timezone` (DRAFT) — fix correttezza UTC→`Europe/Rome` (opzione B raccomandata, no schema; opzione A per-tenant in addendum). **Decisione A/B aperta.**
-- `A2_parametrize-onboarding-script` (DRAFT) — parametrizza `create_schema_from_template.sql` + test su schema usa-e-getta. **Decisione meccanismo aperta** (psql -v vs funzione dinamica). Dipende da A1/A1b.
+- `A1b_timezone` (DRAFT, **opzione B decisa 2026-05-25**) — fix correttezza UTC→`Europe/Rome` con costante in helper condiviso, **no schema**. (Opzione A per-tenant rimandata a post-MVP, in addendum.)
+- `A2_parametrize-onboarding-script` (DRAFT, **meccanismo psql `-v` deciso 2026-05-25**) — parametrizza `create_schema_from_template.sql` + test su schema usa-e-getta. Dipende da A1/A1b. (Onboarding da terminale, non dal SQL editor.)
 - `A3_template-cleanup` (DRAFT) — runbook operativo (master, non delegabile): pulizia dati di test sul `template` pre-dump.
 - `A4_freeze-schema-and-lock` (DRAFT) — genera `schema.sql`/`migrations/001_init.sql`, test su schema usa-e-getta, marca tutto LOCKED.
 
