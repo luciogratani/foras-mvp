@@ -1,6 +1,6 @@
 ---
 status: DRAFT
-updated: 2026-05-22
+updated: 2026-05-25
 area: ai-playbooks
 type: index
 tags: [foras-mvp, ai-playbooks, prompts]
@@ -17,15 +17,23 @@ I prompt sono raggruppati per sprint in sottocartelle:
 
 ```
 prompts/
-  2026-05-20_sprint0/        ← Sprint 0 (DONE — monorepo setup)
-  2026-05-20_sprint1/        ← Sprint 1 (DONE — DB, RLS, tipi TS)
-  2026-05-21_sprint2/        ← Sprint 2 (DONE — service layer)
-  2026-05-21_stack-upgrade/  ← Sprint 2.5 (DONE — upgrade Next 16 / React 19)
-  2026-05-21_sprint3/        ← Sprint 3 (DONE — homepage SSR)
-  2026-05-21_sprint4/        ← Sprint 4 (DONE — form prenotazioni)
-  2026-05-21_sprint5/        ← Sprint 5 (DONE — admin panel CRUD)
-  2026-05-22_sprint6/        ← Sprint 6 (IN CORSO — freeze posticipato)
+  2026-05-20_sprint0/            ← Sprint 0 (DONE — monorepo setup)
+  2026-05-20_sprint1/            ← Sprint 1 (DONE — DB, RLS, tipi TS)
+  2026-05-21_sprint2/            ← Sprint 2 (DONE — service layer)
+  2026-05-21_stack-upgrade/      ← Sprint 2.5 (DONE — upgrade Next 16 / React 19)
+  2026-05-21_sprint3/            ← Sprint 3 (DONE — homepage SSR)
+  2026-05-21_sprint4/            ← Sprint 4 (DONE — form prenotazioni)
+  2026-05-21_sprint5/            ← Sprint 5 (DONE — admin panel CRUD)
+  2026-05-22_sprint6/            ← Sprint 6 (IN CORSO — freeze posticipato)
+  2026-05-22_ux-fix/             ← Intermezzo UX-fix (DONE — fix pre-freeze da audit)
+  2026-05-23_admin-ux-fix/       ← Intermezzo Admin-fix (DONE — UX backoffice + schema pre-freeze)
+  2026-05-24_admin-ux2/          ← Intermezzo Admin-UX-2 (DONE — migliorie backoffice)
+  2026-05-24_web-ux-funnel/      ← Intermezzo Web-UX-funnel (DONE — funnel prenotazione web)
+  2026-05-24_menu-refactor/      ← Intermezzo Menu-refactor (DONE — /dashboard/menu accordion + CRUD sezioni)
+  2026-05-25_booking-orario-libero/ ← Intermezzo Booking-orario-libero (DONE — finestra turno + orario libero)
 ```
+
+> Gli **intermezzi** sono lavori schema-affecting o UX inseriti fuori sprint (tutti CHIUSI al 2026-05-25). Il dettaglio per-sub-task con commit e esiti smoke è in `docs/build-delivery/backlog.md`; le decisioni in `docs/decision-log/decisioni.md`. Lo Sprint 6 (freeze + onboarding) resta l'unico aperto.
 
 I wikilink Obsidian risolvono per nome file, quindi funzionano anche tra sottocartelle. Da Sprint 4 in poi i file usano il naming corto `NN_descrizione.md` dentro la cartella dello sprint.
 
@@ -143,12 +151,17 @@ Fix pre-freeze da audit esterno (`docs/audit/03_fit-modello-dati-realta-bar.md`)
 
 Template freeze + onboarding primo cliente. **Operativo, non di sviluppo.** Cartella `2026-05-22_sprint6/`.
 
-> **Strategia (2026-05-22): freeze POSTICIPATO.** Prima smoke test + valutazione UX di `apps/web`/`apps/admin`, poi probabili mini-implementazioni schema-affecting (vedi appunti privati di Lucio) da fare *prima* del freeze. Dettaglio: `backlog.md` § Sprint 6 + le 4 decisioni del 2026-05-22 nel `decision-log/decisioni.md`.
+> **Strategia (2026-05-25): freeze SBLOCCATO lato scope.** I tre candidati schema-affecting pre-freeze sono chiusi (orari spezzati, DnD menu, orario libero); la capienza tavoli+coperti è rimandata a post-onboarding (decision-log 2026-05-25). Lo Stream A non è più trattenuto da lavoro schema-affecting. Dettaglio: `backlog.md` § Sprint 6 + decisioni 2026-05-22/2026-05-25 nel `decision-log/decisioni.md`.
 
-- `A1_rls-hardening` (DRAFT, pronto) — hardening RLS scrittura (`is_tenant_owner()` `SECURITY DEFINER` + 9 policy + applicazione al `template`) + estensione `audit_rls.sql` ai GRANT. **Parcheggiato col freeze** (trigger "2° tenant o freeze", non imminente).
-- `B2_send-booking-email-dormant` (DONE, commit `ada289c`) — Edge Function `send-booking-email` (Resend) + wiring `apps/web`, **costruita dormiente** (default OFF, no-op, mai blocca una prenotazione). Unico stream che procede ora perché tenant-agnostico.
+**Stream A (freeze) — tutti i prompt scritti (DRAFT), in ordine di esecuzione A1 → A1b → A2 → A3 → A4:**
+- `A1_rls-hardening` (DRAFT, **revisionato 2026-05-25**) — hardening RLS scrittura (`is_tenant_owner()` `SECURITY DEFINER` + **10** policy, `closed_dates_admin_all` inclusa + applicazione al `template`) + estensione `audit_rls.sql` ai GRANT. Pronto per la prossima chat master.
+- `A1b_timezone` (DRAFT) — fix correttezza UTC→`Europe/Rome` (opzione B raccomandata, no schema; opzione A per-tenant in addendum). **Decisione A/B aperta.**
+- `A2_parametrize-onboarding-script` (DRAFT) — parametrizza `create_schema_from_template.sql` + test su schema usa-e-getta. **Decisione meccanismo aperta** (psql -v vs funzione dinamica). Dipende da A1/A1b.
+- `A3_template-cleanup` (DRAFT) — runbook operativo (master, non delegabile): pulizia dati di test sul `template` pre-dump.
+- `A4_freeze-schema-and-lock` (DRAFT) — genera `schema.sql`/`migrations/001_init.sql`, test su schema usa-e-getta, marca tutto LOCKED.
 
-Sub-task ancora da scrivere quando si riapre il freeze: A1b (timezone), A2 (parametrizzazione script), A3 (pulizia template), A4 (genera `schema.sql`/`001_init.sql` + test + freeze).
+**Stream B (email):**
+- `B2_send-booking-email-dormant` (DONE, commit `ada289c`) — Edge Function `send-booking-email` (Resend) + wiring `apps/web`, **costruita dormiente** (default OFF, no-op, mai blocca una prenotazione). B1 (dominio `foras.*`) differito.
 
 ## Ordine di esecuzione
 

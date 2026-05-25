@@ -80,7 +80,7 @@ export async function getVerifiedTenantClient(session: Session) {
 }
 ```
 
-**Dove chiamarla:** nel middleware Next.js (`middleware.ts`) per le route protette del backoffice, oppure nel layout root di `/apps/admin`. L'importante è che venga eseguita prima di qualsiasi query al DB tenant.
+**Dove chiamarla:** nel proxy Next.js (`apps/admin/proxy.ts` — ex `middleware.ts`, rinominato dal codemod ufficiale nell'upgrade a Next 16) per le route protette del backoffice, oppure nel layout root di `/apps/admin`. L'importante è che venga eseguita prima di qualsiasi query al DB tenant.
 
 **Nota su `supabaseAdmin`:** questa funzione usa la `service_role` key per leggere `public.tenants` in modo affidabile, indipendentemente da eventuali RLS sulla tabella. Va chiamata solo server-side (Server Component o Route Handler), mai nel browser.
 

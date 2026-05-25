@@ -92,10 +92,13 @@ Turni disponibili configurati dal gestore nel backoffice.
 |---|---|---|
 | `id` | uuid | PK |
 | `label` | text | es. "Pranzo", "Cena" |
-| `time` | time | orario del turno |
-| `max_covers` | integer | capacità massima coperti per turno |
+| `time` | time | orario di inizio del turno |
+| `end_time` | time nullable | NULL = orario fisso (comportamento classico); valorizzato = finestra `[time, end_time]` in cui il cliente sceglie l'orario di arrivo. Validato `> time`; oltre-mezzanotte fuori scope. |
+| `max_covers` | integer | capacità massima coperti per turno (invariata: il cap è per turno, non per fascia oraria) |
 | `is_active` | boolean | default true |
 | `archived_at` | timestamptz nullable | NULL = attivo; non-null = archiviato (nascosto da admin e sito). Archiviare imposta anche `is_active = false`. La riga resta per preservare la FK `bookings → time_slots`. |
+
+Quando un turno ha `end_time` valorizzato, il funnel pubblico promuove `preferred_time` a **orario di arrivo obbligatorio e validato** dentro la finestra; quando `end_time` è NULL il turno resta a orario puntuale e `preferred_time` è solo indicativo. La capacità non cambia in nessuno dei due casi.
 
 ### `bookings`
 
@@ -108,7 +111,7 @@ Turni disponibili configurati dal gestore nel backoffice.
 | `email` | text | |
 | `phone` | text nullable | |
 | `covers` | integer | coperti richiesti |
-| `preferred_time` | text nullable | orario preferito indicato dal cliente (libero, indicativo per il gestore; non validato contro turno né finestra oraria) |
+| `preferred_time` | time nullable | orario di arrivo del cliente. Se il turno ha una finestra (`time_slots.end_time` valorizzato): **obbligatorio e validato** in `[time, end_time)`. Se il turno è a orario fisso: facoltativo e solo indicativo per il gestore. |
 | `notes` | text nullable | richieste speciali |
 | `cancellation_token` | uuid | token per cancellazione senza autenticazione |
 | `status` | text | `confirmed` / `cancelled` |

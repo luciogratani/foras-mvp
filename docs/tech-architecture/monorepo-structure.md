@@ -12,7 +12,7 @@ repo-template/                   ← repo base (forkato per ogni cliente)
         /web                     ← Next.js, homepage pubblica SSR
         /admin                   ← Next.js SPA, backoffice
     /packages
-        /supabase                ← client condiviso, types generati da Supabase CLI
+        /supabase                ← client condiviso, types generati via postgres-meta HTTP (hand-edit; la Supabase CLI non è usata)
         /ui                      ← componenti shadcn condivisi
     /migrations
         001_init.sql             ← schema iniziale post-freeze

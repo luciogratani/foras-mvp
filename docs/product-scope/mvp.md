@@ -67,9 +67,9 @@ Lo schema `template` dopo il freeze rimane come riferimento per i fork futuri e 
 
 **Form prenotazioni — campi:** nome (obbligatorio), email (obbligatorio), telefono (opzionale), coperti (obbligatorio), note (opzionale), checkbox GDPR (obbligatorio). Il campo telefono è opzionale nello schema dati (`phone text nullable`) e non obbligatorio nel form — il gestore lo riceve via email assieme al resto della prenotazione se compilato.
 
-**Cancellazione lato utente via link nel ticket di conferma.** Ogni prenotazione ha un `cancellation_token` (UUID). L'utente riceve una email con link `dominio.it/booking/cancel/UUID`. Nessuna autenticazione richiesta. Alla cancellazione i coperti tornano disponibili automaticamente.
+**Cancellazione lato utente via link nel ticket di conferma.** Ogni prenotazione ha un `cancellation_token` (UUID). Il link è `dominio.it/booking/cancel/UUID`; nessuna autenticazione richiesta; alla cancellazione i coperti tornano disponibili automaticamente. **Stato attuale:** finché l'email è dormiente (vedi sotto), il link viene mostrato direttamente nella success page del form.
 
-**Email automatica al gestore ad ogni prenotazione** tramite Resend (piano gratuito sufficiente). Il gestore riceve nome, data, ora, coperti richiesti senza dover aprire il backoffice.
+**Email automatica al gestore ad ogni prenotazione** tramite Resend (piano gratuito sufficiente). Il gestore riceve nome, data, ora, coperti richiesti senza dover aprire il backoffice. **Stato attuale (2026-05-25):** l'Edge Function `send-booking-email` è **costruita ma dormiente** (default OFF, no-op se le env non sono configurate, non blocca mai una prenotazione). Si attiva con un flip di config quando il dominio di servizio `foras.*` e il deploy saranno pronti (Sprint 6 / Stream B). Vedi decision-log *Email prenotazioni*.
 
 **GDPR:** il form prenotazioni include checkbox di consenso al trattamento dati e link a privacy policy. La privacy policy è una pagina statica per cliente (`/privacy`). Da documentare nel Playbook come checklist obbligatoria pre-deploy.
 

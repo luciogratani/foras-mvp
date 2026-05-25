@@ -67,7 +67,7 @@ Il progetto usa un sistema a due livelli di chat AI:
 ## Vincoli
 
 - [Vincolo 1 — es. "nessuna query DB diretta nei componenti UI"]
-- [Vincolo 2 — es. "usare i tipi generati da Supabase CLI, non scrivere tipi a mano"]
+- [Vincolo 2 — es. "usare i tipi in `packages/supabase/src/types/database.ts` (hand-edit, NON la Supabase CLI), non scrivere tipi a mano nei componenti"]
 
 ## Output atteso
 
