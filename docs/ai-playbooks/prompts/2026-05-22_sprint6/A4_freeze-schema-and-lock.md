@@ -1,0 +1,76 @@
+---
+status: DRAFT
+sprint: 6
+stream: A
+task: A4
+created: 2026-05-25
+suggested_model: claude-sonnet-4-6
+suggested_effort: high
+owner: master-chat
+---
+
+# Sprint 6 / A4 — Genera `schema.sql` + `migrations/001_init.sql`, testa, FREEZE LOCKED
+
+> **Ultimo step del freeze.** Dipendenze: A1 (RLS hardened) + A1b (timezone, opzione scelta) + A2 (script parametrizzato e testato) + A3 (template pulito) **tutti completati**. Dopo A4 il template è congelato: la fonte di verità diventa `schema.sql` e ogni modifica passa per migrazioni numerate.
+>
+> Parte **autoriale** (file + doc, delegabile) e parte **operativa** (dump dal DB live, run dei test) che esegue il master. Indicato chi fa cosa.
+
+## Contesto
+
+Oggi `migrations/001_init.sql` e `schema.sql` (root del repo) **non esistono** (solo `.gitkeep`). Il template è stato hardenato (A1), eventualmente tz-aware (A1b), lo script di onboarding è parametrizzato/testato (A2) e lo schema `template` è pulito (A3). A4 produce gli artefatti congelati e li valida, poi marca lo stato LOCKED in tutta la documentazione.
+
+## File da leggere prima di iniziare
+
+- `docs/operations/create_schema_from_template.sql` — la fonte DDL parametrizzata (post-A2): è la base da cui derivare `schema.sql` e `001_init.sql`.
+- `docs/operations/audit_rls.sql` e `rls_isolation_tests.sql` — per la validazione finale.
+- `docs/tech-architecture/architettura-fullstack.md` (§ "Schema template come ambiente di sviluppo", criterio di freeze) e `docs/operations/migration-runbook.md` (flusso migrazioni post-freeze).
+- `docs/product-scope/mvp.md` (criteri di freeze + checklist pulizia) e `docs/build-delivery/backlog.md` (§ Sprint 6).
+- `docs/decision-log/decisioni.md` — per scrivere la voce di chiusura "Template FROZEN".
+
+## Scope
+
+### 1. `schema.sql` (root del repo) — fotografia canonica del template congelato
+Due strade, scegliere con il master:
+- **(preferita) dump dal DB live** (master, operativo): `pg_dump --schema-only --schema=template` dello schema `template` pulito → normalizzare (rimuovere riferimenti owner/ambiente, sostituire `template` con un placeholder coerente o lasciarlo come schema di riferimento documentato). È la più fedele perché cattura lo stato reale post-A1/A1b/A3.
+- **(alternativa) derivare da `create_schema_from_template.sql`** risolvendo per `template`: equivalente se la baseline è davvero allineata (lo è, ri-verificare).
+Header di `schema.sql`: data del freeze, versione, "FONTE DI VERITÀ post-freeze — non modificare senza una migrazione numerata in `/migrations`".
+
+### 2. `migrations/001_init.sql` — migrazione iniziale
+La migrazione "zero" che porta uno schema vuoto allo stato `schema.sql`. In pratica coincide con lo script di onboarding parametrizzato (A2) o con `schema.sql` stesso applicato a uno schema nuovo. Definire la convenzione con `migration-runbook.md` (numerazione, idempotenza, ordine). Header coerente.
+
+### 3. Test su schema usa-e-getta (master, operativo)
+- Creare `freeze_test` applicando `migrations/001_init.sql` (o lo script A2 con `-v schema=freeze_test`).
+- `audit_rls.sql` → zero discrepanze vs `template`.
+- `rls_isolation_tests.sql` (sez. 1/2a/2b + sez. 3 owner-scope) adattati a `freeze_test` → tutti PASS.
+- Sanity: 9 tabelle, seed canonico (14 allergeni / 6 sezioni / 2 time_slots / 1 site_settings), `is_tenant_owner` presente e SECURITY DEFINER.
+- **Cleanup:** `DROP SCHEMA freeze_test CASCADE;` + `DELETE FROM public.tenants WHERE schema_name='freeze_test';`.
+
+### 4. Marcare LOCKED in tutta la documentazione
+- `docs/build-delivery/backlog.md` § Sprint 6: spuntare Stream A; segnare il template **FROZEN/LOCKED** con data.
+- Frontmatter `status: LOCKED` dove pertinente (es. una nota nel README hub o nei doc di onboarding che il template è congelato).
+- `docs/operations/onboarding-tenant.md`: rimuovere le note "bozza/da finalizzare post-freeze" dallo Step 1 (ora lo script è pronto e testato); confermare i pre-requisiti.
+- `docs/decision-log/decisioni.md`: nuova voce datata "Template FROZEN" con cosa include il baseline congelato (RLS owner-scope, schema-extras, end_time, timezone se opzione A) e la regola "da qui in poi solo migrazioni numerate".
+- `docs/ai-playbooks/prompts/2026-05-22_sprint6/` A1/A1b/A2/A3/A4 → `status: DONE`.
+
+## Vincoli
+
+- **Nessuna modifica di schema in A4**: A4 fotografa e congela, non cambia. Se durante il test emerge una discrepanza, **fermarsi e segnalare al master** (è sintomo che A1/A1b/A2/A3 non hanno chiuso qualcosa) — non "aggiustare" lo schema qui.
+- Coerenza assoluta tra `schema.sql`, `001_init.sql` e `create_schema_from_template.sql`: i tre devono produrre lo stesso schema.
+- Il dump e i run SQL li fa il master; la sub-chat produce/normalizza i file e aggiorna i doc.
+- Non committare dati/segreti nel dump (owner UUID reali, chiavi): `schema.sql` è struttura + seed, non dati.
+
+## Output atteso
+
+- `schema.sql` (root) — schema canonico congelato.
+- `migrations/001_init.sql` — migrazione iniziale.
+- Doc aggiornati a LOCKED (backlog, onboarding-tenant, decision-log, README hub se serve) + i 5 prompt Stream A a `status: DONE`.
+
+## Done when
+
+- `schema.sql` e `001_init.sql` esistono, coerenti tra loro e con la baseline; applicati a `freeze_test` passano audit + isolation test; cleanup eseguito.
+- La documentazione dichiara il template **FROZEN/LOCKED** con data; la regola "solo migrazioni numerate" è esplicita.
+- Il primo onboarding reale (Stream C) può partire.
+
+## Report finale (conciso)
+
+(1) Come è stato generato `schema.sql` (dump o derivazione) e perché. (2) Esito del test `freeze_test` (audit zero righe? isolation PASS?) come riportato dal master. (3) Elenco doc marcati LOCKED. (4) Eventuali discrepanze emerse (e stop, se è il caso). (5) Conferma coerenza schema.sql ↔ 001_init.sql ↔ create_schema_from_template.sql.
