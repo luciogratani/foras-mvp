@@ -107,7 +107,7 @@ discrepancies AS (
 
 -- -----------------------------------------------------------------------
 -- Parte 2: tabelle attese con RLS non abilitata
--- Fonte: 8 tabelle definite in create_schema_from_template.sql
+-- Fonte: 9 tabelle definite in create_schema_from_template.sql
 -- -----------------------------------------------------------------------
 expected_tables (table_name) AS (
   VALUES
@@ -117,6 +117,7 @@ expected_tables (table_name) AS (
     ('menu_items'),
     ('time_slots'),
     ('bookings'),
+    ('closed_dates'),
     ('site_settings'),
     ('news_slides')
 ),

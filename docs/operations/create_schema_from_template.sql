@@ -117,10 +117,12 @@ CREATE TABLE bookings (
 
 -- Chiusure straordinarie (ferie, festività, serate private)
 CREATE TABLE closed_dates (
-  id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  date   DATE NOT NULL,
-  reason TEXT,
-  UNIQUE (date)
+  id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  date     DATE NOT NULL,
+  end_date DATE,                  -- NULL = giorno singolo; valorizzato = intervallo [date, end_date]
+  reason   TEXT,
+  UNIQUE (date),
+  CONSTRAINT closed_dates_end_after_start CHECK (end_date IS NULL OR end_date >= date)
 );
 
 -- Impostazioni sito e SEO (riga unica per tenant)
@@ -142,7 +144,12 @@ CREATE TABLE site_settings (
     "friday":    {"closed": true, "ranges": []},
     "saturday":  {"closed": true, "ranges": []},
     "sunday":    {"closed": true, "ranges": []}
-  }'::jsonb
+  }'::jsonb,
+  social_whatsapp  TEXT,
+  social_instagram TEXT,
+  social_facebook  TEXT,
+  maintenance_mode BOOLEAN NOT NULL DEFAULT false,
+  extra_data       JSONB   NOT NULL DEFAULT '{}'
 );
 
 -- Popup / novità (slide multiple, stessi contenuti della sezione news in homepage)

@@ -4,10 +4,13 @@ sprint: 6
 stream: A
 task: A1
 created: 2026-05-22
+reviewed: 2026-05-25
 suggested_model: opus
 suggested_effort: high
 owner: master-chat
 ---
+
+> **Nota di revisione (master, 2026-05-25).** Prompt rivisto contro lo stato reale dello schema. Aggiornamenti rispetto alla stesura del 2026-05-22: (1) le policy di scrittura sono **10, non 9** — è stata aggiunta `closed_dates_admin_all` (intermezzo UX-fix C2); (2) la baseline `create_schema_from_template.sql` è stata ri-allineata il 2026-05-25 (ripiegata la migration schema-extras: `site_settings.extra_data/social_*/maintenance_mode`, `closed_dates.end_date`+CHECK) → lo script che leggi è **attuale**; (3) `audit_rls.sql` ha già `expected_tables` a **9 tabelle** (`closed_dates` inclusa) → in questo task lo estendi solo con i check GRANT + helper, **non** ritoccare la lista tabelle. Il resto del prompt (funzione `is_tenant_owner`, gotcha `current_schema()`, test JWT) resta valido e verificato.
 
 # Sprint 6 / A1 — Hardening RLS scrittura (owner vs `public.tenants`) + estensione audit ai GRANT
 
@@ -57,12 +60,14 @@ GRANT  EXECUTE ON FUNCTION public.is_tenant_owner() TO authenticated, service_ro
 
 ### 2. Riscrittura delle policy di scrittura
 
-In `create_schema_from_template.sql` §4, sostituire `auth.uid() IS NOT NULL` con `public.is_tenant_owner()` in **tutte** le policy admin:
-`menu_sections_admin_all`, `menu_categories_admin_all`, `menu_items_admin_all`, `time_slots_admin_all`, `bookings_admin_select`, `bookings_admin_update`, `bookings_admin_delete`, `site_settings_admin_all`, `news_slides_admin_all`.
+In `create_schema_from_template.sql` §4, sostituire `auth.uid() IS NOT NULL` con `public.is_tenant_owner()` in **tutte e 10** le policy admin (le 7 `*_admin_all` + le 3 `bookings_admin_*`):
+`menu_sections_admin_all`, `menu_categories_admin_all`, `menu_items_admin_all`, `time_slots_admin_all`, `closed_dates_admin_all`, `site_settings_admin_all`, `news_slides_admin_all`, `bookings_admin_select`, `bookings_admin_update`, `bookings_admin_delete`.
+
+> ⚠️ **Verificato 2026-05-25:** sono **10** policy. `closed_dates_admin_all` (riga ~268 della baseline) è la decima — assente nella prima stesura di questo prompt perché `closed_dates` è stata introdotta dopo (UX-fix C2). Controlla a vista che non ne siano comparse altre `*_admin_all` rispetto a questo elenco prima di procedere.
 
 **Le policy `*_public_read` (FOR SELECT USING (true)) e `bookings_public_insert` (FOR INSERT WITH CHECK (true)) NON si toccano** — la lettura pubblica e l'insert anonimo di prenotazioni devono restare invariati. (Ricorda: PostgreSQL combina in OR le policy per lo stesso comando → la SELECT resta pubblica perché `true OR is_tenant_owner()`; INSERT/UPDATE/DELETE hanno solo la policy admin → richiedono owner.)
 
-Inoltre crea un nuovo script idempotente **`docs/operations/2026-05-22_rls_hardening_template.sql`** che applica helper + drop/recreate delle 9 policy **allo schema `template` già esistente** (Lucio lo eseguirà come `service_role` nel SQL editor). Idempotente: `CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS … ; CREATE POLICY …`. Header con descrizione, data, "Applicare a: template (pre-freeze)".
+Inoltre crea un nuovo script idempotente **`docs/operations/2026-05-22_rls_hardening_template.sql`** che applica helper + drop/recreate delle **10** policy **allo schema `template` già esistente** (Lucio lo eseguirà come `service_role` nel SQL editor). Idempotente: `CREATE OR REPLACE FUNCTION`, `DROP POLICY IF EXISTS … ; CREATE POLICY …`. Header con descrizione, data, "Applicare a: template (pre-freeze)". (Nota: lo script aggiorna solo le policy di scrittura — la lettura pubblica e l'insert anon restano invariate; non serve droppare le `*_public_read`.)
 
 ### 3. Estensione `audit_rls.sql` ai GRANT + presenza helper
 
@@ -88,7 +93,8 @@ Casi da coprire (ognuno in un `DO $$` con `BEGIN … ROLLBACK`-style come gli al
 
 ## Vincoli
 
-- **GOTCHA CRITICO — non aggiungere `SET search_path` alla funzione.** La funzione usa `current_schema()` per scoprire lo schema del *chiamante* (lo schema tenant che PostgREST imposta nel search_path). Se aggiungi `SET search_path = public` alla funzione `SECURITY DEFINER`, `current_schema()` ritornerà `public` invece dello schema tenant → la logica si rompe silenziosamente (nessun owner combacia mai → tutte le scritture bloccate). La protezione da search_path hijacking è garantita invece **qualificando completamente** l'unico riferimento a oggetto (`public.tenants`); `auth.uid()`/`current_schema()` sono builtin qualificati. Documenta questo motivo con un commento di una riga sopra la funzione.
+- **GOTCHA CRITICO — non aggiungere `SET search_path` alla funzione.** La funzione usa `current_schema()` per scoprire lo schema del *chiamante* (lo schema tenant che PostgREST imposta nel search_path). Se aggiungi `SET search_path = public` (o qualsiasi valore) alla funzione `SECURITY DEFINER`, `current_schema()` ritornerà quello schema invece di quello del tenant → la logica si rompe silenziosamente (nessun owner combacia mai → tutte le scritture bloccate). La protezione da search_path hijacking è garantita invece **qualificando completamente** l'unico riferimento a oggetto (`public.tenants`); `auth.uid()` è già schema-qualificato e `current_schema()` è un builtin di `pg_catalog`. Documenta questo motivo con un commento di una riga sopra la funzione.
+- **Il linter Supabase segnalerà `function_search_path_mutable` su `is_tenant_owner` — è ATTESO e va lasciato così.** È il prezzo consapevole della riga sopra: la mutabilità del search_path è *necessaria* perché la funzione legga il search_path del chiamante. Non "correggere" l'avviso aggiungendo `SET search_path` (romperebbe il fix). Annota nel commento della funzione che l'avviso del linter è accettato di proposito, così una chat futura non lo "sistema" per errore.
 - **`current_schema()` deve risolvere allo schema tenant.** È un'assunzione su come PostgREST imposta il search_path per-richiesta. Va **verificata nel test 3.1/3.2** (se non risolve, i test falliscono in modo evidente). Se emergesse che non risolve come atteso, **fermati e segnala al master** prima di cercare workaround — è un punto architetturale, non da decidere in autonomia.
 - **Idempotenza** sullo script di applicazione al template e nell'audit (riesecuzioni multiple senza errori).
 - **Zero scritture su `alex_akashi` / `underclub`** (schemi di progetti personali sullo stesso DB). Come per i test esistenti.
