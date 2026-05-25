@@ -1,5 +1,5 @@
 ---
-status: DRAFT
+status: DONE
 created: 2026-05-25
 area: ai-playbooks
 type: prompt

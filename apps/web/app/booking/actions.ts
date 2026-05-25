@@ -4,6 +4,7 @@ import {
   createBooking,
   OverbookingError,
   DuplicateBookingError,
+  BookingWindowError,
   CreateBookingInputSchema,
 } from '@repo/supabase'
 import { getWebSupabaseAdmin } from '../../lib/supabaseAdmin'
@@ -87,6 +88,14 @@ export async function createBookingAction(
       return {
         status: 'error',
         message: 'Esiste già una prenotazione con questa email per il turno e la data selezionati.',
+        values,
+      }
+    }
+    if (err instanceof BookingWindowError) {
+      return {
+        status: 'error',
+        message: 'Controlla l\'orario di arrivo.',
+        fieldErrors: { preferred_time: [(err as BookingWindowError).message] },
         values,
       }
     }

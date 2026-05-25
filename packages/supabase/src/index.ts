@@ -56,6 +56,7 @@ export {
   getDashboardStats,
   OverbookingError,
   DuplicateBookingError,
+  BookingWindowError,
 } from './services/bookings'
 export type { TimeSlot, Booking, AvailableTimeSlot, BookingSummary, BookingAdmin, SlotBookingCounts, DashboardStats } from './services/bookings'
 

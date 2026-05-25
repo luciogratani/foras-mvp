@@ -14,6 +14,7 @@ export type AvailableTimeSlot = {
   time_slot_id: string
   label: string
   time: string
+  end_time: string | null
   max_covers: number
   booked_covers: number
   available_covers: number
@@ -30,6 +31,13 @@ export class DuplicateBookingError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'DuplicateBookingError'
+  }
+}
+
+export class BookingWindowError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'BookingWindowError'
   }
 }
 
@@ -101,6 +109,7 @@ export async function getAvailableTimeSlots(
       time_slot_id: slot.id,
       label: slot.label,
       time: slot.time,
+      end_time: slot.end_time,
       max_covers: slot.max_covers,
       booked_covers,
       available_covers: Math.max(0, slot.max_covers - booked_covers),
@@ -134,6 +143,23 @@ export async function createBooking(
     throw new OverbookingError(
       `Coperti insufficienti: richiesti ${parsed.covers}, disponibili ${slot.available_covers}`
     )
+  }
+
+  // Enforcement finestra oraria: quando il turno ha end_time, preferred_time è obbligatorio
+  // e deve cadere dentro [time, end_time). Normalizza entrambi i lati a HH:MM (il DB
+  // ritorna "HH:MM:SS"; parsed.preferred_time è già "HH:MM" da Zod).
+  const winStart = slot.time.substring(0, 5)
+  const winEnd = slot.end_time ? slot.end_time.substring(0, 5) : null
+  if (winEnd !== null) {
+    if (!parsed.preferred_time) {
+      throw new BookingWindowError(
+        `Per questo turno indica l'orario di arrivo (tra ${winStart} e ${winEnd}).`
+      )
+    } else if (!(parsed.preferred_time >= winStart && parsed.preferred_time < winEnd)) {
+      throw new BookingWindowError(
+        `L'orario di arrivo deve essere tra ${winStart} e ${winEnd}.`
+      )
+    }
   }
 
   const { data, error } = await client

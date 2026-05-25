@@ -1,5 +1,5 @@
 'use client'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import type { AvailableTimeSlot } from '@repo/supabase'
 import { createBookingAction, type BookingActionState } from '../actions'
 
@@ -7,6 +7,15 @@ const initialState: BookingActionState = { status: 'idle' }
 
 export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date: string }) {
   const [state, formAction, isPending] = useActionState(createBookingAction, initialState)
+
+  const v = state.status === 'error' ? state.values : undefined
+  const fe = state.status === 'error' ? state.fieldErrors : undefined
+
+  const [selectedId, setSelectedId] = useState(v?.time_slot_id ?? '')
+  const selected = slots.find((s) => s.time_slot_id === selectedId)
+  const winStart = selected ? selected.time.substring(0, 5) : ''
+  const winEnd = selected?.end_time ? selected.end_time.substring(0, 5) : null
+  const hasWindow = winEnd !== null
 
   if (state.status === 'success') {
     return (
@@ -27,8 +36,6 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
     )
   }
 
-  const v = state.status === 'error' ? state.values : undefined
-  const fe = state.status === 'error' ? state.fieldErrors : undefined
   const today = new Date().toISOString().slice(0, 10)
   const hasAvailableSlots = slots.some((s) => s.available_covers > 0)
 
@@ -68,6 +75,7 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
               name="time_slot_id"
               required
               defaultValue={v?.time_slot_id ?? ''}
+              onChange={(e) => setSelectedId(e.currentTarget.value)}
               aria-describedby={fe?.time_slot_id ? 'time_slot_id-error' : undefined}
             >
               <option value="" disabled>
@@ -79,7 +87,7 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
                   value={slot.time_slot_id}
                   disabled={slot.available_covers === 0}
                 >
-                  {slot.label} ({slot.time})
+                  {slot.label} ({slot.time.substring(0, 5)}{slot.end_time ? `–${slot.end_time.substring(0, 5)}` : ''})
                   {slot.available_covers === 0 ? ' — Completo' : ''}
                 </option>
               ))}
@@ -90,14 +98,29 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
           </div>
 
           <div>
-            <label htmlFor="preferred_time">Orario preferito (facoltativo)</label>
+            <label htmlFor="preferred_time">
+              {hasWindow ? 'Orario di arrivo' : 'Orario preferito (facoltativo)'}
+            </label>
             <input
               id="preferred_time"
               type="time"
               name="preferred_time"
+              required={hasWindow}
+              min={hasWindow ? winStart : undefined}
+              max={hasWindow ? winEnd : undefined}
               defaultValue={v?.preferred_time}
+              aria-describedby={fe?.preferred_time ? 'preferred_time-error' : 'preferred_time-hint'}
             />
-            <p><small>Indicaci a che ora vorresti sederti. Sarà mostrato al gestore come preferenza.</small></p>
+            <p id="preferred_time-hint">
+              <small>
+                {hasWindow
+                  ? `Scegli un orario tra ${winStart} e ${winEnd}.`
+                  : 'Indicaci a che ora vorresti sederti. Sarà mostrato al gestore come preferenza.'}
+              </small>
+            </p>
+            {fe?.preferred_time && (
+              <p id="preferred_time-error" role="alert">{fe.preferred_time[0]}</p>
+            )}
           </div>
 
           <div>
