@@ -534,3 +534,26 @@ Gli schemi tenant esistenti `alex_akashi` e `underclub` non avevano il problema 
 **Conseguenza operativa:**
 - Sub-task 03 riconvertito (hardening, DnD mantenuto). Nuovo **sub-task 06**: `createMenuSection`/`deleteMenuSection` nel service + UI (crea sezione, elimina con conferma cascade sezione→categorie→voci) + stato vuoto sul sito pubblico (home con 0 sezioni attive). `create_schema_from_template.sql` continua a seedare le 6 sezioni standard.
 - Guardrail UX da curare nel 06: la `delete` di una sezione cancella a cascata categorie e voci → conferma esplicita con conteggio di cosa si perde.
+
+### 2026-05-25 — Prenotazione a orario libero nella finestra del turno (pre-freeze, schema-affecting)
+
+**Contesto:** il modello prenotazioni forza il cliente a un turno a **orario puntuale** (`time_slots.time`, es. Cena 20:00); chi cena alle 21:30 deve comunque "scegliere le 20:00". Il campo `bookings.preferred_time` esiste (aggiunto in UX-fix C3) ma è **solo indicativo**: free-text non validato, non incide su capacità né disponibilità. Audit `03_fit-modello-dati-realta-bar.md`: un bar non lavora a slot fissi, i clienti arrivano a orari diversi durante il servizio. È una modifica **schema-affecting** → va fatta **prima del freeze** per non trasformarla in migrazione post-freeze su ogni schema cliente.
+
+**Opzioni considerate (3 nodi, decisi con Lucio):**
+- *Conta coperti:* (A) **cap per turno invariato** — `max_covers` vale per l'intera finestra, l'orario custom dice solo *quando* si arriva; (B) cap per fascia oraria (slotting a intervalli) — gestione turnover ma nuovo modello capacità; (C) doppio cap (turno + max contemporanei per fascia).
+- *Definizione finestra:* (A) **colonna `time_slots.end_time`** esplicita (nullable); (B) finestra derivata dalla fascia `opening_hours` che contiene l'orario del turno.
+- *Campo orario:* (A) **riuso `preferred_time`** promosso a orario validato; (B) nuova colonna `booking_time` validata separata da `preferred_time` indicativo.
+
+**Decisione (Lucio, 2026-05-25):** tutte e tre le **(A)**.
+1. **Capacità per turno invariata** — niente slotting; `available_covers = max_covers − Σ covers confermati` resta per turno+data.
+2. **`time_slots.end_time TIME NULL`** — il turno definisce esplicitamente `[time, end_time]`. `end_time` NULL ⇒ comportamento attuale (orario fisso, `preferred_time` resta nota indicativa): **opt-in graduale per turno**.
+3. **`preferred_time` promosso a orario di prenotazione validato** quando il turno ha `end_time`: obbligatorio e vincolato a `time ≤ preferred_time < end_time`. Nessuna colonna nuova.
+
+**Rationale:** per la scala di un bar il vincolo reale è la capienza di sala/cucina sul servizio, non il numero di coperti in una fascia di 15 min → lo slotting è sovra-ingegnerizzazione (B/C). `end_time` esplicito è robusto e disaccoppiato dagli `opening_hours` (evita edge-case di derivazione: turno fuori fascia, fasce multiple) e l'admin gestisce già i turni. Riusare `preferred_time` evita una colonna ridondante (era già `TIME`). Costo: **una colonna** (no slotting, no nuove tabelle).
+
+**Gotcha tecnici (nel prompt sub-chat):** (a) PG ritorna i `TIME` come `"HH:MM:SS"` ma il form invia `"HH:MM"` → confronti finestra **normalizzati a HH:MM** su entrambi i lati (`"20:00" >= "20:00:00"` è falso lessicograficamente). (b) Finestre **oltre mezzanotte** (es. 20:00–00:30) **fuori scope** — coerente con gli `opening_hours` attuali (confronto stringa semplice). `end_time` validato `> time`.
+
+**Conseguenza operativa (intermezzo dedicato, `docs/ai-playbooks/prompts/2026-05-25_booking-orario-libero/`):**
+- **01** (schema + admin): `ALTER TABLE time_slots ADD COLUMN end_time TIME` nel baseline `create_schema_from_template.sql` + hand-edit `types/database.ts`; Zod `TimeSlot*Schema` con `end_time` opzionale + `.refine(end_time > time)`; admin orari (Create/Edit dialog + `TimeSlotCard` mostra la finestra). **Step manuale master:** `ALTER` sullo schema `template` nel SQL editor prima dello smoke.
+- **02** (web): `getAvailableTimeSlots` ritorna `end_time`; `createBooking` enforce `preferred_time` nella finestra quando settata (capacità invariata); `BookingForm` rende `preferred_time` richiesto con `min`/`max` sui turni con finestra; `actions.ts` mappa l'errore a field error.
+- È modifica di schema → la colonna entra nel **baseline congelato** (insieme a `end_time` su `template`).

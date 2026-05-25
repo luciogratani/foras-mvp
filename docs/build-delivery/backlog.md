@@ -363,6 +363,24 @@ Done when:
 
 ---
 
+## Intermezzo Booking-orario-libero — finestra turno + prenotazione a orario custom (2026-05-25 → APERTO)
+
+**Goal:** il cliente può prenotare a un **orario di arrivo libero** dentro la finestra del turno (es. Cena 20:00–23:00), non solo all'orario puntuale del turno. Capacità **per turno invariata**.
+
+> **Pre-freeze, schema-affecting.** Trigger: punto 0 della pianificazione post-Menu-refactor (vedi anche audit `03_fit-modello-dati-realta-bar.md`). Decisione completa + 3 forcelle + gotcha tecnici nel `decision-log/decisioni.md` (voce 2026-05-25 *Prenotazione a orario libero nella finestra del turno*): (A) cap **per turno** invariato, (A) colonna **`time_slots.end_time`** nullable (opt-in per turno), (A) **`preferred_time`** promosso a orario validato. **Una sola colonna**, niente slotting/tabelle nuove → entra nel **baseline congelato**.
+
+Piano a 2 sub-task in `docs/ai-playbooks/prompts/2026-05-25_booking-orario-libero/`:
+
+- [ ] **01** — Schema `end_time` + admin "finestra turno" (`sonnet`/medium): `ALTER ... ADD COLUMN end_time TIME` nel baseline `create_schema_from_template.sql` + hand-edit `types/database.ts`; Zod `TimeSlot*Schema` con `end_time` opzionale/nullable + `.refine(end_time > time)` (Update ristrutturato per preservare il refine); admin orari (Create/Edit dialog campo facoltativo + `TimeSlotCard` mostra `time–end_time`). **NON tocca `apps/web`/`bookings`.** Step manuale master: `ALTER TABLE template.time_slots ADD COLUMN end_time TIME;` prima dello smoke.
+- [ ] **02** — Web "prenotazione a orario libero" + enforcement (`sonnet`/high): `getAvailableTimeSlots` ritorna `end_time`; `createBooking` valida `preferred_time` in `[time, end_time)` (obbligatorio quando il turno ha finestra; capacità invariata); `BookingForm` rende `preferred_time` richiesto con `min`/`max` sui turni con finestra, altrimenti resta facoltativo; `actions.ts` mappa l'errore finestra a field error. Dipende da 01 (la colonna deve esistere). Gotcha: confronti `TIME` normalizzati a HH:MM; oltre-mezzanotte fuori scope.
+
+Done when:
+- [ ] Sub-task 01-02 committati + tsc -r e build (`admin` per 01, `web` per 02) verdi
+- [ ] `end_time` applicata allo schema `template` (step master)
+- [ ] Smoke di Lucio: turno con finestra → cliente prenota a orario custom validato; turno senza finestra → comportamento attuale; capacità sempre per-turno
+
+---
+
 ## Sprint 6 — Template freeze + onboarding primo cliente
 
 **Goal:** template congelato, primo cliente reale onboardato.
