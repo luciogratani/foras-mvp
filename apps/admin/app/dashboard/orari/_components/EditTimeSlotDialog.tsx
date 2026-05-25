@@ -61,6 +61,18 @@ export function EditTimeSlotDialog({
             />
           </div>
           <div className="space-y-1">
+            <Label htmlFor="edit-slot-end-time">Fine turno (facoltativo)</Label>
+            <Input
+              id="edit-slot-end-time"
+              name="end_time"
+              type="time"
+              defaultValue={slot.end_time?.substring(0, 5) ?? ''}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Lascia vuoto per un orario fisso. Imposta una fine per far scegliere ai clienti l&apos;orario di arrivo nella finestra (es. 20:00–23:00).
+            </p>
+          </div>
+          <div className="space-y-1">
             <Label htmlFor="edit-slot-covers">Coperti massimi</Label>
             <Input
               id="edit-slot-covers"

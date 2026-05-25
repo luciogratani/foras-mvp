@@ -41,6 +41,13 @@ export function CreateTimeSlotDialog({ onClose }: { onClose: () => void }) {
             <Input id="create-slot-time" name="time" type="time" required />
           </div>
           <div className="space-y-1">
+            <Label htmlFor="create-slot-end-time">Fine turno (facoltativo)</Label>
+            <Input id="create-slot-end-time" name="end_time" type="time" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Lascia vuoto per un orario fisso. Imposta una fine per far scegliere ai clienti l&apos;orario di arrivo nella finestra (es. 20:00–23:00).
+            </p>
+          </div>
+          <div className="space-y-1">
             <Label htmlFor="create-slot-covers">Coperti massimi</Label>
             <Input id="create-slot-covers" name="max_covers" type="number" min="1" required />
             <p className="text-xs text-muted-foreground mt-1">

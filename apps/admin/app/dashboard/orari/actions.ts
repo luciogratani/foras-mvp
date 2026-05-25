@@ -24,9 +24,11 @@ export async function createTimeSlotAction(
   formData: FormData
 ): Promise<SettingsActionState> {
   const { tenant } = await requireTenantClient()
+  const et = (formData.get('end_time') as string | null)?.trim()
   const raw = {
     label: formData.get('label'),
     time: formData.get('time'),
+    end_time: et ? et : null,
     max_covers: formData.get('max_covers'),
     is_active: formData.get('is_active') === 'true',
   }
@@ -54,6 +56,8 @@ export async function updateTimeSlotAction(
   if (label !== null) {
     raw.label = label
     raw.time = formData.get('time')
+    const et = (formData.get('end_time') as string | null)?.trim()
+    raw.end_time = et ? et : null
     raw.max_covers = formData.get('max_covers')
   }
   if (formData.has('is_active')) raw.is_active = formData.get('is_active') === 'true'

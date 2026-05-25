@@ -88,6 +88,7 @@ CREATE TABLE time_slots (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   label       TEXT        NOT NULL,   -- es. "Pranzo", "Cena"
   time        TIME        NOT NULL,
+  end_time    TIME,                   -- NULL = orario fisso; valorizzato = finestra [time, end_time] per prenotazioni a orario libero
   max_covers  INTEGER     NOT NULL,
   is_active   BOOLEAN     NOT NULL DEFAULT true,
   archived_at TIMESTAMPTZ            -- NULL = attivo; valorizzato = archiviato (nascosto da admin/sito, storico conservato)

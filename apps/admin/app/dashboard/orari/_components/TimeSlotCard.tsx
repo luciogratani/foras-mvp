@@ -50,7 +50,7 @@ export function TimeSlotCard({
             </span>
           </span>
           <p className="text-xs text-muted-foreground">
-            {slot.time.substring(0, 5)} — {slot.max_covers} coperti
+            {slot.time.substring(0, 5)}{slot.end_time ? `–${slot.end_time.substring(0, 5)}` : ''} — {slot.max_covers} coperti
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -91,7 +91,7 @@ export function TimeSlotCard({
           )}
         </span>
         <p className="text-xs text-muted-foreground">
-          {slot.time.substring(0, 5)} — {slot.max_covers} coperti
+          {slot.time.substring(0, 5)}{slot.end_time ? `–${slot.end_time.substring(0, 5)}` : ''} — {slot.max_covers} coperti
           {counts.upcoming > 0 && (
             <span className="ml-2 text-foreground">
               · {counts.upcoming} prenotazion{counts.upcoming === 1 ? 'e' : 'i'} in arrivo

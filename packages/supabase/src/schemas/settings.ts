@@ -18,13 +18,25 @@ export const OpeningHoursSchema = z.object(
 )
 export type OpeningHours = z.infer<typeof OpeningHoursSchema>
 
-export const TimeSlotCreateSchema = z.object({
+const timeSlotBase = z.object({
   label: z.string().min(1, 'Il nome è obbligatorio'),
   time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
+  end_time: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM').nullable().optional(),
   max_covers: z.coerce.number().int().positive('Deve essere almeno 1'),
   is_active: z.boolean().optional(),
 })
-export const TimeSlotUpdateSchema = TimeSlotCreateSchema.partial()
+
+const endTimeAfterTime = (v: { time?: string; end_time?: string | null }) =>
+  v.end_time == null || v.time == null || v.end_time > v.time
+
+export const TimeSlotCreateSchema = timeSlotBase.refine(endTimeAfterTime, {
+  message: 'La fine deve essere dopo l\'inizio',
+  path: ['end_time'],
+})
+export const TimeSlotUpdateSchema = timeSlotBase.partial().refine(endTimeAfterTime, {
+  message: 'La fine deve essere dopo l\'inizio',
+  path: ['end_time'],
+})
 export type TimeSlotCreate = z.infer<typeof TimeSlotCreateSchema>
 export type TimeSlotUpdate = z.infer<typeof TimeSlotUpdateSchema>
 
