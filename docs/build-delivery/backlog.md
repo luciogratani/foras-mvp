@@ -363,7 +363,7 @@ Done when:
 
 ---
 
-## Intermezzo Booking-orario-libero — finestra turno + prenotazione a orario custom (2026-05-25 → APERTO)
+## Intermezzo Booking-orario-libero — finestra turno + prenotazione a orario custom (2026-05-25 → CHIUSO 2026-05-25)
 
 **Goal:** il cliente può prenotare a un **orario di arrivo libero** dentro la finestra del turno (es. Cena 20:00–23:00), non solo all'orario puntuale del turno. Capacità **per turno invariata**.
 
@@ -372,12 +372,12 @@ Done when:
 Piano a 2 sub-task in `docs/ai-playbooks/prompts/2026-05-25_booking-orario-libero/`:
 
 - [x] **01** — Schema `end_time` + admin "finestra turno" (`sonnet`/medium) — commit `a96483a` (subchat Sonnet/medium; tsc -r + build `admin` verdi; **smoke di Lucio verde 2026-05-25**; `ALTER` applicato su `template`): colonna `end_time TIME` nel baseline + `types/database.ts`; Zod `TimeSlot*Schema` con `end_time` opzionale/nullable + `.refine(end_time > time)` (oggetto base + refine su Create **e** Update, per preservare il vincolo dopo `.partial()`); admin orari (Create/Edit dialog campo facoltativo; `TimeSlotCard` mostra `time–end_time` nei due rami). `apps/web`/`bookings` intatti. **Fix UI post-smoke:** il campo `end_time` non viene più mostrato come input `time` vuoto (il browser lo rendeva con un orario fantasma); ora c'è un bottone "+ Aggiungi fine turno" che rivela l'input pre-compilato (inizio+2h) + "Rimuovi" che lo nasconde.
-- [x] **02** — Web "prenotazione a orario libero" + enforcement (`sonnet`/high) — subchat Sonnet; `tsc -r` + build `web` verdi (verificati dal master); **smoke di Lucio pendente**. `AvailableTimeSlot`+`getAvailableTimeSlots` espongono `end_time`; nuova `BookingWindowError` (esportata da `index.ts`); `createBooking` impone `preferred_time` in `[time, end_time)` quando il turno ha finestra (obbligatorio; confronti normalizzati a HH:MM su entrambi i lati; enforcement dopo il check capacità, prima dell'insert), capacità invariata; `BookingForm` rende `preferred_time` `required` con `min`/`max` per i turni con finestra (stato `selectedId` derivato prima dell'early return per le Rules of Hooks), option label `label (HH:MM–HH:MM)`; `actions.ts` mappa `BookingWindowError` a field error su `preferred_time`. Schema Zod invariato; nessuna modifica DB. Oltre-mezzanotte fuori scope.
+- [x] **02** — Web "prenotazione a orario libero" + enforcement (`sonnet`/high) — commit `6dd94fd` (subchat Sonnet; `tsc -r` + build `web` verdi, verificati dal master; **smoke di Lucio verde 2026-05-25**: turno con finestra → orario di arrivo obbligatorio e validato, fuori finestra → field error, cambio turno dinamico, capacità invariata, senza finestra invariato). `AvailableTimeSlot`+`getAvailableTimeSlots` espongono `end_time`; nuova `BookingWindowError` (esportata da `index.ts`); `createBooking` impone `preferred_time` in `[time, end_time)` quando il turno ha finestra (obbligatorio; confronti normalizzati a HH:MM su entrambi i lati; enforcement dopo il check capacità, prima dell'insert), capacità invariata; `BookingForm` rende `preferred_time` `required` con `min`/`max` per i turni con finestra (stato `selectedId` derivato prima dell'early return per le Rules of Hooks), option label `label (HH:MM–HH:MM)`; `actions.ts` mappa `BookingWindowError` a field error su `preferred_time`. Schema Zod invariato; nessuna modifica DB. Oltre-mezzanotte fuori scope.
 
 Done when:
 - [x] Sub-task 01-02 committati + tsc -r e build (`admin` per 01, `web` per 02) verdi
 - [x] `end_time` applicata allo schema `template` (step master, 2026-05-25)
-- [ ] Smoke di Lucio: turno con finestra → cliente prenota a orario custom validato; turno senza finestra → comportamento attuale; capacità sempre per-turno
+- [x] Smoke di Lucio (2026-05-25): turno con finestra → cliente prenota a orario custom validato; turno senza finestra → comportamento attuale; capacità sempre per-turno
 
 ---
 
