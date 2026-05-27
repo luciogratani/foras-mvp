@@ -1,14 +1,18 @@
 ---
-status: DRAFT
+status: DONE
 sprint: 6
 stream: A
 task: A1
 created: 2026-05-22
 reviewed: 2026-05-25
+completed: 2026-05-27
+commit: 887df1b
 suggested_model: opus
 suggested_effort: high
 owner: master-chat
 ---
+
+> **DONE 2026-05-27 (commit `887df1b`).** Implementato da subchat (opus/high), revisionato e committato dal master. Eseguito da Lucio nel SQL editor: hardening applicato al `template`, `audit_rls.sql` pulito (0 righe su tutte e 3 le query), `rls_isolation_tests.sql` Sezione 3 con 3.1–3.4 tutti PASS. **Quirk:** la suite di test va eseguita per sezioni — il run "in blocco" fallisce su `CREATE SCHEMA test_iso` (§2b) con `42501 permission denied for database postgres` a causa di un ruolo non-privilegiato residuo (comportamento pre-esistente del file, non introdotto da A1).
 
 > **Nota di revisione (master, 2026-05-25).** Prompt rivisto contro lo stato reale dello schema. Aggiornamenti rispetto alla stesura del 2026-05-22: (1) le policy di scrittura sono **10, non 9** — è stata aggiunta `closed_dates_admin_all` (intermezzo UX-fix C2); (2) la baseline `create_schema_from_template.sql` è stata ri-allineata il 2026-05-25 (ripiegata la migration schema-extras: `site_settings.extra_data/social_*/maintenance_mode`, `closed_dates.end_date`+CHECK) → lo script che leggi è **attuale**; (3) `audit_rls.sql` ha già `expected_tables` a **9 tabelle** (`closed_dates` inclusa) → in questo task lo estendi solo con i check GRANT + helper, **non** ritoccare la lista tabelle. Il resto del prompt (funzione `is_tenant_owner`, gotcha `current_schema()`, test JWT) resta valido e verificato.
 

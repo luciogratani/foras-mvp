@@ -67,10 +67,10 @@ Done when:
 - Generazione tipi via `postgres-meta` HTTP (no CLI Supabase, no Docker locale)
 - GRANT espliciti aggiunti a `create_schema_from_template.sql` §3b — RLS senza GRANT non sono raggiungibili
 - `SUPABASE_SERVICE_ROLE_KEY` su Vercel admin per MVP; trigger di migrazione a Edge Function tracciato in `post-mvp.md`
-- Hardening RLS scrittura (owner-scope vs `auth.uid() IS NOT NULL`): trigger = secondo tenant o freeze template
+- Hardening RLS scrittura (owner-scope vs `auth.uid() IS NOT NULL`): ✅ CHIUSO in Sprint 6 / A1 (2026-05-27) via `public.is_tenant_owner()` `SECURITY DEFINER` — vedi Sprint 6
 
 **Debito tecnico aperto:**
-- `audit_rls.sql` non controlla i GRANT — va esteso prima del secondo tenant o del freeze del template
+- ~~`audit_rls.sql` non controlla i GRANT~~ → ✅ CHIUSO in Sprint 6 / A1 (2026-05-27): esteso con QUERY 2 (GRANT minimi mancanti per ruolo) + QUERY 3 (presenza/`SECURITY DEFINER` di `is_tenant_owner`).
 
 ---
 
@@ -387,6 +387,8 @@ Done when:
 
 > **Strategia aggiornata (2026-05-22):** il **freeze è posticipato**. Prima si fanno smoke test approfonditi + valutazione UX di `apps/web` e `apps/admin`; è probabile che ne emergano mini-implementazioni comode (vedi appunti privati di Lucio) **schema-affecting** — es. orari di apertura spezzati e orario di prenotazione custom — che vanno fatte *prima* del freeze per non trasformarle in migrazioni post-freeze su ogni schema cliente. Conseguenze: **A1 (RLS hardening) è parcheggiato** col freeze (trigger "2° tenant o freeze", nessuno imminente — prompt già scritto e pronto). L'unico lavoro che procede ora è lo Stream B (email), perché tenant-agnostico e a prova di futuro — e viene costruito **dormiente** (vedi B2). Ordine A2/A3/A4 invariato ma differito a dopo le decisioni UX.
 
+> **Aggiornamento 2026-05-27 — freeze RIPRESO, A1 eseguito.** I tre candidati schema-affecting pre-freeze sono tutti chiusi (UX-fix C1, Menu-refactor, Booking-orario-libero) → il freeze non è più trattenuto da lavoro di prodotto (decisione 2026-05-25). **A1 è ✅ DONE ed eseguito sul `template`** (vedi bullet Stream A). Prossimo: **A1b** (timezone). La capienza tavoli+coperti resta rimandata a post-onboarding.
+
 **Decisioni master all'apertura** (2026-05-22, dettaglio nel `decision-log/decisioni.md`):
 - **RLS hardening scrittura** → owner verificato contro `public.tenants` via funzione `public.is_tenant_owner()` `SECURITY DEFINER` (chiude il debito 2026-05-20). Entra nel baseline congelato + applicata al `template`.
 - **Progetto Supabase** → ri-confermato condiviso (il vettore cross-tenant lo chiude l'hardening RLS).
@@ -396,7 +398,7 @@ Done when:
 Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
 
 **Stream A — Artefatti freeze** (sequenziale):
-- A1: hardening RLS (`is_tenant_owner()` `SECURITY DEFINER` + riscrittura policy di scrittura) + estensione `audit_rls.sql` ai GRANT — SQL/sicurezza, verificato via `rls_isolation_tests.sql`
+- **A1 ✅ DONE (2026-05-27, commit `887df1b`):** hardening RLS — helper `public.is_tenant_owner()` (`SECURITY DEFINER`, `STABLE`, senza `SET search_path`) + riscrittura delle **10** policy di scrittura admin da `auth.uid() IS NOT NULL` a `is_tenant_owner()` + estensione `audit_rls.sql` ai GRANT (QUERY 2/3) + Sezione 3 in `rls_isolation_tests.sql`. Eseguito da Lucio nel SQL editor: hardening applicato al `template`, audit pulito (0 righe), test 3.1–3.4 tutti PASS. **Quirk esecuzione:** la suite test va lanciata **per sezioni** — il run "in blocco" muore su `CREATE SCHEMA test_iso` (§2b) per un ruolo non-privilegiato residuo, comportamento pre-esistente non legato ad A1.
 - A1b: colonna `site_settings.timezone` + guard booking (`getAvailableTimeSlots`/`createBooking`) in ora locale del tenant — schema + service layer, verificato via flusso prenotazione
 - A2: parametrizzazione `create_schema_from_template.sql` (`:schema`/`:owner_uuid`)
 - A3: pulizia pre-freeze schema `template` (checklist [[mvp]] — operativo)
