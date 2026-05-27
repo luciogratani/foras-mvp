@@ -17,30 +17,45 @@ Procedura per onboardare un nuovo cliente bar sul sistema. Da eseguire dopo il c
 
 ## Step 1 — Creare lo schema PostgreSQL
 
-Eseguire lo script `docs/operations/create_schema_from_template.sql` (bozza già disponibile, da finalizzare post-freeze) sostituendo i placeholder `nome_schema` e `owner_uuid`:
+Eseguire lo script `docs/operations/create_schema_from_template.sql` via `psql`, passando obbligatoriamente le variabili `-v schema=` e `-v owner_uuid=`:
 
 ```bash
-# Da psql con accesso service_role
 psql $DATABASE_URL \
   -v schema=bar_rossi \
   -v owner_uuid=<uuid-dell-admin> \
   -f docs/operations/create_schema_from_template.sql
 ```
 
-Lo script crea: tutte le tabelle, RLS abilitata su ognuna, policies complete, seed degli allergeni (14 obbligatori per legge) e delle sezioni menu predefinite, riga iniziale in `site_settings`, e registrazione in `public.tenants`.
+Lo script crea: tutte le tabelle, RLS abilitata su ognuna, policies complete, GRANT per i ruoli Supabase (`anon`, `authenticated`, `service_role`), seed degli allergeni (14 obbligatori per legge), sezioni menu predefinite, 2 time_slots placeholder, riga iniziale in `site_settings`, e registrazione in `public.tenants`.
 
-> **Nota:** la bozza è basata sul data model attuale. Va rivista e testata end-to-end prima del primo onboarding reale, contestualmente alla scrittura di `schema.sql` nel repo-template.
+> **Importante:** lo script usa variabili `psql -v` e **non funziona nel Supabase SQL editor**. Deve essere eseguito da terminale con `psql`. Le variabili `schema` e `owner_uuid` sono obbligatorie — lo script fallisce in testa se mancano.
+>
+> Lo script è progettato per uno **schema nuovo**: ri-eseguirlo su uno schema già esistente duplica i dati di seed senza errore.
+
+Dopo l'esecuzione, verificare con l'audit RLS:
+
+```bash
+psql $DATABASE_URL -f docs/operations/audit_rls.sql
+```
+
+Zero righe nell'output = schema allineato al template (policy, RLS, GRANT tutti corretti).
+
+> **Nota:** la registrazione in `public.tenants` (Step 2 qui sotto) è già inclusa nello script — non è necessario eseguirla manualmente.
 
 ---
 
 ## Step 2 — Registrare il tenant in `public.tenants`
+
+Già incluso nello script `create_schema_from_template.sql` (§6). Non è necessario eseguirlo manualmente.
+
+Per riferimento, il comando SQL corrispondente è:
 
 ```sql
 INSERT INTO public.tenants (schema_name, owner_id)
 VALUES ('nome_schema', '<uuid-dell-admin>');
 ```
 
-Questo passaggio deve essere automatizzato nello script di onboarding. È necessario per la validazione nelle Edge Functions.
+La riga in `public.tenants` è necessaria per la validazione nelle Edge Functions e per la funzione `public.is_tenant_owner()` usata dalle RLS policy di scrittura.
 
 ---
 
@@ -143,6 +158,6 @@ SELECT * FROM bookings; -- deve restituire solo i record di bar_rossi
 
 ## ⚠️ Sezioni ancora da completare
 
-- **Script `create_schema_from_template.sql`**: bozza disponibile in `docs/operations/create_schema_from_template.sql` — da finalizzare e testare end-to-end post-freeze
+- **Script `create_schema_from_template.sql`**: parametrizzato e testato su `onboard_test` (Sprint 6 / A2). Da verificare end-to-end al primo onboarding reale su un tenant di produzione.
 - **Procedura DNS dettagliata**: dipende dal registrar del cliente
 - **Verifica finale end-to-end**: checklist da costruire testando il primo onboarding reale

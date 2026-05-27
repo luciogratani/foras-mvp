@@ -2,24 +2,60 @@
 -- -----------------------------------------------------------------------
 -- Script di onboarding: crea un nuovo schema tenant a partire dal template.
 --
--- STATO: bozza — basata sul data model in tech-architecture/data-model.md.
--- Da verificare e finalizzare contestualmente alla scrittura di schema.sql
--- nel repo-template (post-freeze).
+-- STATO: parametrizzato con psql -v (Sprint 6 / A2, 2026-05-27).
+--        Struttura tabelle, RLS e policy invariate rispetto al baseline A1.
 --
 -- USO:
---   Sostituire 'nome_schema' con il nome del bar (es. 'bar_rossi').
---   Eseguire come service_role dal Supabase SQL editor o tramite psql.
+--   psql $DATABASE_URL \
+--     -v schema=bar_rossi \
+--     -v owner_uuid=<uuid-dell-admin> \
+--     -f docs/operations/create_schema_from_template.sql
 --
---   psql $DATABASE_URL -v schema=bar_rossi -f create_schema_from_template.sql
+--   Le variabili sono OBBLIGATORIE — lo script fallisce in testa se mancano.
+--
+-- PER RICREARE IL TENANT 'template' (snapshot identico al baseline):
+--   psql $DATABASE_URL \
+--     -v schema=template \
+--     -v owner_uuid=1c486961-12b2-47d0-8aef-0aee30df083c \
+--     -f docs/operations/create_schema_from_template.sql
+--
+-- CAVEAT:
+--   Le variabili :var funzionano in psql, NON nel Supabase SQL editor.
+--   L'onboarding è quindi un'operazione da CLI (psql), eseguita dal master/dev.
 --
 -- DIPENDENZE:
 --   - Tabella public.tenants deve esistere
 --   - L'utente admin del tenant deve essere già creato in auth.users
---     con user_metadata.schema = 'nome_schema'
+--     con user_metadata.schema = '<schema>'
+--   - La funzione public.is_tenant_owner() deve esistere (condivisa tra tutti
+--     i tenant, creata una volta sola in public — vedi §3c)
+--
+-- IDEMPOTENZA:
+--   CREATE SCHEMA IF NOT EXISTS e CREATE TABLE IF NOT EXISTS rendono lo script
+--   rieseguibile, ma i blocchi INSERT (§5 seed + §6 public.tenants) NON sono
+--   idempotenti: rieseguire su uno schema già seedato DUPLICA i dati.
+--   Lo script è progettato per uno schema NUOVO.
 -- -----------------------------------------------------------------------
 
--- ⚠️  Schema e owner già impostati per il tenant 'template'
---     (usare psql con \set per altri tenant)
+
+-- -----------------------------------------------------------------------
+-- Guard: fallisce subito se le variabili obbligatorie non sono state passate.
+-- ":?" è la forma psql per "variabile non impostata → errore".
+-- Queste righe producono errori "invalid variable name" nel Supabase SQL
+-- editor (che non supporta le variabili psql): usare esclusivamente psql.
+-- -----------------------------------------------------------------------
+
+\if :{?schema}
+\else
+\warn 'ERRORE: variabile "schema" non impostata. Passarla con -v schema=<nome_schema>'
+\quit
+\endif
+
+\if :{?owner_uuid}
+\else
+\warn 'ERRORE: variabile "owner_uuid" non impostata. Passarla con -v owner_uuid=<uuid>'
+\quit
+\endif
 
 
 -- -----------------------------------------------------------------------
@@ -37,8 +73,8 @@ CREATE TABLE IF NOT EXISTS public.tenants (
 -- 1. Creazione schema
 -- -----------------------------------------------------------------------
 
-CREATE SCHEMA IF NOT EXISTS template;
-SET search_path = template;
+CREATE SCHEMA IF NOT EXISTS :"schema";
+SET search_path = :"schema";
 
 
 -- -----------------------------------------------------------------------
@@ -194,22 +230,22 @@ ALTER TABLE news_slides   ENABLE ROW LEVEL SECURITY;
 --   service_role  → server-side (Edge Functions, supabaseAdmin) — bypassa RLS
 -- -----------------------------------------------------------------------
 
-GRANT USAGE ON SCHEMA template TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA :"schema" TO anon, authenticated, service_role;
 
-GRANT SELECT ON ALL TABLES IN SCHEMA template TO anon, authenticated;
-GRANT INSERT ON template.bookings TO anon;
-GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA template TO authenticated;
-GRANT ALL ON ALL TABLES IN SCHEMA template TO service_role;
+GRANT SELECT ON ALL TABLES IN SCHEMA :"schema" TO anon, authenticated;
+GRANT INSERT ON :"schema".bookings TO anon;
+GRANT INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA :"schema" TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA :"schema" TO service_role;
 
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA template TO anon, authenticated;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA template TO service_role;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA :"schema" TO anon, authenticated;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA :"schema" TO service_role;
 
 -- Default per oggetti creati in futuro nello schema (post-freeze migrations)
-ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT SELECT ON TABLES TO anon, authenticated;
-ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT INSERT, UPDATE, DELETE ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT ALL ON TABLES TO service_role;
-ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
-ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA :"schema" GRANT SELECT ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA :"schema" GRANT INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA :"schema" GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA :"schema" GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA :"schema" GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO service_role;
 
 
 -- -----------------------------------------------------------------------
@@ -220,6 +256,13 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT, UPDATE ON SEQUE
 -- policy di scrittura (§4) per legare ogni scrittura admin all'owner dello
 -- schema invece che a "un qualsiasi utente autenticato" (auth.users è
 -- condiviso a livello di progetto → auth.uid() IS NOT NULL non isola i tenant).
+--
+-- ⚠️  FUNZIONE CONDIVISA — NON PARAMETRIZZATA.
+--     public.is_tenant_owner() vive in public ed è condivisa da tutti i tenant.
+--     Va creata UNA SOLA VOLTA (o idempotente con CREATE OR REPLACE) e usa
+--     current_schema() a runtime per sapere in quale schema opera.
+--     Non va ricreata per ogni tenant: eseguire questa sezione la prima volta,
+--     poi è già presente per i tenant successivi.
 --
 -- ⚠️  GOTCHA — NON aggiungere `SET search_path` a questa funzione.
 --     current_schema() deve risolvere allo schema del CHIAMANTE (lo schema
@@ -377,7 +420,7 @@ INSERT INTO time_slots (label, time, max_covers, is_active) VALUES
 -- -----------------------------------------------------------------------
 
 INSERT INTO public.tenants (schema_name, owner_id)
-VALUES ('template', '1c486961-12b2-47d0-8aef-0aee30df083c'::uuid);
+VALUES (:'schema', :'owner_uuid'::uuid);
 
 
 -- -----------------------------------------------------------------------
