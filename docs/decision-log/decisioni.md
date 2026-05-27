@@ -601,3 +601,17 @@ Due scelte di meccanismo per i sub-task del freeze, prese da Lucio dopo l'assess
 **2. WARN `function_search_path_mutable` su `is_tenant_owner` → ACCETTATO by-design.** La funzione NON ha `SET search_path` di proposito (`current_schema()` deve risolvere allo schema del chiamante — vedi A1). Non "correggere".
 
 **3. WARN `rls_policy_always_true` su `bookings_public_insert` (INSERT WITH CHECK true) → ACCETTATO by-design.** È il form prenotazione pubblico: `anon` deve poter inviare una prenotazione (come un form contatti). Validità/capacità imposte nel service layer (`createBooking` + Zod), non in RLS. L'unico vettore è abuso/spam → rate-limiting, questione separata post-MVP. Non è un buco di isolamento.
+
+### 2026-05-27 — 🔒 TEMPLATE FROZEN (Sprint 6 / A4 — freeze completato)
+
+**Il baseline dello schema tenant è CONGELATO.** Generati `schema.sql` (root, fotografia strutturale via `pg_dump --schema-only`) e `migrations/001_init.sql` (pointer al provisioner `create_schema_from_template.sql`) da uno schema usa-e-getta `freeze_test`, validato identico a `template` dall'audit (0 discrepanze su policy/RLS/GRANT/helper), poi droppato.
+
+**Cosa include il baseline congelato:**
+- 9 tabelle (allergens, menu_sections/categories/items, time_slots, bookings, closed_dates, site_settings, news_slides) con tutte le colonne/constraint/FK attuali (incl. `time_slots.end_time`, `closed_dates.end_date`, `site_settings.extra_data/social_*/maintenance_mode`, `bookings.preferred_time`).
+- RLS su tutte e 9; scrittura admin **owner-scope** via `public.is_tenant_owner()` (A1); lettura pubblica + insert anon bookings invariati; GRANT per `anon`/`authenticated`/`service_role`.
+- Oggetti globali in `public`: `tenants` (RLS abilitata, fix 2026-05-27) + `is_tenant_owner()` (SECURITY DEFINER).
+- Timezone gestita via helper TS `Europe/Rome` (A1b, opzione B) — **nessuna colonna**.
+
+**Regola post-freeze:** ogni modifica di schema (incl. RLS) passa per una **migrazione numerata** in `/migrations`, applicata a ogni schema tenant (vedi `migration-runbook.md`). Onboarding di nuovi tenant via `create_schema_from_template.sql` (`psql -v`, da terminale/SSH+Docker).
+
+**Note:** A3 (pulizia `template`) cancellato — il `template` live resta sandbox dev/test, non è la fonte di verità (lo è lo script + `schema.sql`). Migrazioni post-freeze accettate consapevolmente per: capienza tavoli+coperti (rimandata post-onboarding), timezone per-tenant (opzione A, post-MVP), e l'eventuale follow-up sul guard §3c (`CREATE OR REPLACE is_tenant_owner` dà ERROR benigno "must be owner" se eseguito come `postgres` su install dove la funzione è di `supabase_admin`). **Prossimo: Stream C — onboarding primo cliente reale.**

@@ -113,3 +113,31 @@ chore(deps): add @dnd-kit/core to admin
 ```
 
 Un commit per sessione di sub-chat completata, non un commit per file.
+
+---
+
+## Accesso al DB Supabase (self-hosted, dentro Docker)
+
+Il DB **non** è esposto pubblicamente sulla 5432. Si lavora via **SSH sul server**, dove Postgres gira nel container **`supabase-db`**. **`psql`/`pg_dump` NON sono sul PATH dell'host** → vanno invocati con `docker exec`.
+
+- **Server:** `ssh root@178.104.44.21`
+- **Connessione DB nel container:** `docker exec supabase-db psql -U postgres -d postgres`
+
+**Query al volo:**
+```bash
+ssh root@178.104.44.21 "docker exec supabase-db psql -U postgres -d postgres -c \"SELECT ...;\""
+```
+
+**Eseguire uno script `.sql` locale sul DB remoto** (qui funzionano le variabili `psql -v`, che invece NON funzionano nel SQL editor di Studio):
+```bash
+cat docs/operations/SCRIPT.sql | ssh root@178.104.44.21 \
+  "docker exec -i supabase-db psql -U postgres -d postgres -v schema=NOME -v owner_uuid=UUID -f -"
+```
+(`-i` su `docker exec` serve a passare lo stdin; `-f -` legge lo script da stdin.)
+
+**Dump schema-only di uno schema → file locale** (il `>` gira sul Mac, il file resta in locale):
+```bash
+ssh root@178.104.44.21 "docker exec supabase-db pg_dump -U postgres -d postgres --schema-only --schema=NOME" > /tmp/dump.sql
+```
+
+**Gotcha ruoli:** `docker exec ... -U postgres` si connette come **`postgres`**, mentre il **SQL editor di Studio gira come `supabase_admin`** (superuser). Gli oggetti creati da Studio (es. `public.is_tenant_owner`, `public.tenants`) sono di proprietà di `supabase_admin` → un `CREATE OR REPLACE`/`REVOKE`/`GRANT` su di essi via `docker exec` come `postgres` dà un **ERROR "must be owner" benigno** (l'oggetto esiste già e funziona). Per i `pg_dump` usare il binario del container garantisce versione allineata al server.

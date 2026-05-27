@@ -1,13 +1,16 @@
 ---
-status: DRAFT
+status: DONE
 sprint: 6
 stream: A
 task: A4
 created: 2026-05-25
+completed: 2026-05-27
 suggested_model: claude-sonnet-4-6
 suggested_effort: high
 owner: master-chat
 ---
+
+> **DONE 2026-05-27.** Eseguito dal master (parte operativa via SSH+docker exec sul server self-hosted, niente subchat). Creato schema usa-e-getta `freeze_test` dallo script A2 → audit `audit_rls.sql` **0 discrepanze** vs `template` (policy/RLS/GRANT/helper) → `pg_dump --schema-only` → generati `schema.sql` (root, `freeze_test`→`template` + header FROZEN) e `migrations/001_init.sql` (pointer sottile al provisioner, no duplicazione) → `freeze_test` droppato. `migration-runbook.md` allineato (baseline 001 + applicazione via Docker). **Template FROZEN/LOCKED** (decision-log 2026-05-27). NB: lo schema `template` live NON è stato toccato (resta sandbox dev/test).
 
 # Sprint 6 / A4 — Genera `schema.sql` + `migrations/001_init.sql`, testa, FREEZE LOCKED
 

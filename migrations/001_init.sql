@@ -1,0 +1,24 @@
+-- =======================================================================
+-- migrations/001_init.sql — MIGRAZIONE BASELINE (001)
+-- =======================================================================
+-- Freeze: 2026-05-27 (Sprint 6 / A4).
+--
+-- È la migrazione "zero" del sistema. Lo stato baseline di un nuovo schema tenant
+-- NON è duplicato qui (evita divergenze): il provisioner canonico, parametrizzato
+-- e testato, è
+--     docs/operations/create_schema_from_template.sql
+-- che crea schema + 9 tabelle + RLS owner-scope + GRANT + seed e registra il
+-- tenant in public.tenants, oltre al bootstrap globale condiviso
+-- (public.tenants con RLS, public.is_tenant_owner() SECURITY DEFINER).
+--
+-- La fotografia strutturale congelata del risultato è in /schema.sql (root).
+--
+-- Questo file ancora il baseline 001 per la numerazione delle migrazioni:
+-- dal 002 in poi ogni modifica di schema è un file numerato in /migrations,
+-- applicato per ogni schema tenant. Vedi docs/operations/migration-runbook.md.
+--
+-- PROVISIONING DI UN TENANT AL BASELINE 001 (da terminale, DB in Docker):
+--   cat docs/operations/create_schema_from_template.sql | ssh root@<server> \
+--     "docker exec -i supabase-db psql -U postgres -d postgres \
+--      -v schema=<nome> -v owner_uuid=<uuid> -f -"
+-- =======================================================================

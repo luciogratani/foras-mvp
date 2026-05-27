@@ -15,14 +15,15 @@ Ogni modifica allo schema di un tenant attivo — aggiunta di colonne, nuove tab
 ## Struttura dei file
 
 ```
-repo-template/
-    /migrations
-        001_init.sql              ← schema iniziale completo (post-freeze)
-        002_add_og_image.sql      ← ogni modifica successiva
-        003_bookings_add_notes.sql
-    schema.sql                    ← schema PostgreSQL corrente (aggiornato dopo ogni migrazione)
-    CHANGELOG.md                  ← registro human-readable delle modifiche
+/migrations
+    001_init.sql              ← baseline (FROZEN 2026-05-27) — pointer al provisioner
+    002_add_og_image.sql      ← ogni modifica successiva (ALTER numerato, per-schema)
+    003_bookings_add_notes.sql
+schema.sql                    ← fotografia strutturale congelata, aggiornata dopo ogni migrazione
+CHANGELOG.md                  ← registro human-readable delle modifiche
 ```
+
+> **Baseline 001 (freeze 2026-05-27).** `migrations/001_init.sql` **non duplica** lo schema: rimanda al provisioner canonico parametrizzato `docs/operations/create_schema_from_template.sql` (crea schema + tabelle + RLS owner-scope + GRANT + seed + bootstrap globale `public.tenants`/`is_tenant_owner`). `schema.sql` (root) è la fotografia strutturale congelata di un tenant (generata via `pg_dump --schema-only`, validata identica a `template` dall'audit). Dal **002** in poi: `ALTER` numerati applicati a ogni schema tenant.
 
 ---
 
@@ -48,11 +49,15 @@ Ogni script deve:
 1. Scrivere lo script numerato in `/migrations`
 2. Aggiornare `schema.sql` per riflettere lo stato corrente
 3. Aggiungere una riga in `CHANGELOG.md` con numero, data e descrizione
-4. Applicare lo script manualmente su ogni schema cliente:
-   ```sql
-   SET search_path = bar_rossi;
-   \i 002_add_og_image.sql
+4. Applicare lo script manualmente su ogni schema cliente. Il DB Supabase è
+   self-hosted **dentro Docker** e non è esposto sulla 5432 → si applica via SSH +
+   `docker exec` (dettagli e comandi in `docs/ai-playbooks/workflow-master-sub.md`,
+   sezione "Accesso al DB Supabase"). Esempio per uno schema:
+   ```bash
+   cat migrations/002_add_og_image.sql | ssh root@<server> \
+     "docker exec -i supabase-db psql -U postgres -d postgres -c 'SET search_path = bar_rossi' -f -"
    ```
+   In alternativa, anteporre `SET search_path = <schema>;` in testa allo script.
 5. Ripetere il punto 4 per ogni schema cliente esistente
 
 ---
@@ -71,13 +76,13 @@ Le RLS policies sono identiche su tutti gli schemi ma vanno applicate manualment
 
 ```sql
 -- 003_fix_rls_bookings.sql
--- Corregge la policy di lettura su bookings
+-- Corregge la policy di lettura admin su bookings (pattern owner-scope, post-A1)
 -- Data: YYYY-MM-DD | Applicare a: tutti i clienti esistenti
 
-DROP POLICY IF EXISTS "Lettura bookings" ON bookings;
-CREATE POLICY "Lettura bookings"
+DROP POLICY IF EXISTS "bookings_admin_select" ON bookings;
+CREATE POLICY "bookings_admin_select"
 ON bookings FOR SELECT
-USING (auth.uid() = owner_id);
+USING (public.is_tenant_owner());
 ```
 
 ---
