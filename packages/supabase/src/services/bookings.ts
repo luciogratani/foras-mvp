@@ -6,6 +6,7 @@ import {
   CancelBookingTokenSchema,
   type CreateBookingInput,
 } from '../schemas/bookings'
+import { localToday, localNow, localDateOffset } from '../lib/clock'
 
 export type TimeSlot = Tables<{ schema: 'template' }, 'time_slots'>
 export type Booking = Tables<{ schema: 'template' }, 'bookings'>
@@ -53,9 +54,8 @@ export async function getAvailableTimeSlots(
   client: TenantClient,
   date: string
 ): Promise<AvailableTimeSlot[]> {
-  const now = new Date()
-  const today = now.toISOString().slice(0, 10)
-  const currentTime = now.toISOString().slice(11, 16)
+  const today = localToday()
+  const currentTime = localNow()
   if (date < today) return []
 
   const [slotsRes, bookedRes, settingsRes, closedDateRes] = await Promise.all([
@@ -84,6 +84,9 @@ export async function getAvailableTimeSlots(
   if (closedDateRes.data) return []
 
   const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+  // getUTCDay() su una stringa date-only ("YYYY-MM-DD") è corretto e tz-stabile: il parser ISO
+  // la interpreta come mezzanotte UTC, quindi getUTCDay() restituisce sempre il giorno inteso,
+  // indipendentemente dalla timezone locale. Non usare getDay() o Intl qui.
   const dayKey = DAY_NAMES[new Date(date).getUTCDay()]
   const hours = settingsRes.data?.opening_hours as OpeningHours | null | undefined
   if (hours?.[dayKey]?.closed === true) return []
@@ -133,7 +136,7 @@ export async function createBooking(
 ): Promise<{ id: string; cancellation_token: string }> {
   const parsed = CreateBookingInputSchema.parse(input)
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   if (parsed.date < today) throw new Error('Non è possibile prenotare per una data passata')
 
   const slots = await getAvailableTimeSlots(client, parsed.date)
@@ -218,7 +221,7 @@ export type SlotBookingCounts = {
 export async function getBookingCountsBySlot(
   client: TenantClient
 ): Promise<Record<string, SlotBookingCounts>> {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   const { data, error } = await client
     .from('bookings')
     .select('time_slot_id, status, date')
@@ -249,9 +252,9 @@ export type DashboardStats = {
 }
 
 export async function getDashboardStats(client: TenantClient): Promise<DashboardStats> {
-  const today = new Date().toISOString().slice(0, 10)
-  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
-  const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)
+  const today = localToday()
+  const tomorrow = localDateOffset(1)
+  const nextWeek = localDateOffset(7)
 
   const [bookingsRes, slotsRes] = await Promise.all([
     client.from('bookings').select('status, covers, date').gte('date', today).lte('date', nextWeek),

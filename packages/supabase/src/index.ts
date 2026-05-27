@@ -84,6 +84,8 @@ export type { NewsSlide as NewsSlideAdmin } from './services/news'
 export { NewsSlideCreateSchema, NewsSlideUpdateSchema } from './schemas/news'
 export type { NewsSlideCreate, NewsSlideUpdate } from './schemas/news'
 
+export { localToday, localNow, localDateOffset } from './lib/clock'
+
 export { getTimeSlotsAdmin, createTimeSlot, updateTimeSlot, deleteTimeSlot, setTimeSlotArchived, updateSiteSettings, getClosedDates, addClosedDate, removeClosedDate } from './services/site-admin'
 export type { TimeSlotAdmin, ClosedDate } from './services/site-admin'
 export { TimeSlotCreateSchema, TimeSlotUpdateSchema, SiteSettingsUpdateSchema, OpeningHoursSchema } from './schemas/settings'

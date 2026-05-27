@@ -1,5 +1,5 @@
 import { requireTenantClient } from '../../../lib/auth'
-import { getBookingsAdmin, getTimeSlotsAdmin } from '@repo/supabase'
+import { getBookingsAdmin, getTimeSlotsAdmin, localToday } from '@repo/supabase'
 import type { BookingAdmin } from '@repo/supabase'
 import { BookingFilters } from './_components/BookingFilters'
 import { BookingList } from './_components/BookingList'
@@ -15,7 +15,7 @@ export default async function PrenotazioniPage({
   const { tenant } = await requireTenantClient()
 
   // Fix 2: default to today if no date filter is provided
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   const effectiveDate = params.date ?? today
 
   const [bookings, timeSlots] = await Promise.all([

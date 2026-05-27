@@ -1,6 +1,7 @@
 'use client'
 import { useActionState, useState } from 'react'
 import type { AvailableTimeSlot } from '@repo/supabase'
+import { localToday } from '@repo/supabase'
 import { createBookingAction, type BookingActionState } from '../actions'
 
 const initialState: BookingActionState = { status: 'idle' }
@@ -36,7 +37,7 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
     )
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   const hasAvailableSlots = slots.some((s) => s.available_covers > 0)
 
   return (

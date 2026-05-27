@@ -1,4 +1,4 @@
-import { getAvailableTimeSlots } from '@repo/supabase'
+import { getAvailableTimeSlots, localToday } from '@repo/supabase'
 import { getWebSupabaseAdmin } from '../../lib/supabaseAdmin'
 import { BookingForm } from './_components/BookingForm'
 
@@ -12,7 +12,7 @@ export default async function BookingPage({
   searchParams: Promise<{ date?: string }>
 }) {
   const { date: rawDate } = await searchParams
-  const today = new Date().toISOString().slice(0, 10)
+  const today = localToday()
   const date = rawDate && DATE_RE.test(rawDate) ? rawDate : today
 
   let slots

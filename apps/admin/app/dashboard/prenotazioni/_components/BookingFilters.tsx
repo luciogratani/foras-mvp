@@ -1,5 +1,6 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
+import { localDateOffset } from '@repo/supabase'
 
 type SlotOption = { id: string; label: string }
 
@@ -7,10 +8,6 @@ type Props = {
   slotOptions: SlotOption[]
   currentDate: string
   currentSlotId: string
-}
-
-function dateOffset(days: number) {
-  return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
 }
 
 export function BookingFilters({ slotOptions, currentDate, currentSlotId }: Props) {
@@ -32,8 +29,8 @@ export function BookingFilters({ slotOptions, currentDate, currentSlotId }: Prop
     router.push(`${pathname}?date=${date}`)
   }
 
-  const today = dateOffset(0)
-  const tomorrow = dateOffset(1)
+  const today = localDateOffset(0)
+  const tomorrow = localDateOffset(1)
 
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
