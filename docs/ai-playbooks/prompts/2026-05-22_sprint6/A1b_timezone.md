@@ -1,13 +1,17 @@
 ---
-status: DRAFT
+status: DONE
 sprint: 6
 stream: A
 task: A1b
 created: 2026-05-25
+completed: 2026-05-27
+commit: 9bb53b8
 suggested_model: claude-sonnet-4-6
 suggested_effort: high
 owner: master-chat
 ---
+
+> **DONE 2026-05-27 (commit `9bb53b8`).** Implementato da subchat sonnet/high, revisionato e committato dal master. Opzione B: helper `packages/supabase/src/lib/clock.ts` (`localToday`/`localNow`/`localDateOffset`, default `'Europe/Rome'` come unico punto), applicato a `bookings.ts` (4 funzioni) + `apps/web`/`apps/admin` (min/default/filtri). `getUTCDay()` weekday lasciato invariato. **Hardening del master in review:** `localNow` usa `hourCycle:'h23'` invece di `hour12:false` per evitare il `"24:00"` a mezzanotte di alcune versioni ICU. `tsc -r` pulito + build web/admin verdi. Nessuna modifica di schema (opzione A per-tenant resta nell'Addendum, post-MVP).
 
 # Sprint 6 / A1b — Timezone-correctness del calcolo "oggi/ora"
 

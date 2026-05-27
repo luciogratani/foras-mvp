@@ -399,7 +399,7 @@ Piano a 3 stream (`docs/ai-playbooks/prompts/2026-05-22_sprint6/`):
 
 **Stream A — Artefatti freeze** (sequenziale):
 - **A1 ✅ DONE (2026-05-27, commit `887df1b`):** hardening RLS — helper `public.is_tenant_owner()` (`SECURITY DEFINER`, `STABLE`, senza `SET search_path`) + riscrittura delle **10** policy di scrittura admin da `auth.uid() IS NOT NULL` a `is_tenant_owner()` + estensione `audit_rls.sql` ai GRANT (QUERY 2/3) + Sezione 3 in `rls_isolation_tests.sql`. Eseguito da Lucio nel SQL editor: hardening applicato al `template`, audit pulito (0 righe), test 3.1–3.4 tutti PASS. **Quirk esecuzione:** la suite test va lanciata **per sezioni** — il run "in blocco" muore su `CREATE SCHEMA test_iso` (§2b) per un ruolo non-privilegiato residuo, comportamento pre-esistente non legato ad A1.
-- A1b: colonna `site_settings.timezone` + guard booking (`getAvailableTimeSlots`/`createBooking`) in ora locale del tenant — schema + service layer, verificato via flusso prenotazione
+- **A1b ✅ DONE (2026-05-27, commit `9bb53b8`):** timezone-correctness "oggi/ora" — **opzione B** (decisione 2026-05-25): helper condiviso `clock.ts` con costante `Europe/Rome` (no schema, no deps), applicato a `bookings.ts` + `apps/web`/`apps/admin`. `tsc -r` + build verdi. (Opzione A — colonna `site_settings.timezone` per-tenant — rimandata post-MVP, Addendum del prompt.)
 - A2: parametrizzazione `create_schema_from_template.sql` (`:schema`/`:owner_uuid`)
 - A3: pulizia pre-freeze schema `template` (checklist [[mvp]] — operativo)
 - A4: genera `schema.sql` + `migrations/001_init.sql`, test su schema usa-e-getta (`test_freeze`), audit pulito, drop, freeze `LOCKED`
