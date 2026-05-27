@@ -591,3 +591,13 @@ Due scelte di meccanismo per i sub-task del freeze, prese da Lucio dopo l'assess
 **Rationale:** lo script è la fonte di verità già verificata; i dati di test del `template` non si propagano mai ai clienti (l'onboarding seed-a dal §5 dello script, non copia dati). Tenere `template` come sandbox non crea problemi di sviluppo: l'`audit_rls.sql` lo usa come schema di riferimento ma confronta solo **policy/RLS/GRANT** (struttura), non i dati.
 
 **Conseguenza:** A3 → CANCELLED. A4 → dump da `freeze_test` (non `template`), rimossa la dipendenza da A3. **Caveat:** se Lucio/James alterano la *struttura o le policy* del `template` durante i test (non i dati), il `template` decade come riferimento valido per l'audit — i **dati** invece sono liberi.
+
+### 2026-05-27 — Triage linter Supabase pre-freeze: RLS su `public.tenants` + 2 warning accettati
+
+**Contesto:** triage degli advisor Supabase prima del freeze (1 ERROR + 2 WARN).
+
+**1. ERROR `rls_disabled_in_public` su `public.tenants` → CHIUSO.** La tabella registro (schema→owner) è nel `public` esposto a PostgREST senza RLS → un client API potrebbe enumerare schemi tenant e `owner_id`. **Fix (Lucio, 2026-05-27):** `ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY` **senza policy**. Verificato che nessun lettore legittimo usa `anon`/`authenticated`: `is_tenant_owner()` è `SECURITY DEFINER` con owner = owner della tabella (bypassa la RLS non-FORCE), `getVerifiedTenantClient` (`apps/admin/lib/auth.ts`) legge via `service_role` (BYPASSRLS). Complemento di A1. Nel baseline §0 di `create_schema_from_template.sql` + script live `docs/operations/2026-05-27_tenants_rls.sql`. **Auto-verificabile:** la Sezione 3 dei test resta verde (3.1 PASS ⇒ `is_tenant_owner` legge ancora `public.tenants` nonostante la RLS).
+
+**2. WARN `function_search_path_mutable` su `is_tenant_owner` → ACCETTATO by-design.** La funzione NON ha `SET search_path` di proposito (`current_schema()` deve risolvere allo schema del chiamante — vedi A1). Non "correggere".
+
+**3. WARN `rls_policy_always_true` su `bookings_public_insert` (INSERT WITH CHECK true) → ACCETTATO by-design.** È il form prenotazione pubblico: `anon` deve poter inviare una prenotazione (come un form contatti). Validità/capacità imposte nel service layer (`createBooking` + Zod), non in RLS. L'unico vettore è abuso/spam → rate-limiting, questione separata post-MVP. Non è un buco di isolamento.

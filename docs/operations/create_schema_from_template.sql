@@ -68,6 +68,17 @@ CREATE TABLE IF NOT EXISTS public.tenants (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- RLS su public.tenants: la tabella è nello schema public esposto a PostgREST →
+-- senza RLS un client API (anon/authenticated) potrebbe enumerare schemi tenant
+-- e owner_id (chiude il linter Supabase 0013_rls_disabled_in_public).
+-- NESSUNA policy di proposito: anon/authenticated sono negati via API. L'accesso
+-- legittimo resta garantito da chi bypassa la RLS non-FORCE:
+--   - service_role (BYPASSRLS) → auth admin getVerifiedTenantClient + audit_rls.sql;
+--   - public.is_tenant_owner() (SECURITY DEFINER, owner = owner della tabella) →
+--     legge public.tenants per le policy di scrittura dei tenant.
+-- Idempotente: ENABLE su tabella già abilitata è un no-op.
+ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
+
 
 -- -----------------------------------------------------------------------
 -- 1. Creazione schema
