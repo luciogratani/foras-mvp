@@ -467,3 +467,188 @@ WHERE nspname = 'test_iso';
 -- [ ] audit_rls.sql pulito (zero discrepanze) anche dopo i test (schema test_iso rimosso)
 --     → Rieseguire docs/operations/audit_rls.sql dopo questa suite: atteso 0 righe.
 --       test_iso è stato eliminato in 2b.7, non appare più tra gli schemi monitorati.
+
+
+-- =======================================================================
+-- 3. Owner-scoped write hardening (Sprint 6 / A1)
+-- =======================================================================
+--
+-- PREREQUISITO AGGIUNTIVO PER QUESTA SEZIONE
+--   docs/operations/2026-05-22_rls_hardening_template.sql eseguito su 'template'
+--   → helper public.is_tenant_owner() presente + le 10 policy di scrittura admin
+--     riscritte da `auth.uid() IS NOT NULL` a `public.is_tenant_owner()`.
+--
+-- COSA DIMOSTRA
+--   Le scritture admin sono legate all'OWNER registrato in public.tenants, non
+--   al semplice "qualsiasi utente autenticato". Poiché auth.users è condiviso a
+--   livello di progetto, l'isolamento in scrittura ora regge a livello DB.
+--
+-- COME SI SIMULA UN JWT NEL SQL EDITOR
+--   Nel SQL editor non c'è una sessione PostgREST, quindi auth.uid() = NULL di
+--   default. Per i test 3.1/3.2 impostiamo a mano i claim del JWT:
+--       SET LOCAL ROLE authenticated;
+--       SET LOCAL request.jwt.claims = '{"sub":"<uuid>","role":"authenticated"}';
+--   Con questi claim auth.uid() ritorna <uuid> (legge il campo "sub").
+--   request.jwt.claims è una GUC: SET LOCAL la limita alla transazione corrente
+--   e il ROLLBACK la azzera insieme a tutto il resto.
+--
+-- GOTCHA ARCHITETTURALE — current_schema() dentro is_tenant_owner()
+--   La funzione confronta public.tenants.schema_name con current_schema().
+--   Nel SQL editor il search_path di default mette 'public' davanti, quindi
+--   current_schema() può NON essere 'template' a meno di forzarlo. Qui lo
+--   forziamo esplicitamente con `SET LOCAL search_path = template, public`
+--   prima di ogni scrittura, così current_schema() = 'template' e la riga in
+--   public.tenants (schema_name='template') può combaciare. In produzione è
+--   PostgREST che imposta il search_path al tenant per-richiesta (assunzione
+--   verificata indirettamente proprio da 3.1: se current_schema() non
+--   risolvesse a 'template', 3.1 FALLIREBBE come 3.2).
+--
+-- OWNER ATTESO DEL TEMPLATE
+--   public.tenants(schema_name='template').owner_id =
+--     1c486961-12b2-47d0-8aef-0aee30df083c
+--   (registrato in create_schema_from_template.sql §5d / decision-log).
+--
+-- NOTA RLS su FOR ALL senza WITH CHECK
+--   Le policy *_admin_all sono FOR ALL USING (is_tenant_owner()) senza WITH
+--   CHECK esplicito → Postgres riusa l'espressione USING anche per l'INSERT.
+--   Quindi per un non-owner: UPDATE tocca 0 righe (USING filtra), INSERT viene
+--   RIFIUTATO con 42501 "new row violates row-level security policy"
+--   (in PL/pgSQL: insufficient_privilege).
+--
+-- ZERO COMMIT: i casi 3.1/3.2/3.4 sono avvolti da un BEGIN; … ROLLBACK; esplicito
+-- (transazione esterna) che garantisce che NESSUNA scrittura andata a buon fine
+-- venga persistita su 'template'. 3.3 è una sola lettura anon (come §1.6).
+--
+-- ⚠️  PERCHÉ NON `ROLLBACK` DENTRO IL DO BLOCK: un blocco PL/pgSQL con clausola
+--     EXCEPTION apre una subtransaction e NON può eseguire COMMIT/ROLLBACK
+--     (errore 2D000). Per questo il controllo transazione sta NELLA transazione
+--     esterna (BEGIN/ROLLBACK), non dentro il DO — coerente con i write test §1.
+-- -----------------------------------------------------------------------
+
+
+-- 3.1 owner OK — l'owner registrato del template scrive su site_settings e
+--     menu_sections (is_tenant_owner() = true). UPDATE deve toccare la riga,
+--     INSERT deve andare a buon fine. Il ROLLBACK esterno annulla tutto.
+BEGIN;
+SET LOCAL ROLE authenticated;
+-- search_path forzato a template così current_schema() = 'template'
+SET LOCAL search_path = template, public;
+-- JWT simulato: sub = owner registrato del template
+SET LOCAL request.jwt.claims = '{"sub":"1c486961-12b2-47d0-8aef-0aee30df083c","role":"authenticated"}';
+DO $$
+DECLARE
+  v_updated INTEGER;
+  v_inserted INTEGER;
+BEGIN
+  -- UPDATE su site_settings (riga unica di onboarding deve esistere)
+  UPDATE template.site_settings SET title = '__test_owner_ok__';
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+
+  -- INSERT su menu_sections (name è NOT NULL)
+  INSERT INTO template.menu_sections (name) VALUES ('__test_owner_ok__');
+  GET DIAGNOSTICS v_inserted = ROW_COUNT;
+
+  IF v_updated >= 1 AND v_inserted = 1 THEN
+    RAISE NOTICE 'PASS 3.1: owner registrato scrive su template (UPDATE site_settings=% righe, INSERT menu_sections=% riga) — is_tenant_owner()=true', v_updated, v_inserted;
+  ELSE
+    RAISE EXCEPTION 'FAIL 3.1: owner registrato NON ha scritto come atteso (UPDATE=% righe, INSERT=% righe). Se UPDATE=0 e INSERT lancia 42501, probabile che current_schema() non risolva a template o owner_id non combaci.', v_updated, v_inserted;
+  END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE EXCEPTION 'FAIL 3.1: scrittura owner rifiutata con 42501 — is_tenant_owner() ha ritornato false per l''owner registrato. Verificare: (a) public.tenants(template).owner_id = 1c486961-... ; (b) current_schema() risolva a template (search_path); (c) request.jwt.claims popoli auth.uid().';
+END $$;
+ROLLBACK;  -- annulla UPDATE+INSERT del caso owner OK: nessuna scrittura persiste
+-- PASS quando: NOTICE PASS 3.1 (UPDATE >=1 riga, INSERT 1 riga)
+-- FAIL se: NOTICE/ERROR FAIL 3.1 (owner non riesce a scrivere → hardening troppo restrittivo o assunzioni rotte)
+
+
+-- 3.2 non-owner BLOCCATO — un UUID casuale NON registrato come owner del
+--     template non deve poter scrivere. È il cuore del fix: dimostra che un
+--     autenticato qualsiasi (anche admin di un altro tenant) non scrive.
+--     Atteso: UPDATE → 0 righe (USING filtra); INSERT → 42501 (WITH CHECK).
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL search_path = template, public;
+-- JWT simulato: sub = UUID casuale NON presente in public.tenants come owner del template
+SET LOCAL request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000ff","role":"authenticated"}';
+DO $$
+DECLARE
+  v_updated INTEGER;
+BEGIN
+  -- UPDATE: deve toccare 0 righe (RLS USING filtra tutto per il non-owner)
+  UPDATE template.site_settings SET title = '__test_non_owner_should_fail__';
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+
+  IF v_updated <> 0 THEN
+    RAISE EXCEPTION 'FAIL 3.2: UPDATE non-owner ha toccato % righe su template.site_settings — buco di sicurezza (is_tenant_owner() non sta filtrando le scritture)', v_updated;
+  END IF;
+
+  -- INSERT: deve essere rifiutato con 42501 (violazione RLS WITH CHECK).
+  -- Se NON solleva eccezione, è un FAIL (il non-owner è riuscito a inserire).
+  INSERT INTO template.menu_sections (name) VALUES ('__test_non_owner_should_fail__');
+
+  -- Se arriviamo qui, l'INSERT NON è stato bloccato → buco di sicurezza
+  RAISE EXCEPTION 'FAIL 3.2: INSERT non-owner su template.menu_sections ha avuto successo — buco di sicurezza (manca il blocco WITH CHECK su is_tenant_owner())';
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    -- 42501: l'INSERT è stato correttamente rifiutato dalla RLS. UPDATE era già 0 righe.
+    RAISE NOTICE 'PASS 3.2: non-owner BLOCCATO — UPDATE site_settings=0 righe + INSERT menu_sections rifiutato con 42501 (RLS WITH CHECK su is_tenant_owner())';
+END $$;
+ROLLBACK;  -- nessuna scrittura del non-owner persiste (UPDATE 0 righe; INSERT bloccato)
+-- PASS quando: NOTICE PASS 3.2 (UPDATE 0 righe E INSERT rifiutato con 42501)
+-- FAIL se: ERROR FAIL 3.2 (il non-owner ha scritto, anche una sola riga/insert)
+
+
+-- 3.3 lettura pubblica preservata — la riscrittura delle policy di scrittura
+--     NON deve aver toccato la SELECT pubblica (site_settings_public_read).
+--     Ripete il test 1.6: anon legge ancora la riga di site_settings.
+BEGIN;
+SET LOCAL ROLE anon;
+SELECT COUNT(*) AS cnt_site_settings_after_hardening FROM template.site_settings;
+-- PASS quando: cnt_site_settings_after_hardening = 1 (lettura pubblica intatta, come 1.6)
+-- FAIL se: 0 righe o errore 42501 (la riscrittura ha rotto la SELECT pubblica)
+ROLLBACK;
+
+
+-- 3.4 booking insert anon preservato — l'INSERT anonimo di prenotazioni NON
+--     deve essere stato toccato (bookings_public_insert resta WITH CHECK (true)).
+--     Ripete il test 1.9: anon inserisce ancora su template.bookings.
+--     A differenza di 1.9 lo avvolgiamo in BEGIN; … ROLLBACK; (come 3.1/3.2):
+--     se il template ha un time_slot reale l'INSERT anon riesce davvero → il
+--     ROLLBACK evita di lasciare una prenotazione di test su 'template'.
+BEGIN;
+DO $$
+DECLARE
+  v_ts_id UUID;
+BEGIN
+  -- Usa il primo time_slot esistente, se presente; altrimenti UUID fittizio
+  SELECT id INTO v_ts_id FROM template.time_slots LIMIT 1;
+  IF v_ts_id IS NULL THEN
+    v_ts_id := gen_random_uuid(); -- causerà FK violation (23503) — atteso, vedi 1.9
+  END IF;
+
+  SET LOCAL ROLE anon;
+
+  INSERT INTO template.bookings (
+    time_slot_id, date, name, email, phone, covers, gdpr_consent
+  ) VALUES (
+    v_ts_id,
+    '2099-12-31'::date,
+    '__test_booking_after_hardening__',
+    '__test__@test.invalid',
+    NULL,
+    1,
+    true
+  );
+
+  RAISE NOTICE 'PASS 3.4: INSERT anon su template.bookings ancora permesso dopo hardening (time_slot valido trovato)';
+
+EXCEPTION
+  WHEN foreign_key_violation THEN
+    RAISE NOTICE 'PASS 3.4: INSERT anon su template.bookings ancora permesso dal punto di vista RLS/GRANT (FK violation 23503 su time_slot_id fittizio — atteso, come 1.9)';
+  WHEN insufficient_privilege THEN
+    RAISE EXCEPTION 'FAIL 3.4: INSERT anon su template.bookings rifiutato con 42501 dopo hardening — la riscrittura ha rotto bookings_public_insert';
+END $$;
+ROLLBACK;  -- annulla l'eventuale INSERT anon riuscito: nessuna prenotazione di test resta su 'template'
+-- PASS quando: NOTICE PASS 3.4 (insert anon riuscito o FK violation 23503)
+-- FAIL se: ERROR FAIL 3.4 (insert anon rifiutato con 42501 → hardening ha toccato l'insert pubblico)

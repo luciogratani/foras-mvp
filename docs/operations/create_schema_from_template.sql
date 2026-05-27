@@ -213,10 +213,58 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA template GRANT USAGE, SELECT, UPDATE ON SEQUE
 
 
 -- -----------------------------------------------------------------------
+-- 3c. Helper di ownership — public.is_tenant_owner()
+--
+-- Verifica che l'utente autenticato corrente (auth.uid()) sia l'owner
+-- registrato in public.tenants per lo schema tenant corrente. Usata dalle
+-- policy di scrittura (§4) per legare ogni scrittura admin all'owner dello
+-- schema invece che a "un qualsiasi utente autenticato" (auth.users è
+-- condiviso a livello di progetto → auth.uid() IS NOT NULL non isola i tenant).
+--
+-- ⚠️  GOTCHA — NON aggiungere `SET search_path` a questa funzione.
+--     current_schema() deve risolvere allo schema del CHIAMANTE (lo schema
+--     tenant che PostgREST mette nel search_path per-richiesta). Un
+--     `SET search_path = ...` fisserebbe lo schema della funzione → nessun
+--     owner combacerebbe mai → tutte le scritture verrebbero bloccate in
+--     silenzio. La protezione da search_path hijacking è garantita invece
+--     qualificando completamente l'unico oggetto referenziato (public.tenants);
+--     auth.uid() è già schema-qualificato e current_schema() è un builtin di
+--     pg_catalog.
+--     Il linter Supabase segnalerà `function_search_path_mutable` su questa
+--     funzione: è ATTESO e va lasciato così di proposito — NON "correggerlo"
+--     aggiungendo SET search_path (romperebbe l'hardening).
+-- -----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.is_tenant_owner()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.tenants
+    WHERE schema_name = current_schema()
+      AND owner_id    = auth.uid()
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_tenant_owner() FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.is_tenant_owner() TO authenticated, service_role;
+
+
+-- -----------------------------------------------------------------------
 -- 4. RLS — policies
 --
 -- Modello: utente anonimo = visitatore homepage (sola lettura su dati pubblici)
---          utente autenticato = admin del tenant (CRUD completo)
+--          utente autenticato = admin del tenant (CRUD completo SE owner)
+--
+-- Le policy di scrittura usano public.is_tenant_owner() (§3c): solo l'owner
+-- registrato in public.tenants per lo schema corrente può scrivere. La lettura
+-- pubblica (*_public_read) e l'insert anonimo di prenotazioni
+-- (bookings_public_insert) restano invariati — USING (true)/WITH CHECK (true).
+-- Nota: per le policy FOR SELECT, PostgreSQL combina in OR le policy dello
+-- stesso comando → la SELECT resta pubblica (true OR is_tenant_owner()).
+-- INSERT/UPDATE/DELETE hanno solo la policy admin → richiedono owner.
 --
 -- ⚠️  Queste policies assumono un solo admin per schema.
 --     Se in futuro si aggiungono ruoli multipli, rivedere.
@@ -230,25 +278,25 @@ CREATE POLICY "allergens_public_read"
 CREATE POLICY "menu_sections_public_read"
   ON menu_sections FOR SELECT USING (true);
 CREATE POLICY "menu_sections_admin_all"
-  ON menu_sections FOR ALL USING (auth.uid() IS NOT NULL);
+  ON menu_sections FOR ALL USING (public.is_tenant_owner());
 
 -- menu_categories: lettura pubblica, scrittura solo admin
 CREATE POLICY "menu_categories_public_read"
   ON menu_categories FOR SELECT USING (true);
 CREATE POLICY "menu_categories_admin_all"
-  ON menu_categories FOR ALL USING (auth.uid() IS NOT NULL);
+  ON menu_categories FOR ALL USING (public.is_tenant_owner());
 
 -- menu_items: lettura pubblica, scrittura solo admin
 CREATE POLICY "menu_items_public_read"
   ON menu_items FOR SELECT USING (true);
 CREATE POLICY "menu_items_admin_all"
-  ON menu_items FOR ALL USING (auth.uid() IS NOT NULL);
+  ON menu_items FOR ALL USING (public.is_tenant_owner());
 
 -- time_slots: lettura pubblica (serve per il form prenotazioni), scrittura solo admin
 CREATE POLICY "time_slots_public_read"
   ON time_slots FOR SELECT USING (true);
 CREATE POLICY "time_slots_admin_all"
-  ON time_slots FOR ALL USING (auth.uid() IS NOT NULL);
+  ON time_slots FOR ALL USING (public.is_tenant_owner());
 
 -- bookings: inserimento anonimo (chiunque può prenotare),
 --           lettura e modifica solo admin,
@@ -256,29 +304,29 @@ CREATE POLICY "time_slots_admin_all"
 CREATE POLICY "bookings_public_insert"
   ON bookings FOR INSERT WITH CHECK (true);
 CREATE POLICY "bookings_admin_select"
-  ON bookings FOR SELECT USING (auth.uid() IS NOT NULL);
+  ON bookings FOR SELECT USING (public.is_tenant_owner());
 CREATE POLICY "bookings_admin_update"
-  ON bookings FOR UPDATE USING (auth.uid() IS NOT NULL);
+  ON bookings FOR UPDATE USING (public.is_tenant_owner());
 CREATE POLICY "bookings_admin_delete"
-  ON bookings FOR DELETE USING (auth.uid() IS NOT NULL);
+  ON bookings FOR DELETE USING (public.is_tenant_owner());
 
 -- site_settings: lettura pubblica (SSR homepage), scrittura solo admin
 CREATE POLICY "site_settings_public_read"
   ON site_settings FOR SELECT USING (true);
 CREATE POLICY "site_settings_admin_all"
-  ON site_settings FOR ALL USING (auth.uid() IS NOT NULL);
+  ON site_settings FOR ALL USING (public.is_tenant_owner());
 
 -- closed_dates: lettura pubblica (necessaria per bloccare prenotazioni lato pubblico), scrittura solo admin
 CREATE POLICY "closed_dates_public_read"
   ON closed_dates FOR SELECT USING (true);
 CREATE POLICY "closed_dates_admin_all"
-  ON closed_dates FOR ALL USING (auth.uid() IS NOT NULL);
+  ON closed_dates FOR ALL USING (public.is_tenant_owner());
 
 -- news_slides: lettura pubblica, scrittura solo admin
 CREATE POLICY "news_slides_public_read"
   ON news_slides FOR SELECT USING (true);
 CREATE POLICY "news_slides_admin_all"
-  ON news_slides FOR ALL USING (auth.uid() IS NOT NULL);
+  ON news_slides FOR ALL USING (public.is_tenant_owner());
 
 
 -- -----------------------------------------------------------------------
