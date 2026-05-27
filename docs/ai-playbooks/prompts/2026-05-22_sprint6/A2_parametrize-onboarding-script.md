@@ -1,13 +1,17 @@
 ---
-status: DRAFT
+status: DONE
 sprint: 6
 stream: A
 task: A2
 created: 2026-05-25
+completed: 2026-05-27
+commit: 5ad19e9
 suggested_model: claude-sonnet-4-6
 suggested_effort: high
 owner: master-chat
 ---
+
+> **DONE 2026-05-27 (commit `5ad19e9`).** Implementato da subchat sonnet/high, revisionato e committato dal master. `create_schema_from_template.sql` parametrizzato con `psql -v` (`:"schema"` identificatori, `:'schema'`/`:'owner_uuid'` literal; `public.is_tenant_owner()`/`public.tenants` lasciati letterali; guard `\if :{?schema}`/`:{?owner_uuid}`). Nuovi `2026-05-27_onboard_smoketest.sql` (12 verifiche read-only) e `2026-05-27_onboard_cleanup.sql` (distruttivo, `onboard_test` hardcoded). `onboarding-tenant.md` Step 1 allineato. **Verificato da Lucio via psql (SSH sul server self-hosted, `psql -h 127.0.0.1 -U postgres`):** crea `onboard_test` ok (warning benigno su `is_tenant_owner` già esistente — `CREATE OR REPLACE` idempotente), smoke 12/12 ok, audit cross-schema 0 discrepanze, cleanup `schema_exists=0`/`tenant_row_exists=0`. **Nota operativa:** Supabase self-hosted non espone 5432 → onboarding/test via SSH+psql sul server.
 
 # Sprint 6 / A2 — Parametrizzazione dello script di onboarding + test su schema usa-e-getta
 
