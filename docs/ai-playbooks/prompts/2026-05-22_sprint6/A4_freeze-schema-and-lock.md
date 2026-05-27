@@ -11,13 +11,15 @@ owner: master-chat
 
 # Sprint 6 / A4 — Genera `schema.sql` + `migrations/001_init.sql`, testa, FREEZE LOCKED
 
-> **Ultimo step del freeze.** Dipendenze: A1 (RLS hardened) + A1b (timezone, opzione scelta) + A2 (script parametrizzato e testato) + A3 (template pulito) **tutti completati**. Dopo A4 il template è congelato: la fonte di verità diventa `schema.sql` e ogni modifica passa per migrazioni numerate.
+> **Ultimo step del freeze.** Dipendenze: A1 (RLS hardened) + A1b (timezone, opzione B) + A2 (script parametrizzato e testato) **tutti completati**. **A3 è CANCELLATO** (decision-log 2026-05-27): non si tocca il `template`. Dopo A4 il baseline è congelato: la fonte di verità diventa `schema.sql` e ogni modifica passa per migrazioni numerate.
 >
-> Parte **autoriale** (file + doc, delegabile) e parte **operativa** (dump dal DB live, run dei test) che esegue il master. Indicato chi fa cosa.
+> **Approccio (deciso 2026-05-27): NON dumpare il `template`.** `schema.sql` si genera da uno schema **usa-e-getta** `freeze_test`, creato dallo script A2 (pulito per costruzione), che è anche lo schema su cui girano i test; poi si droppa. Il `template` resta un sandbox dev/test (anche per James) e non viene mai toccato.
+>
+> Parte **autoriale** (file + doc, delegabile) e parte **operativa** (creazione/dump/test dello schema `freeze_test`) che esegue il master via SSH+psql sul server self-hosted (la 5432 non è esposta). Indicato chi fa cosa.
 
 ## Contesto
 
-Oggi `migrations/001_init.sql` e `schema.sql` (root del repo) **non esistono** (solo `.gitkeep`). Il template è stato hardenato (A1), eventualmente tz-aware (A1b), lo script di onboarding è parametrizzato/testato (A2) e lo schema `template` è pulito (A3). A4 produce gli artefatti congelati e li valida, poi marca lo stato LOCKED in tutta la documentazione.
+Oggi `migrations/001_init.sql` e `schema.sql` (root del repo) **non esistono** (solo `.gitkeep`). Il baseline è stato hardenato (A1), reso tz-correct via helper condiviso (A1b, opzione B — nessuna colonna), e lo script di onboarding è parametrizzato/testato (A2). A3 (pulizia `template`) è cancellato: A4 lavora su uno schema usa-e-getta `freeze_test`, non sul `template`. A4 produce gli artefatti congelati e li valida, poi marca lo stato LOCKED in tutta la documentazione.
 
 ## File da leggere prima di iniziare
 
@@ -29,10 +31,11 @@ Oggi `migrations/001_init.sql` e `schema.sql` (root del repo) **non esistono** (
 
 ## Scope
 
-### 1. `schema.sql` (root del repo) — fotografia canonica del template congelato
-Due strade, scegliere con il master:
-- **(preferita) dump dal DB live** (master, operativo): `pg_dump --schema-only --schema=template` dello schema `template` pulito → normalizzare (rimuovere riferimenti owner/ambiente, sostituire `template` con un placeholder coerente o lasciarlo come schema di riferimento documentato). È la più fedele perché cattura lo stato reale post-A1/A1b/A3.
-- **(alternativa) derivare da `create_schema_from_template.sql`** risolvendo per `template`: equivalente se la baseline è davvero allineata (lo è, ri-verificare).
+### 1. `schema.sql` (root del repo) — fotografia canonica del baseline congelato
+**Generare da uno schema usa-e-getta `freeze_test` (NON dal `template`).** Master, operativo, via SSH+psql sul server:
+1. Creare `freeze_test` con lo script A2: `psql -h 127.0.0.1 -p 5432 -U postgres -d postgres -v schema=freeze_test -v owner_uuid=1c486961-12b2-47d0-8aef-0aee30df083c -f create_schema_from_template.sql`.
+2. `pg_dump --schema-only --schema=freeze_test` → normalizzare: sostituire l'identificatore `freeze_test` con un placeholder coerente (o documentarlo come schema di riferimento), rimuovere riferimenti owner/ambiente. È fedele perché cattura lo stato reale che lo script produce post-A1/A1b/A2, **senza toccare il `template`**.
+3. Coerenza con `create_schema_from_template.sql` (la sub-chat verifica che `schema.sql` e lo script producano lo stesso schema). Lo schema `freeze_test` serve anche per i test (§3) → riusare lo stesso, droppare alla fine.
 Header di `schema.sql`: data del freeze, versione, "FONTE DI VERITÀ post-freeze — non modificare senza una migrazione numerata in `/migrations`".
 
 ### 2. `migrations/001_init.sql` — migrazione iniziale
@@ -50,7 +53,7 @@ La migrazione "zero" che porta uno schema vuoto allo stato `schema.sql`. In prat
 - Frontmatter `status: LOCKED` dove pertinente (es. una nota nel README hub o nei doc di onboarding che il template è congelato).
 - `docs/operations/onboarding-tenant.md`: rimuovere le note "bozza/da finalizzare post-freeze" dallo Step 1 (ora lo script è pronto e testato); confermare i pre-requisiti.
 - `docs/decision-log/decisioni.md`: nuova voce datata "Template FROZEN" con cosa include il baseline congelato (RLS owner-scope, schema-extras, end_time, timezone se opzione A) e la regola "da qui in poi solo migrazioni numerate".
-- `docs/ai-playbooks/prompts/2026-05-22_sprint6/` A1/A1b/A2/A3/A4 → `status: DONE`.
+- `docs/ai-playbooks/prompts/2026-05-22_sprint6/`: A1/A1b/A2 già `DONE`, A3 `CANCELLED`, A4 → `status: DONE`.
 
 ## Vincoli
 

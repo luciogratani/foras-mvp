@@ -1,15 +1,18 @@
 ---
-status: DRAFT
+status: CANCELLED
 sprint: 6
 stream: A
 task: A3
 created: 2026-05-25
+cancelled: 2026-05-27
 suggested_model: n/a (operativo — master/Lucio, non delegabile a sub-chat)
 suggested_effort: n/a
 owner: master-chat
 ---
 
-# Sprint 6 / A3 — Pulizia dello schema `template` pre-freeze
+> **❌ CANCELLATO (Lucio, 2026-05-27 — vedi decision-log voce *`template` resta sandbox dev/test*).** La pulizia del `template` live non serve più: la fonte di verità del freeze è lo script `create_schema_from_template.sql` (parametrizzato e testato in A2), non un dump del `template`. A4 genera `schema.sql` da uno schema usa-e-getta `freeze_test` creato dallo script, senza toccare il `template`. Lo schema `template` resta un **sandbox dev/test** (anche per James). Il runbook qui sotto è conservato solo come riferimento storico — **non eseguirlo.**
+
+# Sprint 6 / A3 — Pulizia dello schema `template` pre-freeze [CANCELLATO]
 
 > **Operativo, NON delegabile a una sub-chat di codice.** Tocca il DB live, Supabase Auth e Storage. Lo esegue **Lucio/master** nel SQL editor + dashboard Supabase. Questo file è un runbook con checklist, non un prompt di coding.
 >

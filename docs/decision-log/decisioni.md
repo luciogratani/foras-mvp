@@ -581,3 +581,13 @@ Due scelte di meccanismo per i sub-task del freeze, prese da Lucio dopo l'assess
 **Decisione (Lucio, 2026-05-27):** **non è un problema** che un nuovo tenant nasca con un menu **senza sezioni** — anzi va benissimo. Con il CRUD completo sulle sezioni (Menu-refactor 06: `createMenuSection`/`deleteMenuSection`), il gestore costruisce le proprie sezioni dall'admin; le 6 sezioni standard erano default opinionati, non un requisito. Quindi: **nessun ripristino del menu del `template` prima del freeze**; A4 può congelare lo stato corrente (menu vuoto) senza problemi.
 
 **Conseguenza:** annulla, ai fini del freeze, il vincolo "le 6 sezioni seed devono essere presenti prima di A4". Il seed §5b di `create_schema_from_template.sql` non è più necessario al freeze (decisione su mantenerlo/rimuoverlo rinviata al sub-task A4, non bloccante). Il sito pubblico gestisce già lo stato "0 sezioni attive" (stato vuoto previsto in Menu-refactor 06). Resta aperto, come watch-item separato, il *perché* le `menu_*` si siano svuotate (da investigare solo se si ripete).
+
+### 2026-05-27 — `template` resta sandbox dev/test; freeze da schema usa-e-getta (no dump del `template`)
+
+**Contesto:** il piano originale prevedeva A3 = pulire lo schema `template` live per poi dumparlo in `schema.sql` (A4). Due fatti lo rendono superfluo: (1) con A2 la **fonte di verità** per un nuovo tenant è lo script parametrizzato `create_schema_from_template.sql` (testato: `onboard_test` → audit 0 discrepanze), non il contenuto live del `template`; (2) Lucio vuole tenere `template` come **sandbox dev/test**, anche per il collega James.
+
+**Decisione (Lucio, 2026-05-27):** **non si tocca lo schema `template`.** A3 (pulizia del template live) è **CANCELLATO**. A4 si riformula: genera `schema.sql`/`migrations/001_init.sql` creando uno schema usa-e-getta `freeze_test` dallo script A2, dumpando **quello** (pulito per costruzione, `pg_dump --schema-only --schema=freeze_test`) e droppandolo — il `template` non viene mai toccato.
+
+**Rationale:** lo script è la fonte di verità già verificata; i dati di test del `template` non si propagano mai ai clienti (l'onboarding seed-a dal §5 dello script, non copia dati). Tenere `template` come sandbox non crea problemi di sviluppo: l'`audit_rls.sql` lo usa come schema di riferimento ma confronta solo **policy/RLS/GRANT** (struttura), non i dati.
+
+**Conseguenza:** A3 → CANCELLED. A4 → dump da `freeze_test` (non `template`), rimossa la dipendenza da A3. **Caveat:** se Lucio/James alterano la *struttura o le policy* del `template` durante i test (non i dati), il `template` decade come riferimento valido per l'audit — i **dati** invece sono liberi.
