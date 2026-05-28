@@ -17,8 +17,8 @@ Ogni modifica allo schema di un tenant attivo — aggiunta di colonne, nuove tab
 ```
 /migrations
     001_init.sql              ← baseline (FROZEN 2026-05-27) — pointer al provisioner
-    002_add_og_image.sql      ← ogni modifica successiva (ALTER numerato, per-schema)
-    003_bookings_add_notes.sql
+    002_bookings_overbooking_trigger.sql  ← prima migrazione reale (trigger anti-overbooking)
+    NNN_<descrizione>.sql                 ← migrazioni successive (ALTER numerati, per-schema)
 schema.sql                    ← fotografia strutturale congelata, aggiornata dopo ogni migrazione
 CHANGELOG.md                  ← registro human-readable delle modifiche
 ```
@@ -49,16 +49,57 @@ Ogni script deve:
 1. Scrivere lo script numerato in `/migrations`
 2. Aggiornare `schema.sql` per riflettere lo stato corrente
 3. Aggiungere una riga in `CHANGELOG.md` con numero, data e descrizione
-4. Applicare lo script manualmente su ogni schema cliente. Il DB Supabase è
-   self-hosted **dentro Docker** e non è esposto sulla 5432 → si applica via SSH +
-   `docker exec` (dettagli e comandi in `docs/ai-playbooks/workflow-master-sub.md`,
-   sezione "Accesso al DB Supabase"). Esempio per uno schema:
-   ```bash
-   cat migrations/002_add_og_image.sql | ssh root@<server> \
-     "docker exec -i supabase-db psql -U postgres -d postgres -c 'SET search_path = bar_rossi' -f -"
-   ```
-   In alternativa, anteporre `SET search_path = <schema>;` in testa allo script.
-5. Ripetere il punto 4 per ogni schema cliente esistente
+4. Applicare via il runner — vedi **Runner migrazioni** sotto. (Fallback manuale documentato lì.)
+
+---
+
+## Runner migrazioni — `scripts/migrate.sh`
+
+Sostituisce il loop manuale per-schema. **Idempotente e re-eseguibile**: un secondo run produce solo righe `SKIP`, zero scritture al DB.
+
+**Cosa fa:**
+- Bootstrap `public.tenant_migrations(schema_name, version, applied_at)` con `CREATE TABLE IF NOT EXISTS`.
+- Legge gli schemi da `public.tenants`. Flag: `--template` per includere `template`, `--schema <nome>` per uno solo, `--dry-run` per anteprima.
+- Per ogni schema, per ogni `/migrations/NNN_*.sql` non ancora tracciato: `BEGIN; SET LOCAL search_path = <schema>; <contenuto file>; INSERT public.tenant_migrations; COMMIT;` con `ON_ERROR_STOP=1`. Fail-fast al primo errore (rollback automatico, nessuna riga di tracking).
+- `001_init.sql` è il pointer-baseline: marcato come applicato (`ON CONFLICT DO NOTHING`) senza essere eseguito.
+
+**Esecuzione locale** (psql sul PATH):
+```bash
+DATABASE_URL="postgres://..." bash scripts/migrate.sh --template
+```
+
+**Esecuzione live via SSH + `docker exec`:**
+```bash
+scp -r migrations scripts root@<server>:/tmp/foras/
+ssh root@<server> "docker exec \
+  -e DATABASE_URL='postgres://supabase_admin@/postgres?host=/var/run/postgresql' \
+  -e MIGRATIONS_DIR=/tmp/foras/migrations \
+  supabase-db bash /tmp/foras/scripts/migrate.sh --template"
+```
+
+### ⚠️ Ruolo di connessione (gotcha su questo DB self-hosted)
+
+Lo schema `template` è stato creato da Studio → di proprietà di `supabase_admin`. Connettersi come `postgres` per applicare migrazioni a `template` fallisce con `permission denied for schema template`. **Per `--template` connettersi come `supabase_admin`.** Gli schemi cliente provisionati dal provisioner come `postgres` sono `postgres`-owned → `postgres` funziona per `--schema <cliente>`. Vedi anche il *Gotcha ruoli* in `docs/ai-playbooks/workflow-master-sub.md`.
+
+### Backfill — migrazioni già applicate manualmente
+
+Se una migrazione è stata applicata prima dell'introduzione del runner (es. la 002 al `template` durante la cerimonia D del 2026-05-28), va registrata per evitare ri-esecuzione:
+```sql
+INSERT INTO public.tenant_migrations (schema_name, version) VALUES
+  ('template', '001'),
+  ('template', '002')
+ON CONFLICT (schema_name, version) DO NOTHING;
+```
+Questo stato di partenza è stato seedato sul DB live il 2026-05-28.
+
+### Fallback manuale (uso eccezionale)
+
+Per un'applicazione one-off senza passare dal runner:
+```bash
+cat migrations/NNN_*.sql | ssh root@<server> \
+  "docker exec -i supabase-db psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1 -c 'SET search_path = <schema>' -f -"
+```
+Nota: il fallback **NON aggiorna** `public.tenant_migrations` — fare il backfill come sopra.
 
 ---
 
