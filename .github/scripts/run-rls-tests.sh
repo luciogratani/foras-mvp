@@ -121,7 +121,7 @@ SET LOCAL ROLE anon;
 -- 2a INSERT su tabella admin (site_settings) deve fallire
 DO $$
 BEGIN
-  INSERT INTO ci_tenant_b.site_settings (key, value) VALUES ('xc_probe', 'pwned');
+  INSERT INTO ci_tenant_b.site_settings (title) VALUES ('xc_probe_pwned');
   RAISE EXCEPTION 'FAIL ci_xc.2a: anon ha potuto INSERT su ci_tenant_b.site_settings';
 EXCEPTION
   WHEN insufficient_privilege THEN
@@ -135,7 +135,7 @@ END $$;
 DO $$
 DECLARE v_rows INTEGER;
 BEGIN
-  UPDATE ci_tenant_b.site_settings SET value = 'pwned' WHERE TRUE;
+  UPDATE ci_tenant_b.site_settings SET title = 'pwned' WHERE TRUE;
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows > 0 THEN
     RAISE EXCEPTION 'FAIL ci_xc.2b: anon ha aggiornato % righe in ci_tenant_b.site_settings', v_rows;
@@ -176,7 +176,7 @@ SET LOCAL search_path = ci_tenant_b, public;
 -- 3a INSERT
 DO $$
 BEGIN
-  INSERT INTO ci_tenant_b.site_settings (key, value) VALUES ('xc_probe', 'pwned');
+  INSERT INTO ci_tenant_b.site_settings (title) VALUES ('xc_probe_pwned');
   RAISE EXCEPTION 'FAIL ci_xc.3a: authenticated di tenant_a ha INSERT su tenant_b';
 EXCEPTION
   WHEN insufficient_privilege THEN
@@ -191,7 +191,7 @@ END $$;
 DO $$
 DECLARE v_rows INTEGER;
 BEGIN
-  UPDATE ci_tenant_b.site_settings SET value = 'pwned' WHERE TRUE;
+  UPDATE ci_tenant_b.site_settings SET title = 'pwned' WHERE TRUE;
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows > 0 THEN
     RAISE EXCEPTION 'FAIL ci_xc.3b: authenticated di tenant_a ha aggiornato % righe su tenant_b', v_rows;
@@ -229,8 +229,8 @@ SET LOCAL ROLE anon;
 DO $$
 DECLARE v_cnt INTEGER;
 BEGIN
-  SELECT COUNT(*) INTO v_cnt FROM ci_tenant_b.site_settings WHERE is_active = true;
-  RAISE NOTICE 'INFO ci_xc.note: anon vede % righe attive in ci_tenant_b.site_settings (comportamento atteso)', v_cnt;
+  SELECT COUNT(*) INTO v_cnt FROM ci_tenant_b.site_settings;
+  RAISE NOTICE 'INFO ci_xc.note: anon vede % righe in ci_tenant_b.site_settings (comportamento atteso)', v_cnt;
 END $$;
 ROLLBACK;
 EOSQL
