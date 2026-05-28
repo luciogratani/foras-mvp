@@ -40,7 +40,8 @@ ALTER TABLE site_settings ADD COLUMN og_image TEXT;
 Ogni script deve:
 - Avere un numero progressivo nel nome
 - Contenere un commento di intestazione con descrizione, data e destinatari
-- Essere idempotente dove possibile (es. `ADD COLUMN IF NOT EXISTS`)
+- Essere idempotente dove possibile (es. `ADD COLUMN IF NOT EXISTS`, `CREATE OR REPLACE FUNCTION`, `DROP ... IF EXISTS`)
+- **NON aprire transazioni esplicite** (no `BEGIN;`/`COMMIT;`) né DDL non-transazionali (`CREATE INDEX CONCURRENTLY`, `VACUUM`, ecc.): il runner `scripts/migrate.sh` wrappa già ogni file in `BEGIN; SET LOCAL search_path; <file>; INSERT tracking; COMMIT;`. Una `COMMIT` annidata o un DDL non-transazionale farebbe sballare il wrapper o impedirebbe il rollback al primo errore.
 
 ---
 

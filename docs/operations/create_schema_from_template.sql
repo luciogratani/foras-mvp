@@ -416,7 +416,11 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1', TG_TABLE_SCHEMA)
+  -- FOR UPDATE: row-lock esclusivo sul time_slot → serializza i BEFORE INSERT
+  -- concorrenti sullo stesso slot, chiude la race sotto READ COMMITTED in cui
+  -- il SUM è cieco al row in-flight di un'altra transazione. (Fix introdotto
+  -- in migrations/003 e propagato qui per i nuovi tenant.)
+  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1 FOR UPDATE', TG_TABLE_SCHEMA)
     INTO v_max USING NEW.time_slot_id;
 
   -- Slot inesistente: lasciamo decidere alla FK bookings_time_slot_id_fkey.

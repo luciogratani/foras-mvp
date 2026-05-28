@@ -70,18 +70,9 @@ CREATE TABLE IF NOT EXISTS public.tenants (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- public.is_tenant_owner() — used by some RLS policies
-CREATE OR REPLACE FUNCTION public.is_tenant_owner(p_schema TEXT) RETURNS BOOLEAN
-  LANGUAGE sql STABLE SECURITY DEFINER
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.tenants
-    WHERE schema_name = p_schema
-      AND owner_id = auth.uid()
-  );
-$$;
-
-GRANT EXECUTE ON FUNCTION public.is_tenant_owner(TEXT) TO authenticated;
+-- NOTE: public.is_tenant_owner() (0-arg, current_schema()-based) is created by
+-- the provisioner itself (create_schema_from_template.sql §3c). No stub needed
+-- here — RLS policies in the tenant schemas reference the 0-arg overload.
 
 -- Pre-seed two distinct owners that will be used for the two test tenant schemas.
 -- UUIDs chosen to be deterministic so the provisioner INSERT can reference them.

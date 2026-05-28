@@ -158,8 +158,12 @@ else
       applied_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
       PRIMARY KEY (schema_name, version)
     );
+    -- RLS deny-by-default (nessuna policy = nessun ruolo non-bypass legge la
+    -- tabella via PostgREST). Coerente con public.tenants (commit a981b33) e
+    -- chiude il linter Supabase rls_disabled_in_public.
+    ALTER TABLE public.tenant_migrations ENABLE ROW LEVEL SECURITY;
   "
-  ok "public.tenant_migrations pronta."
+  ok "public.tenant_migrations pronta (RLS enable, no policy)."
 fi
 
 # ---------------------------------------------------------------------------
@@ -296,7 +300,7 @@ apply_schema() {
 
     cat > "${tmpfile}" <<EOF
 BEGIN;
-SET LOCAL search_path = ${schema};
+SET LOCAL search_path = "${schema}";
 $(cat "${filepath}")
 INSERT INTO public.tenant_migrations (schema_name, version)
   VALUES ('${schema}', '${version}');

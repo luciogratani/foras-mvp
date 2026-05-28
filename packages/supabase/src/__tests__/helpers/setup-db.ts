@@ -20,8 +20,9 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// Path to the ops SQL files (relative to this file at packages/supabase/src/__tests__/helpers/)
-const REPO_ROOT = resolve(__dirname, '../../../../../..')
+// Path to the ops SQL files. This file lives at
+// packages/supabase/src/__tests__/helpers/setup-db.ts → 5 levels up to the repo root.
+const REPO_ROOT = resolve(__dirname, '../../../../..')
 const CREATE_TEMPLATE_SQL = resolve(
   REPO_ROOT,
   'docs/operations/create_schema_from_template.sql'
@@ -90,18 +91,8 @@ export async function bootstrapHarness(pool: Pool): Promise<void> {
         created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       );
 
-      -- public.is_tenant_owner() helper (used by some policies)
-      CREATE OR REPLACE FUNCTION public.is_tenant_owner(p_schema TEXT) RETURNS BOOLEAN
-        LANGUAGE sql STABLE SECURITY DEFINER
-        AS $$
-          SELECT EXISTS (
-            SELECT 1 FROM public.tenants
-            WHERE schema_name = p_schema
-              AND owner_id = auth.uid()
-          );
-        $$;
-
-      GRANT EXECUTE ON FUNCTION public.is_tenant_owner(TEXT) TO authenticated;
+      -- NOTE: public.is_tenant_owner() (0-arg) is created by the provisioner
+      -- (create_schema_from_template.sql §3c) — no stub needed here.
     `)
   } finally {
     client.release()
@@ -109,23 +100,22 @@ export async function bootstrapHarness(pool: Pool): Promise<void> {
 }
 
 /**
- * Provisions a tenant schema using the SQL from create_schema_from_template.sql,
- * adapted to use the given schema name and owner UUID instead of 'template'.
+ * Provisions a tenant schema using the SQL from create_schema_from_template.sql.
  *
- * We read create_schema_from_template.sql and perform simple text substitution
- * (template → schemaName, the hardcoded owner UUID → ownerUuid) then execute.
- *
- * This reproduces exactly what `psql -v schema=... -v owner_uuid=...` does in
- * production CI — the same SQL, just pre-processed in JS instead of by psql.
+ * The provisioner is parameterized via psql -v variables (`:"schema"`, `:'schema'`,
+ * `:'owner_uuid'`) and protected by `\if :{?schema}` input guards. `pg.Pool#query`
+ * is a SQL pipe, not a psql process — it doesn't interpret meta-commands. We
+ * pre-process the script in JS: strip backslash-meta lines and substitute the
+ * variables inline. Net effect: same SQL psql would have executed.
  */
 export async function provisionSchema(
   pool: Pool,
   schemaName: string,
   ownerUuid: string
 ): Promise<void> {
-  // First insert the owner into auth.users (idempotent)
   const client = await pool.connect()
   try {
+    // Owner must exist in auth.users (FK from public.tenants.owner_id).
     await client.query(
       `INSERT INTO auth.users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING`,
       [ownerUuid]
@@ -133,48 +123,24 @@ export async function provisionSchema(
 
     let sql = readFileSync(CREATE_TEMPLATE_SQL, 'utf-8')
 
-    // Replace hardcoded 'template' schema references:
-    //   CREATE SCHEMA IF NOT EXISTS template  → schemaName
-    //   SET search_path = template            → schemaName
-    //   GRANT ... ON SCHEMA template TO       → schemaName
-    //   GRANT ... IN SCHEMA template TO       → schemaName
-    //   GRANT ... ON template.bookings TO     → schemaName.bookings
-    //   ALTER DEFAULT PRIVILEGES IN SCHEMA template → schemaName
-    //   public.tenants VALUES ('template', ...)  → schemaName
-    // We also replace the hardcoded owner UUID.
+    // Drop any psql meta-command line (\if/\else/\warn/\quit/\endif). The
+    // provisioner uses these only as input guards at the top.
+    sql = sql.replace(/^\\[^\n]*\n?/gm, '')
 
-    const TEMPLATE_OWNER = '1c486961-12b2-47d0-8aef-0aee30df083c'
-
-    // Perform replacements (order matters — most specific first)
+    // Substitute psql -v variables.
+    //   :"schema"      → quoted identifier   "<name>"
+    //   :'schema'      → string literal      '<name>'
+    //   :'owner_uuid'  → string literal      '<uuid>'
     sql = sql
-      // schema name in single quotes (VALUES insert)
-      .replace(/'template'/g, `'${schemaName}'`)
-      // bare identifier occurrences — use word-boundary-like replacements
-      // "CREATE SCHEMA IF NOT EXISTS template"
-      .replace(/CREATE SCHEMA IF NOT EXISTS template\b/gi, `CREATE SCHEMA IF NOT EXISTS "${schemaName}"`)
-      // "SET search_path = template"
-      .replace(/SET search_path = template\b/gi, `SET search_path = "${schemaName}"`)
-      // "ON SCHEMA template TO"
-      .replace(/ON SCHEMA template\b/gi, `ON SCHEMA "${schemaName}"`)
-      // "IN SCHEMA template "
-      .replace(/IN SCHEMA template\b/gi, `IN SCHEMA "${schemaName}"`)
-      // "ON template.bookings" etc.
-      .replace(/ON template\./g, `ON "${schemaName}".`)
-      // "FROM template." (in audit_rls references, not in provisioner but safe)
-      .replace(/FROM template\./g, `FROM "${schemaName}".`)
-      // owner UUID
-      .replace(new RegExp(TEMPLATE_OWNER, 'gi'), ownerUuid)
+      .replace(/:"schema"/g, `"${schemaName}"`)
+      .replace(/:'schema'/g, `'${schemaName}'`)
+      .replace(/:'owner_uuid'/g, `'${ownerUuid}'`)
 
-    // The provisioner bootstraps public.tenants itself (§0), but we've already
-    // created it. The INSERT INTO public.tenants may conflict if we run twice;
-    // patch it to be idempotent.
+    // Make the public.tenants INSERT idempotent on rerun (PK is schema_name).
     sql = sql.replace(
       /INSERT INTO public\.tenants \(schema_name, owner_id\)/g,
       'INSERT INTO public.tenants (schema_name, owner_id) ON CONFLICT (schema_name) DO UPDATE SET owner_id = EXCLUDED.owner_id --'
     )
-
-    // Also handle the CREATE TABLE IF NOT EXISTS public.tenants block —
-    // it's already created, but IF NOT EXISTS handles it fine.
 
     await client.query(sql)
   } finally {

@@ -3,6 +3,13 @@
 -- "check capacità + insert" NON atomica del service layer (createBooking).
 -- Data: 2026-05-28 | Applicare a: tutti i clienti esistenti + template
 --
+-- ⚠️  FIX SUCCESSIVO IN 003 (stessa data): la versione qui scritta lascia
+--     una race residua sotto READ COMMITTED (il SELECT del trigger è
+--     "cieco" ai row in-flight di un'altra transazione → due insert
+--     concorrenti sullo stesso slot possono entrambi superare il check).
+--     Vedi `migrations/003_fix_overbooking_race.sql` (SELECT ... FOR UPDATE
+--     sul time_slot) e la voce 2026-05-28 "Post-review fix" nel decision-log.
+--
 -- Contesto (audit 04, punto D): packages/supabase/src/services/bookings.ts fa
 -- il controllo capacità e poi l'insert in due step separati → due inserimenti
 -- simultanei sullo stesso turno/data possono superare max_covers (overbooking

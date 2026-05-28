@@ -75,7 +75,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1', TG_TABLE_SCHEMA)
+  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1 FOR UPDATE', TG_TABLE_SCHEMA)
     INTO v_max USING NEW.time_slot_id;
 
   -- Slot inesistente: lasciamo decidere alla FK bookings_time_slot_id_fkey.
