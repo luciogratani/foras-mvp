@@ -26,5 +26,6 @@ Prompt pensati per essere dati a **chat potenti esterne al progetto** (che non h
 | 02 | [UX & workflow operativo backoffice (gestore)](02_ux-workflow-admin-gestore.md) | done | 2026-05-22 | 2026-05-22 |
 | 03 | [Fit modello dati ↔ realtà operativa bar](03_fit-modello-dati-realta-bar.md) | done | 2026-05-22 | 2026-05-22 |
 | 04 | [Valutazione codebase: complessità, manutenibilità, scalabilità, affidabilità](04_valutazione-codebase.md) (review interna, non chat esterna) | done | 2026-05-28 | 2026-05-28 |
+| 04b | [Follow-up: CI failures post-audit-04 + decisione modello isolamento (PII vs contenuto)](04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md) | done | 2026-05-28 | 2026-05-28 |
 
 Aggiornare lo `status` qui e nel frontmatter del file quando un audit viene svolto.

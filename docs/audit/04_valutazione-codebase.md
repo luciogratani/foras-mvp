@@ -116,3 +116,11 @@ Pinnare `@supabase/supabase-js` alla stessa `2.106.1` del resto del repo in `sup
 **Cosa NON fare.** Resistere alla tentazione di "industrializzare" in anticipo: niente framework di migrazione pesante, niente routing multi-tenant su dominio condiviso, niente astrazioni per tenant che oggi non esistono. La soglia che il progetto stesso ha fissato (5-6 clienti / 1 migrazione a settimana) è il momento giusto per rivalutare — prima è over-engineering che aggiunge complessità senza beneficio. Il valore ora sta tutto nelle reti di sicurezza (test, vincoli DB), non nell'infrastruttura.
 
 **In una riga:** progetto solido e ben posizionato, il cui rischio residuo non è la qualità del codice ma l'assenza di una rete che impedisca a un errore di RLS di diventare un leak — chiudere quella (A + B + D) lo rende pronto per il primo cliente reale.
+
+---
+
+## Aggiornamento 2026-05-28 — Follow-up esecuzione
+
+A/B/D/F implementati. Il primo run CI ha portato a galla che la parola "isolamento" usata in questo audit (e nei docs di architettura) era una semplificazione retorica: il modello reale isola PII (`bookings`) e tutte le scritture, **non** la lettura del contenuto pubblico (`site_settings`/`menu_*`/`news_slides`) cross-schema via API. La distinzione è stata esplicitata, il test cross-tenant `ci_xc.1` adattato, e la decisione di non chiudere il gap è motivata.
+
+→ Vedi follow-up completo: [`04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md`](04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md).

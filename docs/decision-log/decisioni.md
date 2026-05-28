@@ -680,3 +680,37 @@ Vitest contro DB effimero via **shim `pg-mock-client.ts`** che traduce l'API flu
 **Note:** trade-off scope-creep `pg-mock-client.ts` (~450 righe, shim API supabase-js → query `pg`) **mantenuto**: difendibile (il service layer riceve `TenantClient` shape; alternative serie sono PostgREST locale o full Supabase stack in CI, troppo pesanti) ma resta surface nuova da validare empiricamente al primo run CI. `ci_xc.6` "harness self-check" — etichetta criticata dal reviewer; rivedibile in un secondo giro, non bloccante.
 
 **Lezione (master):** il typecheck verde sul main tree NON è una prova che gli script di shell + il provisioning funzionino. Per i fix con shell/SQL servono `bash -n` + grep dei pattern attesi nel target prima di considerare il salvataggio completo. La salvage di A dal worktree stale-base è stata fatta a fiducia troppo elevata.
+
+---
+
+### 2026-05-28 — Modello di isolamento: PII e scrittura, non contenuto pubblico
+
+**Contesto:** primo run reale della CI introdotta da Stream A (audit 04). Il test cross-tenant `ci_xc.1` ha fallito mostrando che `anon` può leggere `site_settings`/`menu_*`/`news_slides` di **qualsiasi schema tenant** semplicemente settando `Accept-Profile: <altro_schema>` (verificato: `PGRST_DB_SCHEMAS` whitelist tutti gli schemi tenant; il provisioner fa `GRANT SELECT ON ALL TABLES … TO anon` su ogni schema; le policy `*_public_read` filtrano solo `is_active = true`, non per schema). `bookings` invece restano protetti da `is_tenant_owner()` ✓. Solo lettura: nessuna scrittura cross-tenant è possibile.
+
+Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento totale") e modello **implementato**. Non è un bug del codice: è un qualificatore mancante.
+
+**Opzioni considerate per chiudere il leak (analisi completa in [`audit/04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md`](../audit/04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md)):**
+- (1) Ruoli `tenant_anon_<schema>` + JWT firmate per cliente — pulita, +2 min per cliente, ★★★★☆.
+- (2) Reverse proxy Nginx con mapping dominio→Accept-Profile — bypassabile, ★☆☆☆☆.
+- (3) Una istanza PostgREST per tenant — pesante, ★★☆☆☆.
+- (4) Views `public.*` con filtro per tenant — refactor invasivo, ★★☆☆☆.
+
+**Decisione (Lucio, 2026-05-28):** **nessuna implementazione**. Il modello reale di foras è **isolamento di PII (bookings) e di tutte le scritture, non di contenuto pubblico** (site_settings, menu, news). Rationale concreto:
+- Il contenuto "pubblico" è già esposto sul dominio del cliente. Un attacker che lo legge cross-schema via API non ottiene nulla che lo scraping del sito non darebbe.
+- I clienti target (bar, ristoranti locali) non percepiscono il menu come asset riservato. Nessuna pressione di privacy o competitiva su quei dati.
+- Le prenotazioni — la cosa che davvero conta legalmente (GDPR) — sono blindate da RLS owner-scope via `is_tenant_owner()`.
+- Implementare l'opzione 1 costa 2–4 ore di setup + un asset crittografico per cliente da non perdere; non giustificato finché nessun cliente lo chiede.
+
+**Conseguenze operative:**
+- Test `ci_xc.1` riscritto in `.github/scripts/run-rls-tests.sh` per verificare i 3 invarianti che il modello davvero promette: anon non legge `bookings` cross-tenant; anon non scrive/aggiorna/cancella cross-tenant; `authenticated` di tenant A non scrive/aggiorna/cancella su tenant B. La lettura cross-tenant di contenuto pubblico è esplicitamente documentata come **comportamento atteso**, non come leak.
+- `architettura-fullstack.md` resta autoritativo, ma la parola "isolamento" senza qualificatore va d'ora in poi letta come "isolamento di PII e scrittura" (questa entry funge da chiarimento; non si ri-tocca l'architettura doc per non accumulare drift).
+- Nessuna modifica al template, ai service, alle policy esistenti.
+
+**Trigger di re-valutazione → opzione 1:**
+- Un cliente esplicitamente richiede di non vedere i propri contenuti accessibili cross-schema (es. catena con strategia di menu riservata).
+- Numero di tenant cresce abbastanza da rendere lo scraping cross-schema un fastidio reale (≥ qualche decina).
+- Si introduce un'app pubblica condivisa che aggrega più tenant (oggi non in roadmap).
+
+**Punti aperti correlati (vedi `audit/04b_followup_...md` § *Punti aperti*):**
+- Section 1 della CI RLS resta rossa per `permission denied for function is_tenant_owner` ad anon (bug di harness ortogonale alla decisione qui sopra). Fix raccomandato: `GRANT EXECUTE ON FUNCTION public.is_tenant_owner() TO anon` propagato via `migrations/004_*.sql` — sessione dedicata, ~30 min.
+- Lint error `react-hooks/set-state-in-effect` in `apps/web/app/_components/NewsPopup.tsx:17` + 9 warning `<Link>` — sessione separata, ~1h sub-chat Sonnet.
