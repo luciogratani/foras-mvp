@@ -384,6 +384,68 @@ CREATE POLICY "news_slides_admin_all"
 
 
 -- -----------------------------------------------------------------------
+-- 4b. Vincolo DB anti-overbooking (trigger BEFORE INSERT su bookings)
+--
+-- Rete di sicurezza per la race "check capacità + insert" non atomica del
+-- service layer (createBooking): due insert simultanei sullo stesso turno/data
+-- potrebbero superare max_covers. Il check applicativo resta per il messaggio
+-- UX; questo trigger rende il vincolo autoritativo a livello DB.
+--
+-- ⚠️  SET search_path = '' DI PROPOSITO (l'opposto del divieto su
+--     public.is_tenant_owner()): qui ogni oggetto è qualificato esplicitamente
+--     (tabelle via TG_TABLE_SCHEMA + format %I, builtin in pg_catalog), e lo
+--     schema target è quello della TABELLA, non del chiamante → fissarlo è
+--     corretto e blocca il search_path hijacking. SECURITY DEFINER serve per
+--     contare TUTTE le prenotazioni confermate bypassando la RLS owner-scope.
+--
+-- Mantenuto in sync con migrations/002_bookings_overbooking_trigger.sql.
+-- -----------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION check_booking_capacity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_max    integer;
+  v_booked integer;
+BEGIN
+  -- Solo le prenotazioni confermate consumano capacità.
+  IF NEW.status IS DISTINCT FROM 'confirmed' THEN
+    RETURN NEW;
+  END IF;
+
+  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1', TG_TABLE_SCHEMA)
+    INTO v_max USING NEW.time_slot_id;
+
+  -- Slot inesistente: lasciamo decidere alla FK bookings_time_slot_id_fkey.
+  IF v_max IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  EXECUTE format('SELECT COALESCE(SUM(covers), 0) FROM %I.bookings WHERE time_slot_id = $1 AND date = $2 AND status = ''confirmed''', TG_TABLE_SCHEMA)
+    INTO v_booked USING NEW.time_slot_id, NEW.date;
+
+  IF v_booked + NEW.covers > v_max THEN
+    RAISE EXCEPTION
+      'Overbooking: turno % data % — richiesti % coperti, disponibili %',
+      NEW.time_slot_id, NEW.date, NEW.covers, GREATEST(v_max - v_booked, 0)
+      USING ERRCODE = 'OB001';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS bookings_capacity_check ON bookings;
+CREATE TRIGGER bookings_capacity_check
+  BEFORE INSERT ON bookings
+  FOR EACH ROW
+  EXECUTE FUNCTION check_booking_capacity();
+
+
+-- -----------------------------------------------------------------------
 -- 5. Seed — dati iniziali
 -- -----------------------------------------------------------------------
 

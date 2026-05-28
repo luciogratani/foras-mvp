@@ -177,6 +177,13 @@ export async function createBooking(
         `Prenotazione duplicata: esiste già una prenotazione per questa email su questo turno e data`
       )
     }
+    // OB001 = trigger DB anti-overbooking (002): backstop della race check+insert.
+    // Restituisce lo stesso errore tipato del pre-check sopra, così l'UX è coerente.
+    if (error.code === 'OB001') {
+      throw new OverbookingError(
+        'Non ci sono abbastanza coperti disponibili per il turno selezionato.'
+      )
+    }
     throw new Error(`createBooking failed: ${error.message}`)
   }
 

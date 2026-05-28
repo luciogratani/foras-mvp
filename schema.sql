@@ -59,6 +59,48 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: check_booking_capacity(); Type: FUNCTION; Schema: template; Owner: postgres
+--
+
+CREATE FUNCTION template.check_booking_capacity() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_max    integer;
+  v_booked integer;
+BEGIN
+  -- Solo le prenotazioni confermate consumano capacità.
+  IF NEW.status IS DISTINCT FROM 'confirmed' THEN
+    RETURN NEW;
+  END IF;
+
+  EXECUTE format('SELECT max_covers FROM %I.time_slots WHERE id = $1', TG_TABLE_SCHEMA)
+    INTO v_max USING NEW.time_slot_id;
+
+  -- Slot inesistente: lasciamo decidere alla FK bookings_time_slot_id_fkey.
+  IF v_max IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  EXECUTE format('SELECT COALESCE(SUM(covers), 0) FROM %I.bookings WHERE time_slot_id = $1 AND date = $2 AND status = ''confirmed''', TG_TABLE_SCHEMA)
+    INTO v_booked USING NEW.time_slot_id, NEW.date;
+
+  IF v_booked + NEW.covers > v_max THEN
+    RAISE EXCEPTION
+      'Overbooking: turno % data % — richiesti % coperti, disponibili %',
+      NEW.time_slot_id, NEW.date, NEW.covers, GREATEST(v_max - v_booked, 0)
+      USING ERRCODE = 'OB001';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION template.check_booking_capacity() OWNER TO postgres;
+
+--
 -- Name: allergens; Type: TABLE; Schema: template; Owner: postgres
 --
 
@@ -326,6 +368,13 @@ ALTER TABLE ONLY template.menu_categories
 
 ALTER TABLE ONLY template.menu_items
     ADD CONSTRAINT menu_items_category_id_fkey FOREIGN KEY (category_id) REFERENCES template.menu_categories(id) ON DELETE CASCADE;
+
+
+--
+-- Name: bookings bookings_capacity_check; Type: TRIGGER; Schema: template; Owner: postgres
+--
+
+CREATE TRIGGER bookings_capacity_check BEFORE INSERT ON template.bookings FOR EACH ROW EXECUTE FUNCTION template.check_booking_capacity();
 
 
 --

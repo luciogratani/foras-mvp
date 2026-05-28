@@ -615,3 +615,50 @@ Due scelte di meccanismo per i sub-task del freeze, prese da Lucio dopo l'assess
 **Regola post-freeze:** ogni modifica di schema (incl. RLS) passa per una **migrazione numerata** in `/migrations`, applicata a ogni schema tenant (vedi `migration-runbook.md`). Onboarding di nuovi tenant via `create_schema_from_template.sql` (`psql -v`, da terminale/SSH+Docker).
 
 **Note:** A3 (pulizia `template`) cancellato — il `template` live resta sandbox dev/test, non è la fonte di verità (lo è lo script + `schema.sql`). Migrazioni post-freeze accettate consapevolmente per: capienza tavoli+coperti (rimandata post-onboarding), timezone per-tenant (opzione A, post-MVP), e l'eventuale follow-up sul guard §3c (`CREATE OR REPLACE is_tenant_owner` dà ERROR benigno "must be owner" se eseguito come `postgres` su install dove la funzione è di `supabase_admin`). **Prossimo: Stream C — onboarding primo cliente reale.**
+
+---
+
+### 2026-05-28 — Audit 04 (interno): A + B + D bloccanti pre-cliente #1, F ride-along
+
+**Contesto:** review interna `docs/audit/04_valutazione-codebase.md` (4 assi: complessità/manutenibilità/scalabilità/affidabilità). Verdetto: codice maturo e disciplinato, ma il rischio non mitigato di maggior impatto è il **leak cross-tenant** (zero test automatici, zero CI). Soluzioni A (test RLS in CI), B (runner migrazioni), D (vincolo DB anti-overbooking) bloccanti; C (`service_role` nel web), E (riordino non atomico), G (backup/pooler) non bloccanti.
+
+**Decisione (Lucio, 2026-05-28):** eseguire **A + B + D + F** prima dell'onboarding cliente #1. D richiede riapertura controllata del freeze — costa O(1) ora (esiste solo `template`), O(n) dopo. F (pin `@supabase/supabase-js@2.106.1` in `send-booking-email`) ride-along, no entry separata. Voci dedicate per A/B/D sotto.
+
+---
+
+### 2026-05-28 — D — Trigger DB anti-overbooking (`BEFORE INSERT`, `SECURITY DEFINER`, `TG_TABLE_SCHEMA`)
+
+**Contesto:** `packages/supabase/src/services/bookings.ts:127` documenta la race "check capacità + insert" non atomica. Overbooking soft = unico difetto che il cliente finale vedrebbe.
+
+**Decisione:** funzione `check_booking_capacity()` per-schema con trigger `BEFORE INSERT` su `bookings`:
+- `SECURITY DEFINER` necessario per contare tutte le prenotazioni confermate bypassando la RLS owner-scope (un SECURITY INVOKER come `anon` vedrebbe 0 righe → vincolo inefficace).
+- `SET search_path = ''` di proposito (opposto di `is_tenant_owner()`): qui lo schema target è quello della **tabella** (`TG_TABLE_SCHEMA + format %I`), non del chiamante → fissarlo è corretto e blocca search_path hijacking.
+- Scope: `INSERT` only, coerente col check applicativo. `ERRCODE 'OB001'` mappato a `OverbookingError` accanto al `23505` esistente → UX identica al pre-check anche sulla race.
+
+**Artefatti:** `migrations/002_bookings_overbooking_trigger.sql` + `create_schema_from_template.sql` §4b + `schema.sql`. Applicato al `template` live + test funzionali rolled-back verdi (51/max=50 bloccato con OB001; 50/max=50 passa) + `audit_rls.sql` 0 righe.
+
+**Gotcha emerso:** lo schema `template` live è di proprietà di `supabase_admin` (Studio-creato) → `postgres` non ha CREATE → apply manuale al template via `docker exec -U supabase_admin`. Documentato nel runbook (`docs/operations/migration-runbook.md` sezione "Ruolo di connessione").
+
+---
+
+### 2026-05-28 — B — Runner migrazioni idempotente (`scripts/migrate.sh` + `public.tenant_migrations`)
+
+**Contesto:** apply manuale per-schema via SSH (O(n)) è single-operator + error-prone. Con D che genera la prima migrazione reale (002), costruire il runner ora evita di propagare a mano già al cliente #1.
+
+**Decisione:** bash + psql (coerente col pattern `psql -v` dell'onboarding A2, no framework JS, no Flyway/Sqitch). `public.tenant_migrations(schema_name, version, applied_at, PK(schema_name, version))`; per ogni file `/migrations/NNN_*.sql` non tracciato: `BEGIN; SET LOCAL search_path = <schema>; <file>; INSERT tracking; COMMIT;` con `ON_ERROR_STOP=1`. Fail-fast (rollback automatico, nessuna riga di tracking). `001_init.sql` (pointer) marcato come baseline via `INSERT ... ON CONFLICT DO NOTHING` senza esecuzione. Flag `--template`/`--schema <nome>`/`--dry-run`. Idempotente: rerun = solo `SKIP`.
+
+**Artefatti:** `scripts/migrate.sh` (executable) + runbook aggiornato (sezione "Runner migrazioni" sostituisce loop manuale; fallback `docker exec` documentato). DB live primed (tabella creata, `template/001+002` backfillati — la 002 era stata applicata manualmente nella cerimonia D prima del runner). Soglia tool dedicato (Flyway/Sqitch) resta a >5 clienti o >1 migrazione/settimana.
+
+---
+
+### 2026-05-28 — A — CI gate RLS-isolation + Vitest service-layer (`pg-mock-client` shim)
+
+**Contesto:** zero test, zero CI = il leak cross-tenant è l'unico rischio irreversibile non mitigato. Costo basso, valore alto.
+
+**Decisione:** difesa a 2 job in GitHub Actions:
+- `static`: `pnpm -r tsc --noEmit` + lint + build (no DB).
+- `rls-isolation` con service container `postgres:15.8`: bootstrap harness Supabase-like (roles `anon`/`authenticated`/`service_role` + `auth` schema + `auth.uid()` stub) → provisioning 2 tenant via `create_schema_from_template.sql` con UUID owner distinti → `rls_isolation_tests.sql` (FAIL su qualsiasi accesso cross-tenant) → `audit_rls.sql` (FAIL su qualsiasi riga di discrepanza) → Vitest sul service layer.
+
+Vitest contro DB effimero via **shim `pg-mock-client.ts`** che traduce l'API fluent `supabase-js` in query `pg` su un Pool reale. Trade-off: ~450 righe da validare empiricamente al primo CI run, ma alternative (PostgREST locale, full Supabase stack in CI) sono troppo pesanti. Coperti i path a rischio dati: `createBooking`, `getAvailableTimeSlots`, `cancelBookingByToken`.
+
+**Artefatti:** `.github/workflows/ci.yml` + 3 script in `.github/scripts/` + `packages/supabase/{vitest.config.ts, tsconfig.test.json, src/__tests__/...}` + deps `pg`/`vitest`/`@types/pg`. Validazione semantica deferred al primo push su `main`.

@@ -422,6 +422,34 @@ Done when:
 
 ---
 
+## Intermezzo Audit-04-hardening — rete di sicurezza pre-cliente #1 (2026-05-28 → CHIUSO 2026-05-28)
+
+**Goal:** chiudere i 4 talloni d'Achille dell'audit interno `docs/audit/04_valutazione-codebase.md` (A + B + D bloccanti, F ride-along) prima dell'onboarding cliente #1.
+
+> **Fuori sprint.** Trigger: l'unico rischio non mitigato e irreversibile è il **leak cross-tenant** (zero test, zero CI); gli altri difetti sono recuperabili. Sequenza A → B → D → F. D richiede riapertura controllata del freeze, costa O(1) ora vs O(n) dopo l'onboarding.
+
+Piano a 4 task in `docs/ai-playbooks/prompts/2026-05-28_audit-04-hardening/`:
+
+- [x] **A** — RLS isolation in CI + service-layer tests (sub-chat Sonnet, salvata manualmente dal worktree dopo session-limit a ~12 min/~1700 righe): `.github/workflows/ci.yml` (job `static` + `rls-isolation` su `postgres:15.8` service container) + harness `.github/scripts/ci-harness-bootstrap.sql` + provisioning 2 tenant + `rls_isolation_tests.sql` + gate `audit_rls.sql` + Vitest su `@repo/supabase` con shim `pg-mock-client.ts`. Deps `vitest@4.1.7`, `pg@8.21.0`, `@types/pg`. `pnpm -r tsc --noEmit` verde. Validazione semantica deferred al primo run CI.
+- [x] **B** — Runner migrazioni idempotente (sub-chat Sonnet, salvata manualmente dal worktree per stale-base + missing-commit): `scripts/migrate.sh` (bash+psql, `BEGIN; SET LOCAL search_path; <file>; INSERT tracking; COMMIT;` con `ON_ERROR_STOP=1`, fail-fast) + `public.tenant_migrations` bootstrap + handling 001-pointer-baseline + flag `--template`/`--schema`/`--dry-run`. Runbook aggiornato (sezione "Runner migrazioni" + caveat ruolo `supabase_admin` per template + backfill). DB live primed: tabella creata, `template/001+002` backfillati.
+- [x] **D** — Trigger DB anti-overbooking (master-direct, cerimonia freeze): `migrations/002_bookings_overbooking_trigger.sql` (`BEFORE INSERT` su `bookings`, `SECURITY DEFINER` + `search_path=''` + `TG_TABLE_SCHEMA`, `ERRCODE OB001`) + `create_schema_from_template.sql` §4b + snapshot in `schema.sql` (validato byte-per-byte vs `pg_get_functiondef`/`pg_get_triggerdef` del server) + mappatura `OB001 → OverbookingError` in `services/bookings.ts`. **Applicata al `template` live via SSH come `supabase_admin`** (gotcha: `postgres` non ha CREATE sullo schema Studio-creato); test funzionali rolled-back verdi (overbooking 51/50 bloccato con OB001, insert valido 50/50 passa); `audit_rls.sql` 0 righe. `CHANGELOG.md` creato.
+- [x] **F** — Pin edge function (master-direct, ride-along): `@supabase/supabase-js@2` → `2.106.1` in `supabase/functions/send-booking-email/index.ts`, allineato all'override `pnpm` del repo.
+
+Done when:
+- [x] 002 applicata al `template` live + `audit_rls.sql` 0 righe + test funzionali verdi
+- [x] `public.tenant_migrations` creata + backfill `template/001+002`
+- [x] `pnpm -r tsc --noEmit` verde + `pnpm install` verde
+- [x] Tutti i 4 deliverable nel main tree, syntax check OK
+- [ ] Validazione semantica primo run CI (deferred: appare al primo push su `main`)
+
+**Note operative:**
+- I 2 worktree delle sub-chat sono stati branchati da `e406095` (pre-freeze) per un quirk dell'infra di isolamento → entrambi salvati manualmente nel main tree dal master.
+- A è stata interrotta dal session-limit dopo ~12 min, ma con il codice già scritto: salvato e integrato senza perdita.
+- Decisioni architetturali nel `decision-log/decisioni.md` (4 voci 2026-05-28: umbrella + A + B + D).
+- Audit punto G (backup automatico, connection pooler) **non eseguito** — operativo, non bloccante per cliente #1; resta come watch.
+
+---
+
 ## Sprint 7 — UI custom primo cliente
 
 **Goal:** homepage visivamente personalizzata per il primo cliente.
