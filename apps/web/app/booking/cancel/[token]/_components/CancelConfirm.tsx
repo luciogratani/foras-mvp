@@ -1,5 +1,6 @@
 'use client'
 import { useActionState } from 'react'
+import Link from 'next/link'
 import { confirmCancelAction, type CancelActionState } from '../actions'
 
 const initialState: CancelActionState = { status: 'idle' }
@@ -20,7 +21,7 @@ export function CancelConfirm({ token, name, dateLabel, slotLabel, slotTime, cov
     return (
       <div>
         <p>Prenotazione annullata con successo. I coperti sono stati liberati.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </div>
     )
   }
@@ -29,7 +30,7 @@ export function CancelConfirm({ token, name, dateLabel, slotLabel, slotTime, cov
     return (
       <div>
         <p>Link già utilizzato o prenotazione non trovata.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </div>
     )
   }
@@ -53,7 +54,7 @@ export function CancelConfirm({ token, name, dateLabel, slotLabel, slotTime, cov
         </button>
       </form>
       <p>
-        <a href="/">No, torna alla homepage</a>
+        <Link href="/">No, torna alla homepage</Link>
       </p>
     </div>
   )

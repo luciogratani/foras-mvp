@@ -1,5 +1,6 @@
 'use client'
 import { useActionState, useState } from 'react'
+import Link from 'next/link'
 import type { AvailableTimeSlot } from '@repo/supabase'
 import { localToday } from '@repo/supabase'
 import { createBookingAction, type BookingActionState } from '../actions'
@@ -32,7 +33,7 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
             (le email di conferma non sono ancora attive).
           </em>
         </p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </div>
     )
   }

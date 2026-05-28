@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getBookingByToken, CancelBookingTokenSchema } from '@repo/supabase'
 import { getWebSupabaseAdmin } from '../../../../lib/supabaseAdmin'
 import { CancelConfirm } from './_components/CancelConfirm'
@@ -17,7 +18,7 @@ export default async function CancelBookingPage({
       <main>
         <h1>Link non valido</h1>
         <p>Questo link di annullamento non è valido.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </main>
     )
   }
@@ -30,7 +31,7 @@ export default async function CancelBookingPage({
       <main>
         <h1>Errore</h1>
         <p>Si è verificato un errore. Riprova più tardi.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </main>
     )
   }
@@ -40,7 +41,7 @@ export default async function CancelBookingPage({
       <main>
         <h1>Prenotazione non trovata</h1>
         <p>Nessuna prenotazione corrisponde a questo link.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </main>
     )
   }
@@ -50,7 +51,7 @@ export default async function CancelBookingPage({
       <main>
         <h1>Prenotazione già annullata</h1>
         <p>Questa prenotazione risulta già annullata.</p>
-        <a href="/">← Torna alla homepage</a>
+        <Link href="/">← Torna alla homepage</Link>
       </main>
     )
   }
