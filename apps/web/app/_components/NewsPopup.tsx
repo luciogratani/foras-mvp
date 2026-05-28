@@ -1,33 +1,42 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@repo/ui'
 import type { NewsSlide } from '@repo/supabase'
 
 const STORAGE_KEY = 'foras_news_popup_shown'
 
+function subscribe(onChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+  window.addEventListener('storage', onChange)
+  return () => window.removeEventListener('storage', onChange)
+}
+
+function readDismissed(): boolean {
+  if (typeof window === 'undefined') return true
+  return Boolean(window.sessionStorage.getItem(STORAGE_KEY))
+}
+
+function readDismissedServer(): boolean {
+  return true
+}
+
 export function NewsPopup({ news }: { news: NewsSlide[] }) {
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    if (news.length === 0) return
-    if (typeof window === 'undefined') return
-    if (window.sessionStorage.getItem(STORAGE_KEY)) return
-    setOpen(true)
-  }, [news.length])
-
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next)
-    if (!next && typeof window !== 'undefined') {
-      window.sessionStorage.setItem(STORAGE_KEY, '1')
-    }
-  }
+  const dismissed = useSyncExternalStore(subscribe, readDismissed, readDismissedServer)
 
   if (news.length === 0) return null
+  if (dismissed) return null
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) return
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem(STORAGE_KEY, '1')
+    window.dispatchEvent(new Event('storage'))
+  }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Novità</DialogTitle>
