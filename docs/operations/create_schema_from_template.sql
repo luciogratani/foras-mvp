@@ -303,7 +303,13 @@ AS $$
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.is_tenant_owner() FROM PUBLIC;
-GRANT  EXECUTE ON FUNCTION public.is_tenant_owner() TO authenticated, service_role;
+GRANT  EXECUTE ON FUNCTION public.is_tenant_owner() TO anon, authenticated, service_role;
+-- Nota: anon necessario perché le policy admin invocano is_tenant_owner() anche
+-- per anon che tenti SELECT/INSERT/UPDATE/DELETE su tabelle owner-scope. Senza
+-- EXECUTE → 42501 "permission denied for function" prima della RLS, invece di
+-- 0 righe pulite. La funzione comunica solo TRUE/FALSE per (current_schema(),
+-- auth.uid()): nessuna PII esposta. Vedi migrations/004_*.sql per la storia
+-- e audit/04b_followup_2026-05-28_*.md per il modello di isolamento.
 
 
 -- -----------------------------------------------------------------------

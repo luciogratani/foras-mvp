@@ -712,5 +712,20 @@ Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento t
 - Si introduce un'app pubblica condivisa che aggrega più tenant (oggi non in roadmap).
 
 **Punti aperti correlati (vedi `audit/04b_followup_...md` § *Punti aperti*):**
-- Section 1 della CI RLS resta rossa per `permission denied for function is_tenant_owner` ad anon (bug di harness ortogonale alla decisione qui sopra). Fix raccomandato: `GRANT EXECUTE ON FUNCTION public.is_tenant_owner() TO anon` propagato via `migrations/004_*.sql` — sessione dedicata, ~30 min.
-- Lint error `react-hooks/set-state-in-effect` in `apps/web/app/_components/NewsPopup.tsx:17` + 9 warning `<Link>` — sessione separata, ~1h sub-chat Sonnet.
+- ~~Section 1 della CI RLS resta rossa per `permission denied for function is_tenant_owner` ad anon~~ → **chiuso 2026-05-28** in commit successivo (migrazione 004 + update §3c + apply live).
+- ~~Lint error + 9 warning in `apps/web`~~ → **chiuso 2026-05-28** in commits `16603d0` + `6649631`.
+- `apps/admin` lint (8 errori + 1 warning, stesso pattern React 19) — emerso solo a fine sessione, sub-chat dedicata (~2.5h).
+
+---
+
+### 2026-05-28 — A — Migrazione 004: `GRANT EXECUTE` su `is_tenant_owner()` a `anon`
+
+**Contesto:** primo run CI (audit 04b) ha mostrato Section 1 fallire con `permission denied for function is_tenant_owner` su `SET LOCAL ROLE anon; SELECT COUNT(*) FROM <tenant>.bookings`. Causa: il provisioner faceva `REVOKE EXECUTE … FROM PUBLIC; GRANT EXECUTE … TO authenticated, service_role` — anon escluso. Le policy `bookings_admin_*` invocano la funzione anche per anon → esplode prima di valutare RLS. Semanticamente equivalente a "anon denied" ma rumoroso e CI-rosso.
+
+**Decisione:** `GRANT EXECUTE ON FUNCTION public.is_tenant_owner() TO anon`. La funzione torna `false` quando `auth.uid() IS NULL` (anon), RLS restituisce 0 righe pulite. Nessuna PII esposta: la funzione comunica solo TRUE/FALSE per (`current_schema()`, `auth.uid()`), non legge mai dati sensibili.
+
+**Artefatti:** `migrations/004_grant_execute_is_tenant_owner_anon.sql` + update `create_schema_from_template.sql §3c` (line 306) + applicata sul `template` live via `scripts/migrate.sh --template` con `DATABASE_URL=postgres://supabase_admin@…` (stesso gotcha di `public.tenant_migrations`, di proprietà `supabase_admin`).
+
+**Sorpresa benigna:** il VPS live aveva GIÀ `EXECUTE` ad anon (probabilmente legacy Studio init mai droppato dal `REVOKE FROM PUBLIC` del provisioner) → il fix è no-op funzionale sul live, ma allinea CI + onboarding-futuro al comportamento già attivo in produzione. La 004 viene registrata in `public.tenant_migrations` per audit trail.
+
+**Idempotenza:** `GRANT` è idempotente per natura — la migrazione viene eseguita una volta per schema target (oggi solo `template`, in futuro N tenant) come no-op se già presente, ma marca `tenant_migrations` per tracciabilità.

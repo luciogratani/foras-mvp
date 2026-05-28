@@ -1,0 +1,35 @@
+-- 004_grant_execute_is_tenant_owner_anon.sql
+-- GRANT EXECUTE su public.is_tenant_owner() anche al ruolo anon.
+-- Data: 2026-05-28 | Applicare a: tutti i clienti esistenti + template
+--
+-- Contesto: le policy admin (`*_admin_all`, `bookings_admin_select/update/delete`)
+-- invocano public.is_tenant_owner() per QUALSIASI ruolo che tenti l'operazione,
+-- incluso anon (un anon che fa SELECT su una tabella con policy owner-scope fa
+-- entrare in scena la funzione). Senza EXECUTE per anon, Postgres esplode con
+-- "ERROR: permission denied for function is_tenant_owner" PRIMA che la RLS
+-- venga valutata — semanticamente equivalente a "anon denied" ma con errore
+-- "rude" invece di "0 righe restituite pulite".
+--
+-- Comportamento atteso post-fix: anon chiama la funzione, auth.uid() è NULL,
+-- la SELECT EXISTS ritorna FALSE, la RLS valuta USING come falso, 0 righe.
+-- Nessuna PII esposta (l'unica cosa che la funzione comunica è "true/false
+-- per l'utente corrente nello schema corrente", non legge mai dati sensibili).
+--
+-- Effetto pratico: chiude la sezione 1 del run-rls-tests.sh in CI, che
+-- attualmente fallisce su `SET LOCAL ROLE anon; SELECT COUNT(*) FROM
+-- <tenant>.bookings` con 42501 invece di restituire 0.
+--
+-- Vedi audit/04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md
+-- §"Punti aperti" punto A + decisioni.md voce 2026-05-28 (modello isolamento).
+--
+-- ⚠️  Migrazione GLOBALE camuffata da per-schema.
+--     public.is_tenant_owner() è UN solo oggetto in public, condiviso da
+--     tutti gli schemi tenant. Il runner esegue questo file una volta per
+--     ogni tenant (alex_akashi, underclub, template, ecc.), ma il GRANT è
+--     idempotente: rieseguirlo non cambia nulla. Lasciamo il pattern N-volte
+--     per simmetria col runner — più semplice che fare bookkeeping speciale
+--     per migrazioni "globali".
+--
+-- Idempotente per natura: GRANT su un oggetto che ha già quel grant è no-op.
+
+GRANT EXECUTE ON FUNCTION public.is_tenant_owner() TO anon;

@@ -109,15 +109,15 @@ Non implementate — qui solo per riferimento futuro.
 
 ## Punti aperti (non chiusi in questa sessione)
 
-### A. Section 1 RLS test resta rosso (`permission denied for function is_tenant_owner`)
+### A. Section 1 RLS test (`permission denied for function is_tenant_owner`)
 
-L'`anon` non ha `GRANT EXECUTE` su `public.is_tenant_owner()`. Quando le policy di `bookings` invocano la funzione per un anon, Postgres esplode prima di valutare RLS. **Semanticamente è OK** (anon è negato), ma la CI lo conta come errore.
+**Chiuso 2026-05-28** via opzione (a) — `migrations/004_grant_execute_is_tenant_owner_anon.sql` + update `create_schema_from_template.sql §3c` + apply live (vedi sotto). Anon adesso ha `EXECUTE`, la funzione torna `false` per `auth.uid() IS NULL`, RLS restituisce 0 righe pulite invece di 42501.
 
-Due fix possibili, entrambi sani:
-- **(a)** `GRANT EXECUTE ON FUNCTION public.is_tenant_owner() TO anon` — la funzione ritorna `false` per anon (`auth.uid()` null), RLS restituisce 0 righe pulite. Da propagare a: `create_schema_from_template.sql §3c` + nuova `migrations/004_*.sql` + apply su `template` live + run `migrate.sh` sui tenant esistenti.
-- **(b)** Patchare il test CI per accettare `42501 permission denied for function` come "anon denied = PASS". Più rapido, non tocca DB, ma lascia un'asimmetria fra ambiente reale e CI.
-
-**Raccomandazione:** (a) — l'asimmetria di (b) prima o poi morde. Da fare in una sessione dedicata, scope ~30 min.
+**Apply live (2026-05-28):**
+- Verifica pre-apply: il VPS live aveva GIÀ `EXECUTE` ad anon su `public.is_tenant_owner` (legacy Studio init, mai droppato dal `REVOKE FROM PUBLIC` del provisioner) — il fix vero allinea CI/onboarding-futuro al comportamento già attivo in produzione.
+- Apply via `scripts/migrate.sh --template` con `DATABASE_URL=postgres://supabase_admin@...` (gotcha noto: `public.tenant_migrations` è di proprietà di `supabase_admin`, `postgres` non può `ALTER` → connettersi come `supabase_admin`).
+- Risultato: `template` schema → 004 registrata in `tenant_migrations`, no-op funzionale sul live (anon aveva già EXECUTE).
+- Effetto pratico per la CI: il container Postgres effimero esegue il provisioner aggiornato → anon riceve EXECUTE → Section 1 dovrebbe diventare verde al prossimo push.
 
 ### B. Lint error `react-hooks/set-state-in-effect` in `NewsPopup.tsx:17` + 9 warning
 
