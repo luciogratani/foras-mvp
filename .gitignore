@@ -61,3 +61,7 @@ tmp/
 docs/user.md
 docs/appunti-privati.md
 docs/james-handbook/
+
+# --- Claude Code (locale) ---
+# settings.local.json = allowlist Bash/Write personale; worktrees/ = agent transient
+.claude/
