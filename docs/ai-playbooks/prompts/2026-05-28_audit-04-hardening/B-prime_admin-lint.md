@@ -1,5 +1,5 @@
 ---
-status: TODO
+status: NEEDS_MASTER_REVIEW
 sprint: post-audit-04
 task: B'
 created: 2026-05-28
@@ -7,6 +7,13 @@ suggested_model: sonnet
 suggested_effort: high
 owner: master-chat
 ---
+
+> ⚠️ **NON ESEGUIRE COME SUB-CHAT FINCHÉ UNA MASTER CHAT NON HA REVISIONATO E APPROVATO QUESTO PROMPT.**
+> Status del prompt: `NEEDS_MASTER_REVIEW`. Una master chat (Lucio o assistente master) deve:
+> 1. Leggere l'intero prompt.
+> 2. Validare le 3 categorie di problema, le 3 opzioni per `OpeningHoursForm`, e i vincoli.
+> 3. Modificare/integrare se serve.
+> 4. Cambiare lo status a `TODO` (e rimuovere questo blocco) **prima** di girare a sub-chat.
 
 # B' — Chiudere il lint di `apps/admin` (React 19: `useOptimistic` + entities + postcss)
 

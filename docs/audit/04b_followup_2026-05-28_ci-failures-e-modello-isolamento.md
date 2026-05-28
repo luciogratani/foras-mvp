@@ -135,6 +135,19 @@ Mentre si fixava B, il run locale `pnpm -r lint` (che `pnpm` ferma al primo work
 
 **Stato CI dopo i fix di stasera:** Static job RESTA ROSSO finché B' non viene chiuso (apps/admin lint fallisce). Punti A (RLS Section 1) + B' insieme renderanno verdi entrambi i job.
 
+**Aggiornamento run #71253728477 (post-`fa704fd`):**
+- 🟢 `RLS isolation`: TUTTI i test SQL verdi (Section 1, Section 2b, Cross-tenant) → conferma empirica di A + ci_xc.
+- 🔴 `RLS isolation` (Vitest step nello stesso job): FAIL su `bookings.test.ts` con `syntax error at or near "ON"` (SQLSTATE 42601 al char 21553). Non è test logico, è bug dello shim `pg-mock-client.ts` (~450 righe) che traduce supabase-js fluent → query `pg`. Era esplicitamente segnalato come "validazione semantica deferred al primo CI run" in decisioni.md voce A — il primo run è arrivato. Vedi punto **N** sotto.
+- 🔴 `Static`: 8 errori + 1 warning su apps/admin (B' aperto, atteso).
+
+Prompt sub-chat per B' creato in `docs/ai-playbooks/prompts/2026-05-28_audit-04-hardening/B-prime_admin-lint.md` con status `NEEDS_MASTER_REVIEW`: una master chat deve revisionare/approvare prima di girarlo.
+
+### N. Vitest `bookings.test.ts` — bug `pg-mock-client.ts` (NUOVO)
+
+Emerso al run #71253728477. Lo shim TS `packages/supabase/src/__tests__/helpers/pg-mock-client.ts` produce un SQL invalido al char 21553 (token "ON" inatteso) eseguendo i test di `createBooking`/`getAvailableTimeSlots`/`cancelBookingByToken`. Il job rls-isolation passa interamente sulla parte SQL e fallisce solo sul Vitest step. Investigation richiesta: leggere lo shim, identificare quale costruzione fluent supabase-js produce SQL malformato, decidere fix vs accettare e disable.
+
+**Scope realistico:** 30 min se è bug isolato (es. JOIN o ORDER BY mistranslated); 1-2h se è limite strutturale dello shim. Non bloccante per il template congelato né per l'onboarding cliente #1 — ma blocca la CI verde. **Da fare:** sessione master fresca + eventuale sub-chat per il fix.
+
 ### C. PostgREST schema list — costo onboarding
 
 Ogni nuovo cliente richiede comunque l'append a `PGRST_DB_SCHEMAS` + `docker restart supabase-rest`. È un O(n) operativo non legato a questa decisione, ma da non dimenticare nel runbook onboarding (`docs/operations/onboarding-tenant.md`).
