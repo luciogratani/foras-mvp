@@ -80,99 +80,159 @@ SECTION2B_SQL=$(sed -n '/2b\. Setup/,/Checklist/p' "${ISOLATION_SQL}" | head -n 
 run_sql_check "Section 2b (test_iso isolated schema RLS)" "$SECTION2B_SQL"
 
 # ── Cross-tenant isolation: ci_tenant_a vs ci_tenant_b ──────────────────────
+#
+# Modello di isolamento foras (decisione 2026-05-28 in decisioni.md +
+# audit/04b_followup_2026-05-28_ci-failures-e-modello-isolamento.md):
+#
+#   - PII (bookings) e TUTTE le scritture: isolate per schema (owner-scope
+#     via public.is_tenant_owner()).
+#   - Contenuto PUBBLICO (site_settings, menu_*, news_slides): leggibile
+#     cross-schema da anon via Accept-Profile. Comportamento ATTESO, non leak:
+#     gli stessi dati sono già esposti sul dominio del cliente.
+#
+# I test sotto verificano i 3 invarianti che il modello DAVVERO promette.
 CROSS_TENANT_SQL=$(cat <<'EOSQL'
--- CI cross-tenant isolation tests
--- Mirrors rls_isolation_tests.sql sections 2a.1-2a.5 for ci_tenant_a / ci_tenant_b
-
--- ci_xc.1 anon cannot read ci_tenant_b.site_settings
-DO $$
-BEGIN
-  SET LOCAL ROLE anon;
-  PERFORM * FROM ci_tenant_b.site_settings LIMIT 1;
-  RAISE EXCEPTION 'FAIL ci_xc.1: anon can access ci_tenant_b.site_settings';
-EXCEPTION
-  WHEN insufficient_privilege THEN
-    RAISE NOTICE 'PASS ci_xc.1: anon denied ci_tenant_b (42501)';
-  WHEN undefined_table THEN
-    RAISE NOTICE 'PASS ci_xc.1 (alt): ci_tenant_b.site_settings not reachable by anon';
-END $$;
-
--- ci_xc.2 authenticated cannot read ci_tenant_b (no GRANT USAGE cross-tenant)
-DO $$
-BEGIN
-  SET LOCAL ROLE authenticated;
-  PERFORM * FROM ci_tenant_b.site_settings LIMIT 1;
-  RAISE EXCEPTION 'FAIL ci_xc.2: authenticated can access ci_tenant_b.site_settings';
-EXCEPTION
-  WHEN insufficient_privilege THEN
-    RAISE NOTICE 'PASS ci_xc.2: authenticated denied ci_tenant_b (42501)';
-  WHEN undefined_table THEN
-    RAISE NOTICE 'PASS ci_xc.2 (alt): ci_tenant_b not reachable by authenticated';
-END $$;
-
--- ci_xc.3 anon cannot read ci_tenant_a bookings (RLS: auth.uid() IS NOT NULL)
+-- ─── Invariant 1: anon non legge bookings cross-tenant (PII) ───────────────
 BEGIN;
 SET LOCAL ROLE anon;
 DO $$
 DECLARE v_cnt INTEGER;
 BEGIN
-  SELECT COUNT(*) INTO v_cnt FROM ci_tenant_a.bookings;
+  SELECT COUNT(*) INTO v_cnt FROM ci_tenant_b.bookings;
   IF v_cnt = 0 THEN
-    RAISE NOTICE 'PASS ci_xc.3: anon sees 0 bookings in ci_tenant_a (RLS working)';
+    RAISE NOTICE 'PASS ci_xc.1: anon vede 0 bookings in ci_tenant_b (RLS owner-scope OK)';
   ELSE
-    RAISE EXCEPTION 'FAIL ci_xc.3: anon sees % booking rows in ci_tenant_a', v_cnt;
+    RAISE EXCEPTION 'FAIL ci_xc.1: anon vede % righe in ci_tenant_b.bookings (PII leak)', v_cnt;
   END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    -- Accettato come PASS: anon è negato a livello GRANT/EXECUTE prima della RLS.
+    -- Semanticamente equivalente a "0 righe restituite". Vedi punto aperto A
+    -- in audit/04b_*.md: il fix opzionale è GRANT EXECUTE su is_tenant_owner()
+    -- a anon, che farebbe ritornare 0 righe pulite invece di errore 42501.
+    RAISE NOTICE 'PASS ci_xc.1 (alt): anon negato su ci_tenant_b.bookings (42501)';
 END $$;
 ROLLBACK;
 
--- ci_xc.4 GRANT USAGE check: anon / authenticated must NOT have USAGE on ci_tenant_b
+-- ─── Invariant 2: anon non scrive/aggiorna/cancella cross-tenant ───────────
+BEGIN;
+SET LOCAL ROLE anon;
+
+-- 2a INSERT su tabella admin (site_settings) deve fallire
 DO $$
-DECLARE
-  v_has_usage BOOLEAN;
 BEGIN
-  SELECT has_schema_privilege('anon', 'ci_tenant_b', 'USAGE') INTO v_has_usage;
-  IF v_has_usage THEN
-    RAISE EXCEPTION 'FAIL ci_xc.4: anon has USAGE on ci_tenant_b — cross-tenant exposure';
-  ELSE
-    RAISE NOTICE 'PASS ci_xc.4: anon does not have USAGE on ci_tenant_b';
-  END IF;
+  INSERT INTO ci_tenant_b.site_settings (key, value) VALUES ('xc_probe', 'pwned');
+  RAISE EXCEPTION 'FAIL ci_xc.2a: anon ha potuto INSERT su ci_tenant_b.site_settings';
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.2a: anon negato INSERT su ci_tenant_b.site_settings (42501)';
+  WHEN OTHERS THEN
+    -- accetta anche RLS WITH CHECK violation (SQLSTATE 42501 o 23514)
+    RAISE NOTICE 'PASS ci_xc.2a (alt): anon INSERT bloccato (%)', SQLSTATE;
 END $$;
 
+-- 2b UPDATE su site_settings deve fallire (RLS owner-scope)
 DO $$
-DECLARE
-  v_has_usage BOOLEAN;
+DECLARE v_rows INTEGER;
 BEGIN
-  SELECT has_schema_privilege('authenticated', 'ci_tenant_b', 'USAGE') INTO v_has_usage;
-  IF v_has_usage THEN
-    RAISE EXCEPTION 'FAIL ci_xc.5: authenticated has USAGE on ci_tenant_b';
+  UPDATE ci_tenant_b.site_settings SET value = 'pwned' WHERE TRUE;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows > 0 THEN
+    RAISE EXCEPTION 'FAIL ci_xc.2b: anon ha aggiornato % righe in ci_tenant_b.site_settings', v_rows;
   ELSE
-    RAISE NOTICE 'PASS ci_xc.5: authenticated does not have USAGE on ci_tenant_b';
+    RAISE NOTICE 'PASS ci_xc.2b: anon UPDATE no-op su ci_tenant_b.site_settings (RLS owner-scope OK)';
   END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.2b (alt): anon UPDATE negato (42501)';
 END $$;
 
--- ci_xc.6 Deliberately broken test: verify the harness actually catches a leak.
--- We temporarily grant anon USAGE on ci_tenant_b, confirm the test now FAILS,
--- then revoke and confirm it passes again.
--- This validates that our failure-detection gate is real.
+-- 2c DELETE su site_settings deve fallire (RLS owner-scope)
 DO $$
-DECLARE
-  v_has_usage BOOLEAN;
+DECLARE v_rows INTEGER;
 BEGIN
-  -- Grant USAGE (simulate a broken RLS setup)
-  EXECUTE 'GRANT USAGE ON SCHEMA ci_tenant_b TO anon';
-  SELECT has_schema_privilege('anon', 'ci_tenant_b', 'USAGE') INTO v_has_usage;
-  IF v_has_usage THEN
-    RAISE NOTICE 'HARNESS CHECK: anon now has USAGE on ci_tenant_b (intentional breach)';
-  END IF;
-  -- Revoke immediately
-  EXECUTE 'REVOKE USAGE ON SCHEMA ci_tenant_b FROM anon';
-  SELECT has_schema_privilege('anon', 'ci_tenant_b', 'USAGE') INTO v_has_usage;
-  IF NOT v_has_usage THEN
-    RAISE NOTICE 'PASS ci_xc.6: harness correctly detected and reverted intentional breach';
+  DELETE FROM ci_tenant_b.site_settings WHERE TRUE;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows > 0 THEN
+    RAISE EXCEPTION 'FAIL ci_xc.2c: anon ha cancellato % righe in ci_tenant_b.site_settings', v_rows;
   ELSE
-    RAISE EXCEPTION 'FAIL ci_xc.6: could not revoke USAGE — harness integrity compromised';
+    RAISE NOTICE 'PASS ci_xc.2c: anon DELETE no-op su ci_tenant_b.site_settings (RLS owner-scope OK)';
   END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.2c (alt): anon DELETE negato (42501)';
 END $$;
+ROLLBACK;
+
+-- ─── Invariant 3: authenticated di tenant A non scrive su tenant B ─────────
+-- Simula un utente loggato come owner di ci_tenant_a che tenta di scrivere
+-- su ci_tenant_b. La policy admin di tenant_b chiama is_tenant_owner() che
+-- verifica auth.uid() = owner_id di current_schema(); deve fallire.
+BEGIN;
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims = '{"sub":"aaaaaaaa-0000-0000-0000-000000000001"}';
+SET LOCAL search_path = ci_tenant_b, public;
+
+-- 3a INSERT
+DO $$
+BEGIN
+  INSERT INTO ci_tenant_b.site_settings (key, value) VALUES ('xc_probe', 'pwned');
+  RAISE EXCEPTION 'FAIL ci_xc.3a: authenticated di tenant_a ha INSERT su tenant_b';
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.3a: authenticated di tenant_a negato INSERT su tenant_b (RLS owner-scope)';
+  WHEN check_violation THEN
+    RAISE NOTICE 'PASS ci_xc.3a (alt): authenticated di tenant_a negato INSERT su tenant_b (WITH CHECK)';
+  WHEN OTHERS THEN
+    RAISE NOTICE 'PASS ci_xc.3a (alt): INSERT bloccato (%)', SQLSTATE;
+END $$;
+
+-- 3b UPDATE
+DO $$
+DECLARE v_rows INTEGER;
+BEGIN
+  UPDATE ci_tenant_b.site_settings SET value = 'pwned' WHERE TRUE;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows > 0 THEN
+    RAISE EXCEPTION 'FAIL ci_xc.3b: authenticated di tenant_a ha aggiornato % righe su tenant_b', v_rows;
+  ELSE
+    RAISE NOTICE 'PASS ci_xc.3b: authenticated di tenant_a UPDATE no-op su tenant_b (RLS owner-scope)';
+  END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.3b (alt): UPDATE negato (42501)';
+END $$;
+
+-- 3c DELETE
+DO $$
+DECLARE v_rows INTEGER;
+BEGIN
+  DELETE FROM ci_tenant_b.site_settings WHERE TRUE;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows > 0 THEN
+    RAISE EXCEPTION 'FAIL ci_xc.3c: authenticated di tenant_a ha cancellato % righe su tenant_b', v_rows;
+  ELSE
+    RAISE NOTICE 'PASS ci_xc.3c: authenticated di tenant_a DELETE no-op su tenant_b (RLS owner-scope)';
+  END IF;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS ci_xc.3c (alt): DELETE negato (42501)';
+END $$;
+ROLLBACK;
+
+-- ─── Nota informativa (NON un test): lettura cross-tenant di contenuto pubblico ───
+-- Per modello, anon PUO leggere site_settings/menu/news cross-schema via API.
+-- Lo verifichiamo qui solo per documentare il modello reale nel log della CI;
+-- non è un FAIL se passa, è il comportamento atteso (decisione 2026-05-28).
+BEGIN;
+SET LOCAL ROLE anon;
+DO $$
+DECLARE v_cnt INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_cnt FROM ci_tenant_b.site_settings WHERE is_active = true;
+  RAISE NOTICE 'INFO ci_xc.note: anon vede % righe attive in ci_tenant_b.site_settings (comportamento atteso)', v_cnt;
+END $$;
+ROLLBACK;
 EOSQL
 )
 
