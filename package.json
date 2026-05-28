@@ -7,7 +7,8 @@
     "dev:admin": "pnpm --filter admin dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r tsc --noEmit"
+    "typecheck": "pnpm -r tsc --noEmit",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "eslint": "^9.0.0",

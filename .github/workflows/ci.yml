@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same branch (save minutes on rapid pushes)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ══════════════════════════════════════════════════════════════════════════
+  # static — TypeScript, ESLint, Next.js build
+  # No database required.
+  # ══════════════════════════════════════════════════════════════════════════
+  static:
+    name: Static checks (tsc + lint + build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "store=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.store }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type-check
+        run: pnpm -r tsc --noEmit
+
+      - name: Lint
+        run: pnpm -r lint
+
+      - name: Build
+        run: pnpm -r build
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # rls-isolation — PostgreSQL RLS isolation gate + Vitest service-layer tests
+  #
+  # Steps:
+  #   1. Start postgres:15.8 service container
+  #   2. Bootstrap minimal Supabase harness (auth schema, roles, stubs)
+  #   3. Provision TWO tenant schemas via create_schema_from_template.sql
+  #   4. Run rls_isolation_tests.sql — FAIL if any FAIL notice or SQL error
+  #   5. Run audit_rls.sql — FAIL if any row returned
+  #   6. Run Vitest tests against the ephemeral DB
+  # ══════════════════════════════════════════════════════════════════════════
+  rls-isolation:
+    name: RLS isolation + service-layer tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15.8
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        # These options ensure the container is healthy before steps start
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    env:
+      PGURL: postgres://postgres:postgres@localhost:5432/postgres
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: echo "store=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.store }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Step 1: Bootstrap harness ─────────────────────────────────────────
+      - name: Bootstrap Supabase-like harness (auth schema, roles, stubs)
+        run: |
+          psql "$PGURL" --no-psqlrc -v ON_ERROR_STOP=1 \
+            -f .github/scripts/ci-harness-bootstrap.sql
+
+      # ── Step 2: Provision two tenant schemas ──────────────────────────────
+      - name: Provision tenant schemas (ci_tenant_a + ci_tenant_b)
+        run: bash .github/scripts/provision-ci-tenants.sh "$PGURL"
+
+      # ── Step 3: RLS isolation tests ───────────────────────────────────────
+      - name: Run RLS isolation tests (FAIL on any cross-tenant leak)
+        run: bash .github/scripts/run-rls-tests.sh "$PGURL"
+
+      # ── Step 4: Vitest service-layer tests ───────────────────────────────
+      - name: Run Vitest (service-layer integration tests)
+        run: pnpm --filter @repo/supabase test --reporter=verbose
