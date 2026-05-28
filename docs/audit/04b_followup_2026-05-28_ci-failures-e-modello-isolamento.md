@@ -121,7 +121,19 @@ Due fix possibili, entrambi sani:
 
 ### B. Lint error `react-hooks/set-state-in-effect` in `NewsPopup.tsx:17` + 9 warning
 
-Errore reale (regola nuova di React 19/eslint 9). Fix: refactor `useEffect` → check + `setState` con `useSyncExternalStore` o `useState` iniziale calcolato. Warning: convertire `<a href="/">` in `<Link>` su `BookingForm`/`Cancel*`. **Scope:** ~1h sub-chat Sonnet.
+**Chiuso 2026-05-28** in commit `16603d0` (chore web warnings) + `6649631` (fix NewsPopup → `useSyncExternalStore`). Lint + tsc verdi su `apps/web`.
+
+### B'. apps/admin lint — emerso solo a B chiuso
+
+Mentre si fixava B, il run locale `pnpm -r lint` (che `pnpm` ferma al primo workspace fallito) ha rivelato che `apps/admin` ha **8 errori + 1 warning** mai visti dal CI precedente perché `apps/web` falliva prima. Inventario:
+
+- **6 errori `react-hooks/set-state-in-effect`** — tutti lo stesso pattern `useState(prop) + useEffect([prop]) { setState(prop) }` per ri-sincronizzare stato locale quando il Server Component re-flusha (dopo `revalidatePath`). In: `SlideList.tsx:15`, `SectionList.tsx:35`, `SectionCard.tsx:56`, `CategoryRow.tsx:52`, `TimeSlotList.tsx:19`, `OpeningHoursForm.tsx:50`.
+- **2 errori `react/no-unescaped-entities`** — apostrofi in JSX da escapare: `EditItemDialog.tsx:139`, `DeleteTimeSlotDialog.tsx:66`.
+- **1 warning `import/no-anonymous-default-export`** in `apps/admin/postcss.config.mjs`.
+
+**Fix richiesto:** refactor a `useOptimistic` (React 19) per i 5 componenti dnd, pattern `key` prop o re-design del form per `OpeningHoursForm` (non è optimistic, è "re-init quando le initialHours cambiano"), escape apostrofi, `const config = ...` per postcss. **Scope realistico:** 2.5–3h con review attenta, **rischio non-banale** (5 componenti dnd reggono il CRUD menu/news/orari; un useOptimistic mal-applicato rompe gli optimistic update senza farsi vedere subito). **Raccomandazione:** sub-chat dedicata con prompt che cataloga i pattern target.
+
+**Stato CI dopo i fix di stasera:** Static job RESTA ROSSO finché B' non viene chiuso (apps/admin lint fallisce). Punti A (RLS Section 1) + B' insieme renderanno verdi entrambi i job.
 
 ### C. PostgREST schema list — costo onboarding
 
