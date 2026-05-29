@@ -150,13 +150,17 @@ Emerso al run #71253728477. Lo shim TS `packages/supabase/src/__tests__/helpers/
 
 **Scope realistico:** 30 min se è bug isolato (es. JOIN o ORDER BY mistranslated); 1-2h se è limite strutturale dello shim. Non bloccante per il template congelato né per l'onboarding cliente #1 — ma blocca la CI verde. **Da fare:** sessione master fresca + eventuale sub-chat per il fix.
 
+### E. Gestione network-failure non gestita nei dnd (e forse altrove) — RIMANDATO
+
+Emerso dai test runtime di B' (2026-05-29). Gli handler dnd (`SectionList`/`SectionCard`/`CategoryRow`/`SlideList`) fanno `await reorderXAction(...)` **senza `try/catch`**: se la *rete* fallisce (non un `{ ok:false }` dal server, ma un `fetch` che non parte — offline, server giù, blip), la server action rigetta → **unhandled promise rejection** + nessun toast d'errore. Con `useOptimistic` l'UI rolla comunque indietro a fine transition (verificato: l'ordine torna a posto), quindi **non c'è corruzione di stato** — manca solo il feedback "connessione assente". **Pre-esistente** (il pattern `await action()` senza catch c'era già prima di B'); B' non l'ha introdotto né peggiorato (anzi: prima dell'`useOptimistic` l'UI non rollava nemmeno). **"Forse in altri punti dell'app":** stesso pattern `startTransition(async () => { await action() })` è usato anche altrove (toggle switch, dialog CRUD) → da censire, non solo i dnd. **Fix tipo:** wrap in `try/catch` → `toast.error('Connessione assente, riprova')`; rollback già automatico. Scope diverso da B' (lint), volutamente **non toccato**. Non bloccante. Tracciato come debito; nessun trigger fissato.
+
 ### C. PostgREST schema list — costo onboarding
 
 Ogni nuovo cliente richiede comunque l'append a `PGRST_DB_SCHEMAS` + `docker restart supabase-rest`. È un O(n) operativo non legato a questa decisione, ma da non dimenticare nel runbook onboarding (`docs/operations/onboarding-tenant.md`).
 
-### D. Eliminare `docs/ci-logs/logs_71168130114/`
+### D. Eliminare `docs/ci-logs/logs_*` — ✅ FATTO 2026-05-29
 
-Tenuti come riferimento mentre si scriveva questo doc. Da rimuovere dopo il merge del fix `ci_xc.1` (decisione concordata 2026-05-28).
+Tenuti come riferimento mentre si scriveva questo doc. **Rimossi 2026-05-29** (3 cartelle untracked: `logs_71168130114`, `logs_71252697618`, `logs_71253728477`) — non erano versionati, cleanup diretto della working dir.
 
 ---
 
