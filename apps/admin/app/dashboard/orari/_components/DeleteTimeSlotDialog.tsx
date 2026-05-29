@@ -63,7 +63,7 @@ export function DeleteTimeSlotDialog({
             </p>
             <p className="mt-1">
               Le prenotazioni — anche passate o cancellate — restano nello storico, quindi il turno
-              non è eliminabile. Per toglierlo dal sito usa l'interruttore{' '}
+              non è eliminabile. Per toglierlo dal sito usa l&apos;interruttore{' '}
               <strong>«Visibile sul sito»</strong>: le prenotazioni esistenti restano valide.
             </p>
           </div>

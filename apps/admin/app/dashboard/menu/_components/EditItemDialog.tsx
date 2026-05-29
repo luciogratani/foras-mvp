@@ -136,7 +136,7 @@ export function EditItemDialog({
         {/* Selettore "Sposta in categoria" — separato dal form di modifica */}
         {categories.length > 1 && (
           <div className="mt-2 border-t pt-4">
-            <p className="mb-2 text-sm font-medium">Sposta in un'altra categoria (stessa sezione)</p>
+            <p className="mb-2 text-sm font-medium">Sposta in un&apos;altra categoria (stessa sezione)</p>
             <form action={moveFormAction} className="flex items-center gap-2">
               <input type="hidden" name="id" value={item.id} />
               <select
