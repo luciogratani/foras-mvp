@@ -18,7 +18,10 @@ Ogni modifica allo schema di un tenant attivo — aggiunta di colonne, nuove tab
 /migrations
     001_init.sql              ← baseline (FROZEN 2026-05-27) — pointer al provisioner
     002_bookings_overbooking_trigger.sql  ← prima migrazione reale (trigger anti-overbooking)
+    003_fix_overbooking_race.sql          ← FOR UPDATE row-lock (chiude la race del 002)
+    004_grant_execute_is_tenant_owner_anon.sql ← GRANT EXECUTE is_tenant_owner() ad anon
     NNN_<descrizione>.sql                 ← migrazioni successive (ALTER numerati, per-schema)
+    (elenco autorevole + descrizioni: vedi CHANGELOG.md in root)
 schema.sql                    ← fotografia strutturale congelata, aggiornata dopo ogni migrazione
 CHANGELOG.md                  ← registro human-readable delle modifiche
 ```

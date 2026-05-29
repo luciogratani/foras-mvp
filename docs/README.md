@@ -1,6 +1,6 @@
 ---
 status: DRAFT
-updated: 2026-05-19
+updated: 2026-05-29
 area: docs
 type: hub
 tags: [foras-mvp, docs]
@@ -13,7 +13,7 @@ Sistema multi-tenant per sviluppare e gestire siti web per bar e ristoranti loca
 
 **Stack:** Next.js App Router · pnpm workspaces · Supabase (DB + Auth + Storage) · shadcn/ui · Zod · Resend · Vercel · TypeScript
 
-**Fase attuale:** MVP in sviluppo — template non ancora frozen
+**Fase attuale:** 🔒 template FROZEN (2026-05-27) · CI in piedi e verde (2026-05-29) · prossimo: Stream C — onboarding cliente #1
 
 ---
 
@@ -77,6 +77,13 @@ Il master scrive i prompt, committa (push solo su richiesta esplicita di Lucio),
 
 ### Audit
 - `audit/` — prompt di consulenza per chat esterne a occhio fresco (UX funnel prenotazione, workflow admin gestore, fit modello dati ↔ realtà bar). Prompt + risposta nello stesso file. Vedi `audit/README.md`.
+
+### Root del repo (artefatti post-freeze, fuori da `docs/`)
+- `CHANGELOG.md` — **elenco autorevole delle migrazioni** schema tenant (human-readable, una voce per script in `/migrations`)
+- `migrations/` — script SQL numerati post-freeze (001 baseline-pointer, 002→ ALTER per-schema)
+- `schema.sql` — fotografia strutturale congelata di un tenant (snapshot, generato via `pg_dump --schema-only`)
+- `scripts/migrate.sh` — runner idempotente delle migrazioni (vedi [[migration-runbook]])
+- `.github/workflows/ci.yml` — CI a 2 job: `static` (tsc+lint+build) e `rls-isolation` (test SQL isolamento + Vitest service-layer)
 
 ### Archive
 - `archive/architettura-progetto-bar-v-0-3.md` — documento di architettura v0.3 (fonte primaria per la migrazione docs)

@@ -1,6 +1,6 @@
 ---
 status: DRAFT
-updated: 2026-05-22
+updated: 2026-05-29
 area: build-delivery
 type: backlog
 tags: [foras-mvp, build-delivery]
