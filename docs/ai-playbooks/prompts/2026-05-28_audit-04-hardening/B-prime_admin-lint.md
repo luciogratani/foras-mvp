@@ -1,19 +1,15 @@
 ---
-status: NEEDS_MASTER_REVIEW
+status: TODO
 sprint: post-audit-04
 task: B'
 created: 2026-05-28
+reviewed: 2026-05-29
 suggested_model: sonnet
 suggested_effort: high
 owner: master-chat
 ---
 
-> ⚠️ **NON ESEGUIRE COME SUB-CHAT FINCHÉ UNA MASTER CHAT NON HA REVISIONATO E APPROVATO QUESTO PROMPT.**
-> Status del prompt: `NEEDS_MASTER_REVIEW`. Una master chat (Lucio o assistente master) deve:
-> 1. Leggere l'intero prompt.
-> 2. Validare le 3 categorie di problema, le 3 opzioni per `OpeningHoursForm`, e i vincoli.
-> 3. Modificare/integrare se serve.
-> 4. Cambiare lo status a `TODO` (e rimuovere questo blocco) **prima** di girare a sub-chat.
+> ✅ **Revisione master 2026-05-29.** Prompt validato sul codice reale (tutti i 9 problemi e i numeri di riga confermati). Modifiche post-review: la guida al rollback della Categoria 1 è stata corretta (rollback automatico, **niente throw forzato** — vedi sotto), aggiunta trappola `itemCount`/`totalItems`, e ristretta la raccomandazione per `OpeningHoursForm` a `(c) useReducer`.
 
 # B' — Chiudere il lint di `apps/admin` (React 19: `useOptimistic` + entities + postcss)
 
@@ -51,8 +47,12 @@ Riferimenti completi: `docs/audit/04b_followup_2026-05-28_ci-failures-e-modello-
 **Categoria 1 — dnd optimistic** (4 file): `SlideList.tsx:15`, `SectionList.tsx:35`, `SectionCard.tsx:56`, `CategoryRow.tsx:52`
 - Pattern: `[items, setItems] = useState(prop); useEffect(() => setItems(prop), [prop])`. Server Component re-flusha dopo `revalidatePath` (chiamato dentro la server action) → la prop arriva aggiornata → l'effetto risincronizza lo state locale che era stato mutato ottimisticamente dal drag.
 - **Fix richiesto:** refactor a `useOptimistic(prop)` (React 19). Eliminare `useState` + `useEffect` di sync. Chiamare il setter optimistic **dentro** `startTransition(...)` (o l'action stessa), perché React vincola `useOptimistic` ad essere chiamato solo dentro un transition/action.
-- `SectionList.tsx`: ha un **rollback manuale** (`setSections(previous)` se l'action ritorna `!res.ok`). Con `useOptimistic` il rollback è **automatico** quando l'azione throws (o quando la transition termina senza ulteriore set ottimistico). **Decidere:** se l'action ritorna `{ ok: false }` senza throw, `useOptimistic` non rolla → o (a) far throw l'action su errore, oppure (b) re-set ottimistico al valore precedente prima del toast. Preferisco (a) per simmetria con il throw-on-error pattern di React 19; documenta la scelta in commit.
-- I `toast.success/error` su esito action restano invariati.
+- `SectionList.tsx` (e analogamente `SectionCard`→cats, `CategoryRow`→localItems): hanno un **rollback manuale** (`setSections(previous)` se l'action ritorna `!res.ok`). **Con `useOptimistic` il rollback è automatico e NON serve toccare le action.** Motivo verificato sul codice (`apps/admin/app/dashboard/menu/actions.ts:238-269`): `reorderSectionsAction/Categories/Items` chiamano `revalidatePath` **solo nel ramo di successo**; su errore ritornano `{ ok: false }` senza revalidare. Quindi:
+  - su **successo** → `revalidatePath` aggiorna la prop al nuovo ordine → l'optimistic value, a fine transition, collassa sul nuovo ordine. ✓
+  - su **errore** → nessun revalidate → la prop resta l'ordine vecchio → l'optimistic value, a fine transition, torna **automaticamente** all'ordine vecchio. ✓ (rollback gratis)
+- **Pattern target** per i 4 file dnd: `const [optimistic, setOptimistic] = useOptimistic(prop)`; in `handleDragEnd` calcoli `reordered = arrayMove(optimistic, …)` e dentro `startTransition(async () => { setOptimistic(reordered); const res = await action(...); if (!res.ok) toast.error(...) else toast.success(...) })`. Elimini `useState` + `useEffect([prop])` + il `setSections(previous)` manuale. Rendi DndContext/SortableContext/`.map` su `optimistic`.
+- **NON far throw le action e NON modificarle.** Il rollback manuale `setX(previous)` va rimosso (con `useOptimistic` non esiste più un setter di stato da rollbackare). I `toast.success/error` su esito action restano.
+- `SlideList.tsx`: `reorderSlidesAction` ritorna `void` e non c'è rollback manuale → stesso pattern, `setOptimistic(reordered)` dentro la transition, niente gestione `res`.
 
 **Categoria 2 — stato locale ridondante** (1 file): `TimeSlotList.tsx:19`
 - Il componente **non ha** né dnd né action ottimistico. `setLocalSlots(slots)` è solo "ri-deriva quando prop cambia" — ma `localSlots` viene usato solo per `.filter(s => s.archived_at === null/!== null)`, calcolabile direttamente da `slots` ad ogni render.
@@ -64,7 +64,7 @@ Riferimenti completi: `docs/audit/04b_followup_2026-05-28_ci-failures-e-modello-
   - **(a)** `key` prop sul componente nel parent: `<OpeningHoursForm key={…hash…} initialHours={…} />`. Forza remount → `useState(() => initDayState…)` ri-esegue. *Pro:* zero refactor interno. *Contro:* il parent deve calcolare una chiave significativa (es. `JSON.stringify(initialHours)` o un version-id); brutto se prop è grossa.
   - **(b)** Refactor a `useOptimistic(initialHours)` come "snapshot da cui re-derivare lo state ad ogni render". Compatibile con il setter dentro form actions, ma il form locale ha **molte mutazioni client-only** (toggleClosed, updateRange, addRange, removeRange) che non sono action async — `useOptimistic` non è il pattern giusto qui.
   - **(c)** Refactor a `useReducer` con action `{ type: 'reinit', payload: initialHours }` dispatch-ata da un effetto. **L'effetto chiama `dispatch`, non `setState`** → la regola `react-hooks/set-state-in-effect` non scatta sui dispatch di reducer. *Pro:* zero impatto sul parent, comportamento identico. *Contro:* refactor leggermente più ampio (sostituisce 4 funzioni-handler con altrettante action del reducer).
-- **Raccomandazione (non vincolante):** se trovi che il "version id" per (a) è banale da computare (es. `settings.updated_at` se esiste, o un counter da Server Action), scegli (a). Altrimenti (c).
+- **Raccomandazione master (post-review): scegli (c) `useReducer`.** Verificato sul codice: `OpeningHoursForm` riceve **solo** `initialHours: OpeningHours | null` come prop — nessun `updated_at`/version-id naturale. Quindi (a) costringerebbe il parent a calcolare `key={JSON.stringify(initialHours)}`, che (i) viola il vincolo "non modificare i parent Server Components" e (ii) remonta l'intero form ad ogni save. (b) è escluso (le mutazioni sono client-only, non async). (c) è self-contained: 1 reducer con action `reinit` + le 4 azioni `toggleClosed/updateRange/addRange/removeRange`, l'`useEffect([initialHours])` dispatcha `{ type: 'reinit', payload: initialHours }` (la regola `set-state-in-effect` NON scatta sui `dispatch`). Se durante l'implementazione (c) si rivelasse sproporzionato, **fermati e chiedi al master** prima di ripiegare su (a).
 
 **2 errori `react/no-unescaped-entities`** — apostrofi italiani in JSX text:
 - `EditItemDialog.tsx:139` — `un'altra` → `un&apos;altra` (o `un’altra`)
@@ -89,6 +89,7 @@ Riferimenti completi: `docs/audit/04b_followup_2026-05-28_ci-failures-e-modello-
 - **`useOptimistic` setter fuori da action/transition** → React esplode runtime con "called outside transition". Tutti i `setOptimistic*` devono stare dentro `startTransition(...)` o dentro l'action `useActionState`. Verifica anche per i casi in cui prima il `setSlides(...)` era chiamato fuori dalla `startTransition`.
 - **`SectionList` ha un rollback manuale.** Se passi a `useOptimistic` senza far throw l'action, il rollback non avviene. Leggi la sezione "Categoria 1" sopra.
 - **`CategoryRow`/`SectionCard` hanno altri `useEffect`** (es. toast su `useActionState` status change). NON toccarli — la regola scatta solo sul pattern `setState(prop)`, non su `setState(derivedFromActionStatus)` perché lì lo state è triggerato dal cambio di `toggleState`, non da una prop.
+- **`SectionCard.totalItems` e `CategoryRow.itemCount`/`ItemRow` derivano dalla PROP** (`categories`/`items`), non dallo state dnd (`cats`/`localItems`). È intenzionale e corretto: durante un reorder la *lunghezza* non cambia, solo l'ordine. Lasciali sulla prop — NON convertirli all'optimistic value per "coerenza". Stessa cosa per `cats.length` passato a `DeleteSectionDialog categoryCount`.
 - **`OpeningHoursForm` non ha drag-and-drop.** Resistere alla tentazione di applicare `useOptimistic` anche lì — il pattern non aderisce.
 - **`TimeSlotList` ha `archivedOpen` come state legittimo** (toggle UI controllato da click utente). Non eliminarlo: elimina solo `localSlots`.
 - **Server snapshot e SSR sicuri:** se introduci `useSyncExternalStore` per qualsiasi motivo (non dovrebbe servire qui), garantisci un `getServerSnapshot` non-null per evitare hydration mismatch (vedi `apps/web/app/_components/NewsPopup.tsx` come riferimento).

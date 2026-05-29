@@ -140,7 +140,7 @@ Mentre si fixava B, il run locale `pnpm -r lint` (che `pnpm` ferma al primo work
 - 🔴 `RLS isolation` (Vitest step nello stesso job): FAIL su `bookings.test.ts` con `syntax error at or near "ON"` (SQLSTATE 42601 al char 21553). Non è test logico, è bug dello shim `pg-mock-client.ts` (~450 righe) che traduce supabase-js fluent → query `pg`. Era esplicitamente segnalato come "validazione semantica deferred al primo CI run" in decisioni.md voce A — il primo run è arrivato. Vedi punto **N** sotto.
 - 🔴 `Static`: 8 errori + 1 warning su apps/admin (B' aperto, atteso).
 
-Prompt sub-chat per B' creato in `docs/ai-playbooks/prompts/2026-05-28_audit-04-hardening/B-prime_admin-lint.md` con status `NEEDS_MASTER_REVIEW`: una master chat deve revisionare/approvare prima di girarlo.
+Prompt sub-chat per B' in `docs/ai-playbooks/prompts/2026-05-28_audit-04-hardening/B-prime_admin-lint.md`. **Revisionato e approvato dal master il 2026-05-29** (status `TODO`): inventario validato sul codice reale; guida rollback Categoria 1 corretta (rollback `useOptimistic` automatico — le reorder action non revalidano su errore, quindi niente throw forzato); raccomandazione `OpeningHoursForm` ristretta a `(c) useReducer`. Pronto da girare a sub-chat.
 
 ### N. Vitest `bookings.test.ts` — bug `pg-mock-client.ts` (NUOVO)
 
