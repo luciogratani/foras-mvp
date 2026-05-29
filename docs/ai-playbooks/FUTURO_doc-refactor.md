@@ -1,5 +1,5 @@
 ---
-status: TODO
+status: DONE
 updated: 2026-05-29
 area: ai-playbooks
 type: tech-debt
@@ -7,6 +7,15 @@ owner: master-chat
 ---
 
 # FUTURO — Refactor del sistema documentale (interventi strutturali)
+
+> **✅ ESEGUITO (2026-05-29).** Tutti e 4 gli interventi chiusi:
+> S1 (`docs/STATUS.md` canonico + gerarchia autorità README), S4 (eliminata
+> duplicazione progressione in roadmap+runbook → citano `[[backlog]]`),
+> S2 (split backlog → `backlog-archive.md`, 36 commit-ref preservati),
+> S3 (memoria `project_sprint2_state` 35KB→2.3KB, rinominata a
+> `project-sprint0-A4-history-pointer`). Mappa target raggiunta: una master
+> fresca si orienta con `STATUS.md` + `decisioni.md` + `backlog.md` ripulito.
+> Documento conservato come record della valutazione/decisione.
 
 > **Origine.** Valutazione strutturale della documentazione eseguita il 2026-05-29
 > (sub-chat opus/high) + confronto del master. Verdetto: doc *parzialmente efficace,
