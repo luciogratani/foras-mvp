@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useTransition, useEffect, useId } from 'react'
+import { useRef, useState, useOptimistic, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
 import {
   DndContext,
@@ -45,12 +45,8 @@ export function CategoryRow({
   const [createItemOpen, setCreateItemOpen] = useState(false)
   const [editItem, setEditItem] = useState<MenuItem | null>(null)
   const [deleteItem, setDeleteItem] = useState<MenuItem | null>(null)
-  const [localItems, setLocalItems] = useState(items)
+  const [localItems, setLocalItems] = useOptimistic(items)
   const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    setLocalItems(items)
-  }, [items])
 
   // Toast sul toggle attivo/inattivo categoria — evita il toast al primo render (status 'idle')
   useEffect(() => {
@@ -76,13 +72,11 @@ export function CategoryRow({
     if (!over || active.id === over.id) return
     const oldIndex = localItems.findIndex((it) => it.id === active.id)
     const newIndex = localItems.findIndex((it) => it.id === over.id)
-    const previous = localItems
     const reordered = arrayMove(localItems, oldIndex, newIndex)
-    setLocalItems(reordered)
     startTransition(async () => {
+      setLocalItems(reordered)
       const res = await reorderItemsAction(reordered.map((it) => it.id))
       if (!res.ok) {
-        setLocalItems(previous)
         toast.error('Riordino non salvato. Riprova.')
       } else {
         toast.success('Ordine aggiornato')

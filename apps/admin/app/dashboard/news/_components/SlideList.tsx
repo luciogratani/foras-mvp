@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition, useId, useEffect } from 'react'
+import { useOptimistic, useTransition, useId } from 'react'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { NewsSlideAdmin } from '@repo/supabase'
@@ -7,13 +7,9 @@ import { reorderSlidesAction } from '../actions'
 import { SlideCard } from './SlideCard'
 
 export function SlideList({ slides: initialSlides }: { slides: NewsSlideAdmin[] }) {
-  const [slides, setSlides] = useState(initialSlides)
+  const [slides, setSlides] = useOptimistic(initialSlides)
   const [, startTransition] = useTransition()
   const dndId = useId()
-
-  useEffect(() => {
-    setSlides(initialSlides)
-  }, [initialSlides])
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -23,9 +19,9 @@ export function SlideList({ slides: initialSlides }: { slides: NewsSlideAdmin[] 
     const oldIndex = slides.findIndex((s) => s.id === active.id)
     const newIndex = slides.findIndex((s) => s.id === over.id)
     const reordered = arrayMove(slides, oldIndex, newIndex)
-    setSlides(reordered)
-    startTransition(() => {
-      void reorderSlidesAction(reordered.map((s) => s.id))
+    startTransition(async () => {
+      setSlides(reordered)
+      await reorderSlidesAction(reordered.map((s) => s.id))
     })
   }
 

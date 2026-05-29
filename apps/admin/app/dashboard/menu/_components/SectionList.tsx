@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition, useId, useEffect } from 'react'
+import { useState, useOptimistic, useTransition, useId } from 'react'
 import {
   DndContext,
   KeyboardSensor,
@@ -27,13 +27,9 @@ export function SectionList({
   itemsByCategory: Record<string, MenuItem[]>
   allergens: Allergen[]
 }) {
-  const [sections, setSections] = useState(initialSections)
+  const [sections, setSections] = useOptimistic(initialSections)
   const [createOpen, setCreateOpen] = useState(false)
   const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    setSections(initialSections)
-  }, [initialSections])
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -47,13 +43,11 @@ export function SectionList({
     if (!over || active.id === over.id) return
     const oldIndex = sections.findIndex((s) => s.id === active.id)
     const newIndex = sections.findIndex((s) => s.id === over.id)
-    const previous = sections
     const reordered = arrayMove(sections, oldIndex, newIndex)
-    setSections(reordered)
     startTransition(async () => {
+      setSections(reordered)
       const res = await reorderSectionsAction(reordered.map((s) => s.id))
       if (!res.ok) {
-        setSections(previous)
         toast.error('Riordino non salvato. Riprova.')
       } else {
         toast.success('Ordine aggiornato')

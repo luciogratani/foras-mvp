@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useTransition, useEffect, useId } from 'react'
+import { useState, useRef, useOptimistic, useTransition, useEffect, useId } from 'react'
 import { useActionState } from 'react'
 import {
   DndContext,
@@ -49,12 +49,8 @@ export function SectionCard({
   const [createOpen, setCreateOpen] = useState(false)
   const [editCategory, setEditCategory] = useState<MenuCategory | null>(null)
   const [deleteCategory, setDeleteCategory] = useState<MenuCategory | null>(null)
-  const [cats, setCats] = useState(categories)
+  const [cats, setCats] = useOptimistic(categories)
   const [, startTransition] = useTransition()
-
-  useEffect(() => {
-    setCats(categories)
-  }, [categories])
 
   const [toggleState, toggleAction, isToggling] = useActionState(updateSectionAction, idle)
   const sectionFormRef = useRef<HTMLFormElement>(null)
@@ -89,13 +85,11 @@ export function SectionCard({
     if (!over || active.id === over.id) return
     const oldIndex = cats.findIndex((c) => c.id === active.id)
     const newIndex = cats.findIndex((c) => c.id === over.id)
-    const previous = cats
     const reordered = arrayMove(cats, oldIndex, newIndex)
-    setCats(reordered)
     startTransition(async () => {
+      setCats(reordered)
       const res = await reorderCategoriesAction(reordered.map((c) => c.id))
       if (!res.ok) {
-        setCats(previous)
         toast.error('Riordino non salvato. Riprova.')
       } else {
         toast.success('Ordine aggiornato')
@@ -228,7 +222,7 @@ export function SectionCard({
         <DeleteSectionDialog
           key={`delete-section-${section.id}`}
           section={section}
-          categoryCount={cats.length}
+          categoryCount={categories.length}
           itemCount={totalItems}
           onClose={() => setDeleteOpen(false)}
         />

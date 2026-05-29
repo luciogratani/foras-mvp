@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { TimeSlotAdmin, SlotBookingCounts } from '@repo/supabase'
 import { TimeSlotCard } from './TimeSlotCard'
 
@@ -12,15 +12,10 @@ export function TimeSlotList({
   slots: TimeSlotAdmin[]
   bookingCounts: Record<string, SlotBookingCounts>
 }) {
-  const [localSlots, setLocalSlots] = useState(slots)
   const [archivedOpen, setArchivedOpen] = useState(false)
 
-  useEffect(() => {
-    setLocalSlots(slots)
-  }, [slots])
-
-  const active = localSlots.filter((s) => s.archived_at === null)
-  const archived = localSlots.filter((s) => s.archived_at !== null)
+  const active = slots.filter((s) => s.archived_at === null)
+  const archived = slots.filter((s) => s.archived_at !== null)
 
   return (
     <div className="space-y-4">
