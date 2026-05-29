@@ -1,6 +1,6 @@
 ---
-status: DRAFT
-updated: 2026-05-19
+status: LOCKED
+updated: 2026-05-29
 area: build-delivery
 type: runbook
 tags: [foras-mvp, build-delivery]
@@ -29,15 +29,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 0 — Monorepo Setup (0,5 giorni)
 
-### Tasks
-
-- Inizializzare repo con struttura pnpm workspaces
-- Creare `pnpm-workspace.yaml` con `apps/*` e `packages/*`
-- Scaffoldare `/apps/web` e `/apps/admin` con Next.js App Router
-- Creare `/packages/supabase` (client condiviso) e `/packages/ui` (shadcn)
-- Configurare `.env.example` con le tre variabili Supabase
-- Configurare TypeScript path aliases (`@repo/supabase`, `@repo/ui`)
-- Connettere Vercel al repo con build separati per web e admin
+Per i task → [[backlog]] (Sprint 0).
 
 ### Done when
 
@@ -50,15 +42,13 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 1 — Data e Security Baseline (1–2 giorni)
 
-### Tasks
+Per i task → [[backlog]] (Sprint 1).
+
+### Comandi / verifiche
 
 - Eseguire `docs/operations/create_schema_from_template.sql` sullo schema `template`
 - Eseguire `docs/operations/audit_rls.sql` — nessuna discrepanza attesa
-- Test isolamento cross-tenant (query da un schema sull'altro devono fallire)
-- Generare tipi TypeScript: `pnpm --filter @repo/supabase gen:types` (curl contro `postgres-meta` HTTP via tunnel SSH — vedi `monorepo-structure.md` e decision-log)
-- Implementare `supabaseClient.ts` in `/packages/supabase` che legge le env vars
-- Implementare `getVerifiedTenantClient()` in `/apps/admin/lib/auth.ts`
-- Testare login admin con utente sullo schema `template`
+- Generare tipi TypeScript: `pnpm --filter @repo/supabase gen:types` (curl contro `postgres-meta` HTTP via tunnel SSH — vedi `monorepo-structure.md` e [[decisioni]])
 
 ### Done when
 
@@ -71,13 +61,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 2 — Service Layer (1 giorno)
 
-### Tasks
-
-- `/packages/supabase/src/services/site.ts`: `getSiteSettings()`, `getActiveNews()`
-- `/packages/supabase/src/services/menu.ts`: `getMenuBySection()`, `getMenuSections()`
-- `/packages/supabase/src/services/bookings.ts`: `getAvailableTimeSlots()`, `createBooking()`, `cancelBookingByToken()`
-- Validazioni Zod per tutti gli input (in `/packages/supabase/src/schemas/`)
-- Esportare tutto da `/packages/supabase/src/index.ts`
+Per i task → [[backlog]] (Sprint 2).
 
 ### Done when
 
@@ -89,14 +73,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 3 — Homepage pubblica (2 giorni)
 
-### Tasks
-
-- `app/page.tsx`: fetch server-side di `getSiteSettings()` e `getActiveNews()`
-- Componenti headless: `Hero`, `Slogan`, `Bio`, `OpeningHours`, `Footer`, `Gallery`, `NewsPopup`, `NewsSection`
-- Skeleton screens: `SkeletonGallery`, `SkeletonNews` (client-side)
-- `app/error.tsx` e `app/loading.tsx`
-- Meta tag dinamici in `app/layout.tsx` da `site_settings`
-- `app/booking/cancel/[token]/page.tsx`: chiamata a `cancelBookingByToken()`
+Per i task → [[backlog]] (Sprint 3).
 
 ### Done when
 
@@ -109,14 +86,9 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 4 — Prenotazioni (1–2 giorni)
 
-### Tasks
+Per i task → [[backlog]] (Sprint 4).
 
-- `app/booking/page.tsx`: form con validazione Zod client+server
-- `createBookingAction` (Server Action, non API route) → `createBooking()` con controllo coperti
-- Test unique constraint `(email, time_slot_id, date)`
-- Test overbooking (coperti esauriti → rifiuto con messaggio chiaro)
-
-> **Email demandata a Phase 6.** L'invio email (conferma cliente + notifica gestore) NON è in Phase 4: è ridefinito come Edge Function centralizzata `send-booking-email` con dominio di servizio condiviso `foras.*`, costruita in Phase 6 in parallelo al freeze. Phase 4 chiude col `cancellation_token` mostrato nella success page come link diretto. Vedi decision-log *Email prenotazioni* (2026-05-21 e 2026-05-22).
+> **Email demandata a Phase 6.** L'invio email (conferma cliente + notifica gestore) NON è in Phase 4: è ridefinito come Edge Function centralizzata `send-booking-email` con dominio di servizio condiviso `foras.*`, costruita in Phase 6 in parallelo al freeze. Phase 4 chiude col `cancellation_token` mostrato nella success page come link diretto. Vedi [[decisioni]] *Email prenotazioni* (2026-05-21 e 2026-05-22).
 
 ### Done when
 
@@ -128,26 +100,7 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 5 — Admin panel (2–3 giorni)
 
-### Tasks
-
-**Auth e layout:**
-- `apps/admin/proxy.ts`: protezione route con `getUser()` + `getVerifiedTenantClient()` (era `middleware.ts`, rinominato nello stack upgrade Next 16)
-- Layout con sidebar navigazione
-
-**Menu:**
-- CRUD sezioni (abilita/disabilita, rinomina — no creazione da zero)
-- CRUD categorie e item con form Zod + shadcn
-- Drag-and-drop con bulk update `position` (libreria: `@dnd-kit/core`)
-- Checkbox allergeni su item
-
-**Contenuti:**
-- CRUD popup/novità con ordinamento slide
-- Form orari di apertura (7 giorni, toggle closed)
-- Impostazioni sito: title, description, og:image, slogan, bio, indirizzo
-
-**Prenotazioni:**
-- Vista prenotazioni con filtro per data e turno
-- Visualizzazione stato (confirmed/cancelled)
+Per i task → [[backlog]] (Sprint 5).
 
 ### Done when
 
@@ -159,24 +112,16 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 6 — Template freeze + email centralizzata (1,5–2 giorni)
 
-### Tasks
+Per i task → [[backlog]] (Sprint 6). Qui resta la sequenza operativa di freeze (comandi/verifiche concreti).
 
-**Hardening pre-freeze (entra nel baseline congelato):**
-- Funzione `public.is_tenant_owner()` `SECURITY DEFINER` + riscrittura policy di scrittura admin (owner vs `public.tenants`) in `create_schema_from_template.sql`; migrazione per applicarla al `template` esistente
-- Colonna `site_settings.timezone TEXT NOT NULL DEFAULT 'Europe/Rome'` + guard booking (`getAvailableTimeSlots`/`createBooking`) in ora locale del tenant
-- Estendere `docs/operations/audit_rls.sql` ai GRANT minimi + presenza di `is_tenant_owner()`
+### Comandi / verifiche (sequenza di freeze)
 
-**Freeze:**
-- Parametrizzare `create_schema_from_template.sql` (`:schema`/`:owner_uuid`, niente `template`/owner hardcoded)
 - Eseguire checklist pulizia pre-freeze (vedi [[mvp]])
-- Finalizzare `schema.sql` dallo stato attuale dello schema `template`
+- Finalizzare `schema.sql` dallo stato attuale dello schema `template` (`pg_dump --schema-only`)
 - Creare `migrations/001_init.sql` = contenuto di `schema.sql`
-- Testare `create_schema_from_template.sql` su uno schema di prova (`test_freeze`)
-- Dichiarare freeze: aggiornare `status: LOCKED` nei file rilevanti
-
-**Email (parallelo, infra tenant-agnostica):**
+- Testare `create_schema_from_template.sql` su uno schema di prova (`test_freeze`), poi eliminarlo
 - Verifica dominio `foras.*` su Resend (one-time)
-- Edge Function `send-booking-email` (conferma cliente + notifica gestore) + wiring `apps/web` dopo `createBooking`
+- Dichiarare freeze: aggiornare `status: LOCKED` nei file rilevanti
 
 ### Done when
 
@@ -190,15 +135,12 @@ Tradurre la roadmap in una sequenza eseguibile:
 
 ## Phase 7 — Onboarding primo cliente (1 giorno)
 
-### Tasks
+Per i task → [[backlog]] (Sprint 7 / Stream C). Procedura operativa completa in [[onboarding-tenant]].
 
-- Fork di `repo-template` → `repo-[nome-cliente]`
-- Impostare `.env` con `NEXT_PUBLIC_SUPABASE_SCHEMA=[nome-cliente]`
-- Eseguire `create_schema_from_template.sql` con schema e owner reali
+### Comandi / verifiche
+
+- Eseguire `create_schema_from_template.sql` con schema e owner reali (`-v schema=` / `-v owner_uuid=`)
 - Creare utente admin in Supabase Auth con `user_metadata.schema`
-- Configurare dominio custom su Vercel
-- Implementare UI custom su `/apps/web`
-- Upload asset su `bar-assets/[nome-cliente]/`
 - Compilare checklist pre-deploy (vedi [[onboarding-tenant]])
 
 ### Done when
