@@ -13,7 +13,20 @@ Sistema multi-tenant per sviluppare e gestire siti web per bar e ristoranti loca
 
 **Stack:** Next.js App Router · pnpm workspaces · Supabase (DB + Auth + Storage) · shadcn/ui · Zod · Resend · Vercel · TypeScript
 
-**Fase attuale:** 🔒 template FROZEN (2026-05-27) · CI in piedi e verde (2026-05-29) · prossimo: Stream C — onboarding cliente #1
+**Fase attuale:** 🔒 template FROZEN (2026-05-27) · CI in piedi e verde (2026-05-29) · prossimo: Stream C — onboarding cliente #1 → **stato vivo autorevole e datato in [[STATUS]]**
+
+---
+
+## Gerarchia di autorità (dove vive la verità)
+
+Per evitare drift, ogni tipo di informazione ha **una sola fonte autorevole**:
+
+- **Stato vivo** ("cosa è vero ORA") → [[STATUS]] — unico file con stato datato.
+- **Elenco migrazioni** → `CHANGELOG.md` (root del repo).
+- **Decisioni / il perché** → [[decisioni]].
+- **Cosa fare / cronaca** → [[backlog]].
+
+La **auto-memory NON è autorevole sullo stato**: serve solo come indice di puntatori. In caso di divergenza, vince [[STATUS]].
 
 ---
 
@@ -48,6 +61,9 @@ Il master scrive i prompt, committa (push solo su richiesta esplicita di Lucio),
 ---
 
 ## Indice completo
+
+### Stato
+- [[STATUS]] — stato vivo autorevole e datato (fase attuale · ultimo evento · prossimo passo · watch). **Apri questo per primo.**
 
 ### Tech Architecture
 - [[architettura-fullstack]] — stack, multi-tenancy, auth, Edge Functions, Storage, deploy, loading strategy
