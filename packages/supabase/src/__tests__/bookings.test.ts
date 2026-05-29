@@ -177,17 +177,20 @@ describe('getAvailableTimeSlots', () => {
   })
 
   it('returns empty array when opening_hours marks the day as closed', async () => {
-    // Find what day 2099-09-01 is (Monday = 1 in UTC)
-    const testDate = '2099-09-01' // Monday (UTCDay=1)
-    const targetDay = 'monday'
+    // Mark *the actual weekday* of testDate as closed — derive it the same way the
+    // service does (getUTCDay on the date-only string) so the test can't drift on a
+    // wrong hardcoded weekday.
+    const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+    const testDate = '2099-09-01'
+    const targetDay = DAY_NAMES[new Date(testDate).getUTCDay()]
 
-    const allOpenExceptMonday: Record<string, unknown> = {}
-    for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) {
-      allOpenExceptMonday[day] = day === targetDay
+    const allOpenExceptTarget: Record<string, unknown> = {}
+    for (const day of DAY_NAMES) {
+      allOpenExceptTarget[day] = day === targetDay
         ? { closed: true, ranges: [] }
         : { closed: false, ranges: [] }
     }
-    await setOpeningHours(allOpenExceptMonday)
+    await setOpeningHours(allOpenExceptTarget)
 
     try {
       const result = await getAvailableTimeSlots(client, testDate)
@@ -207,15 +210,18 @@ describe('getAvailableTimeSlots', () => {
     const earlySlot = await insertSlot('EarlyTest', '08:00', 10)
     const eveningSlot = await insertSlot('EveningTest', '20:00', 10)
 
-    // Opening hours for Saturday: only 18:00–23:00
-    // 2099-09-06 is a Saturday
+    // Restrict *the actual weekday* of testDate to 18:00–23:00 — derive the day the
+    // same way the service does, so the test can't drift on a wrong hardcoded day.
+    const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
     const testDate = '2099-09-06'
-    const saturdayOnly: Record<string, unknown> = {}
-    for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'sunday']) {
-      saturdayOnly[day] = { closed: false, ranges: [] }
+    const rangeDay = DAY_NAMES[new Date(testDate).getUTCDay()]
+    const restricted: Record<string, unknown> = {}
+    for (const day of DAY_NAMES) {
+      restricted[day] = day === rangeDay
+        ? { closed: false, ranges: [{ open: '18:00', close: '23:00' }] }
+        : { closed: false, ranges: [] }
     }
-    saturdayOnly['saturday'] = { closed: false, ranges: [{ open: '18:00', close: '23:00' }] }
-    await setOpeningHours(saturdayOnly)
+    await setOpeningHours(restricted)
 
     try {
       const result = await getAvailableTimeSlots(client, testDate)

@@ -137,9 +137,11 @@ export async function provisionSchema(
       .replace(/:'owner_uuid'/g, `'${ownerUuid}'`)
 
     // Make the public.tenants INSERT idempotent on rerun (PK is schema_name).
+    // ON CONFLICT must follow the VALUES clause, not the column list — append it
+    // just before the statement's terminating semicolon.
     sql = sql.replace(
-      /INSERT INTO public\.tenants \(schema_name, owner_id\)/g,
-      'INSERT INTO public.tenants (schema_name, owner_id) ON CONFLICT (schema_name) DO UPDATE SET owner_id = EXCLUDED.owner_id --'
+      /(INSERT INTO public\.tenants \(schema_name, owner_id\)[\s\S]*?\))\s*;/,
+      '$1 ON CONFLICT (schema_name) DO UPDATE SET owner_id = EXCLUDED.owner_id;'
     )
 
     await client.query(sql)
