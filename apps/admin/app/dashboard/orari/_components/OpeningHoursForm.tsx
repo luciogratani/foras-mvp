@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useActionState } from 'react'
 import type { OpeningHours } from '@repo/supabase'
 import { Button, Input, Label, Switch } from '@repo/ui'
@@ -32,48 +32,75 @@ function initDayState(initialHours: OpeningHours | null, day: Day): DayState {
   }
 }
 
+function initDaysState(initialHours: OpeningHours | null): Record<Day, DayState> {
+  const init = {} as Record<Day, DayState>
+  for (const day of DAYS) {
+    init[day] = initDayState(initialHours, day)
+  }
+  return init
+}
+
+type DaysState = Record<Day, DayState>
+
+type DaysAction =
+  | { type: 'reinit'; payload: OpeningHours | null }
+  | { type: 'toggleClosed'; day: Day; value: boolean }
+  | { type: 'updateRange'; day: Day; index: number; field: 'open' | 'close'; value: string }
+  | { type: 'addRange'; day: Day }
+  | { type: 'removeRange'; day: Day; index: number }
+
+function daysReducer(state: DaysState, action: DaysAction): DaysState {
+  switch (action.type) {
+    case 'reinit':
+      return initDaysState(action.payload)
+    case 'toggleClosed':
+      return { ...state, [action.day]: { ...state[action.day], closed: action.value } }
+    case 'updateRange': {
+      const ranges = [...state[action.day].ranges]
+      ranges[action.index] = { ...ranges[action.index], [action.field]: action.value }
+      return { ...state, [action.day]: { ...state[action.day], ranges } }
+    }
+    case 'addRange': {
+      if (state[action.day].ranges.length >= 2) return state
+      return {
+        ...state,
+        [action.day]: {
+          ...state[action.day],
+          ranges: [...state[action.day].ranges, { open: '', close: '' }],
+        },
+      }
+    }
+    case 'removeRange': {
+      const ranges = state[action.day].ranges.filter((_, i) => i !== action.index)
+      return { ...state, [action.day]: { ...state[action.day], ranges } }
+    }
+  }
+}
+
 export function OpeningHoursForm({ initialHours }: { initialHours: OpeningHours | null }) {
   const [state, formAction, isPending] = useActionState(updateOpeningHoursAction, idle)
-  const [days, setDays] = useState<Record<Day, DayState>>(() => {
-    const init = {} as Record<Day, DayState>
-    for (const day of DAYS) {
-      init[day] = initDayState(initialHours, day)
-    }
-    return init
-  })
+  const [days, dispatch] = useReducer(daysReducer, initialHours, initDaysState)
 
+  // Re-inizializza lo stato locale quando il Server Component re-flusha dopo un save.
+  // dispatch() non è uno setState diretto → la regola react-hooks/set-state-in-effect non scatta.
   useEffect(() => {
-    const next = {} as Record<Day, DayState>
-    for (const day of DAYS) {
-      next[day] = initDayState(initialHours, day)
-    }
-    setDays(next)
+    dispatch({ type: 'reinit', payload: initialHours })
   }, [initialHours])
 
   function toggleClosed(day: Day, value: boolean) {
-    setDays((prev) => ({ ...prev, [day]: { ...prev[day], closed: value } }))
+    dispatch({ type: 'toggleClosed', day, value })
   }
 
   function updateRange(day: Day, index: number, field: 'open' | 'close', value: string) {
-    setDays((prev) => {
-      const ranges = [...prev[day].ranges]
-      ranges[index] = { ...ranges[index], [field]: value }
-      return { ...prev, [day]: { ...prev[day], ranges } }
-    })
+    dispatch({ type: 'updateRange', day, index, field, value })
   }
 
   function addRange(day: Day) {
-    setDays((prev) => {
-      if (prev[day].ranges.length >= 2) return prev
-      return { ...prev, [day]: { ...prev[day], ranges: [...prev[day].ranges, { open: '', close: '' }] } }
-    })
+    dispatch({ type: 'addRange', day })
   }
 
   function removeRange(day: Day, index: number) {
-    setDays((prev) => {
-      const ranges = prev[day].ranges.filter((_, i) => i !== index)
-      return { ...prev, [day]: { ...prev[day], ranges } }
-    })
+    dispatch({ type: 'removeRange', day, index })
   }
 
   return (
