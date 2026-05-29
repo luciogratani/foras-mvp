@@ -125,6 +125,8 @@ Non implementate — qui solo per riferimento futuro.
 
 ### B'. apps/admin lint — emerso solo a B chiuso
 
+**Chiuso 2026-05-29** via sub-chat (opus) — commit `04f0778` (dnd→`useOptimistic` + `TimeSlotList` state derivato), `a46ead7` (`OpeningHoursForm`→`useReducer`), `5f73fc0` (escape apostrofi + postcss default nominato). Verifica master: `pnpm --filter @repo/admin lint` 0 errori/0 warning, `tsc --noEmit` exit 0 su admin+web. Nessun eslint-disable. Rollback dnd automatico (le reorder action revalidano solo su successo). Verifica browser dei dnd NON eseguita (sub-chat headless) → da spot-checkare al primo avvio admin. Static job atteso verde al prossimo push.
+
 Mentre si fixava B, il run locale `pnpm -r lint` (che `pnpm` ferma al primo workspace fallito) ha rivelato che `apps/admin` ha **8 errori + 1 warning** mai visti dal CI precedente perché `apps/web` falliva prima. Inventario:
 
 - **6 errori `react-hooks/set-state-in-effect`** — tutti lo stesso pattern `useState(prop) + useEffect([prop]) { setState(prop) }` per ri-sincronizzare stato locale quando il Server Component re-flusha (dopo `revalidatePath`). In: `SlideList.tsx:15`, `SectionList.tsx:35`, `SectionCard.tsx:56`, `CategoryRow.tsx:52`, `TimeSlotList.tsx:19`, `OpeningHoursForm.tsx:50`.
