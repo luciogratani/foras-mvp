@@ -144,11 +144,21 @@ Mentre si fixava B, il run locale `pnpm -r lint` (che `pnpm` ferma al primo work
 
 Prompt sub-chat per B' in `docs/ai-playbooks/prompts/2026-05-28_audit-04-hardening/B-prime_admin-lint.md`. **Revisionato e approvato dal master il 2026-05-29** (status `TODO`): inventario validato sul codice reale; guida rollback Categoria 1 corretta (rollback `useOptimistic` automatico — le reorder action non revalidano su errore, quindi niente throw forzato); raccomandazione `OpeningHoursForm` ristretta a `(c) useReducer`. Pronto da girare a sub-chat.
 
-### N. Vitest `bookings.test.ts` — bug `pg-mock-client.ts` (NUOVO)
+### N. Vitest `bookings.test.ts` — ✅ CHIUSO 2026-05-29 (commit `5b5574c`)
+
+**Causa reale ≠ ipotesi.** Non era lo shim `pg-mock-client.ts` (che è corretto), ma due bug distinti, trovati leggendo il codice + validando contro un Postgres 16 effimero locale (no Docker → istanza usa-e-getta via `pg_ctl`):
+1. **`setup-db.ts` (il blocker):** la regex che rende idempotente la INSERT su `public.tenants` infilava `ON CONFLICT … --` **dopo la lista colonne** invece che dopo `VALUES(...)` → `INSERT (cols) ON CONFLICT … VALUES(...)` = `syntax error at or near "ON"` (42601, ~char 21553 = offset della INSERT nel provisioner). Esplodeva nel `beforeAll` → tutti i 17 test **skippati** (non falliti). Fix: `ON CONFLICT` appeso prima del `;` finale.
+2. **`bookings.test.ts` (2 test):** weekday hardcoded errati — `2099-09-01` è **martedì** (non lunedì), `2099-09-06` è **domenica** (non sabato) → il filtro `opening_hours` del service (corretto) non scattava sul giorno atteso. Fix: il giorno è derivato dalla data via `getUTCDay`, come fa il service stesso.
+
+**Esito:** 17/17 verdi in locale contro Postgres reale. Lo step Vitest della CI atteso verde al prossimo push → CI **interamente verde**. Conferma empirica che lo shim (~450 righe) traduce correttamente i path `createBooking`/`getAvailableTimeSlots`/`cancelBookingByToken` (chiude la "validazione semantica deferred" di `decisioni.md` voce A).
+
+<details><summary>Diagnosi originale (ipotesi pre-fix)</summary>
 
 Emerso al run #71253728477. Lo shim TS `packages/supabase/src/__tests__/helpers/pg-mock-client.ts` produce un SQL invalido al char 21553 (token "ON" inatteso) eseguendo i test di `createBooking`/`getAvailableTimeSlots`/`cancelBookingByToken`. Il job rls-isolation passa interamente sulla parte SQL e fallisce solo sul Vitest step. Investigation richiesta: leggere lo shim, identificare quale costruzione fluent supabase-js produce SQL malformato, decidere fix vs accettare e disable.
 
 **Scope realistico:** 30 min se è bug isolato (es. JOIN o ORDER BY mistranslated); 1-2h se è limite strutturale dello shim. Non bloccante per il template congelato né per l'onboarding cliente #1 — ma blocca la CI verde. **Da fare:** sessione master fresca + eventuale sub-chat per il fix.
+
+</details>
 
 ### E. Gestione network-failure non gestita nei dnd (e forse altrove) — RIMANDATO
 
