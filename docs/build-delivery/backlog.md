@@ -440,7 +440,7 @@ Done when:
 - [x] `public.tenant_migrations` creata + backfill `template/001+002`
 - [x] `pnpm -r tsc --noEmit` verde + `pnpm install` verde
 - [x] Tutti i 4 deliverable nel main tree, syntax check OK
-- [ ] Validazione semantica primo run CI (deferred: appare al primo push su `main`)
+- [x] Validazione semantica primo run CI — ✅ 2026-05-29: CI interamente verde (Static + RLS-isolation SQL + Vitest 17/17). Punti emersi e chiusi: B' (admin lint React 19), N (harness Vitest: `ON CONFLICT` setup-db + weekday test). Dettaglio in `docs/audit/04b_followup_*.md`.
 
 **Note operative:**
 - I 2 worktree delle sub-chat sono stati branchati da `e406095` (pre-freeze) per un quirk dell'infra di isolamento → entrambi salvati manualmente nel main tree dal master.

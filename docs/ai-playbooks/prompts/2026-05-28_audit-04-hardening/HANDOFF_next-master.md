@@ -1,9 +1,12 @@
 ---
-status: ACTIVE
+status: CONSUMED
 type: master-handoff
 created: 2026-05-28
+consumed: 2026-05-29
 owner: master-chat
 ---
+
+> ✅ **CONSUMATO 2026-05-29.** Questo handoff è stato raccolto e completato: N investigato e chiuso, B' revisionato/eseguito, C/D fatti, E tracciato e rimandato. **CI interamente verde, filone audit-04b CHIUSO.** Lo stato live aggiornato è in `docs/audit/04b_followup_*.md` § "Punti aperti" + `MEMORY.md`. Il testo sotto è storico (fotografia del 2026-05-28).
 
 # Handoff alla prossima master chat
 

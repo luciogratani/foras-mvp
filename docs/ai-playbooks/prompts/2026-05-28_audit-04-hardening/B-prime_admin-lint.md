@@ -1,9 +1,10 @@
 ---
-status: TODO
+status: DONE
 sprint: post-audit-04
 task: B'
 created: 2026-05-28
 reviewed: 2026-05-29
+completed: 2026-05-29
 suggested_model: sonnet
 suggested_effort: high
 owner: master-chat
