@@ -52,11 +52,12 @@ Il master scrive i prompt, committa (push solo su richiesta esplicita di Lucio),
 
 ## Ordine di lettura consigliato per una sub-chat
 
-1. Questo README (contesto progetto e stack)
-2. [[architettura-fullstack]] (sistema, multi-tenancy, auth)
-3. [[data-model]] (schema completo)
-4. [[mvp]] (perimetro e freeze)
-5. Il prompt specifico assegnato dal master
+1. [[STATUS]] (stato vivo: dove siamo ORA, prossimo passo)
+2. Questo README (contesto progetto e stack)
+3. [[architettura-fullstack]] (sistema, multi-tenancy, auth)
+4. [[data-model]] (schema completo)
+5. [[mvp]] (perimetro e freeze)
+6. Il prompt specifico assegnato dal master
 
 ---
 

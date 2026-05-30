@@ -16,8 +16,8 @@ Il progetto usa un sistema a due livelli di chat AI:
 **Master chat** — responsabile di:
 - Scrivere i prompt per le sub-chat (file `.md` in `docs/ai-playbooks/prompts/`)
 - Eseguire `git commit` dopo ogni sessione produttiva — **il `git push` solo su richiesta esplicita di Lucio**
-- Aggiornare i file di documentazione ([[backlog]], [[roadmap-sviluppo]], [[decisioni]], [[README]], ecc.)
-- Mantenere la coerenza tra documentazione e stato reale del codice
+- Aggiornare **[[STATUS]] a ogni sessione che cambia lo stato** (è la fonte autorevole dello stato vivo) + gli altri doc pertinenti ([[backlog]] per gli item aperti, [[decisioni]] per il perché). Nota: `roadmap`/`runbook` sono `LOCKED` post-freeze e citano il backlog — non vi si replica più la progressione.
+- Mantenere la coerenza tra documentazione e stato reale del codice; in caso di divergenza, **[[STATUS]] vince** (la auto-memory non è autorevole sullo stato)
 - Decidere lo scope di ogni sub-task prima di delegarlo
 
 **Sub-chat** — responsabile di:
