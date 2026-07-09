@@ -1,0 +1,886 @@
+/**
+ * Design system — hau.studio rebuild, Fase 3a.
+ *
+ * Estratto fedele dai 18 blocchi <style> inline di
+ * `apps/hau-nuxt-build/index.html` (mirror Nuxt, READ-ONLY). Il mirror non
+ * usa Tailwind per queste classi: è CSS scritto a mano con valori fluidi in
+ * `vw` (proporzionali al design a 1440px, `--size` in globals.css), un cap
+ * fisso in px oltre i 1920px, e un ricalcolo in `vw` sotto i 900px (mobile).
+ * Qui riproduciamo lo stesso pattern per le classi effettivamente usate
+ * dalla fondazione + dalla shell chrome (Fase 3a). Selettori component-scoped
+ * più profondi (case study, moduli ACF, ecc.) sono fuori scope: verranno
+ * estratti mano a mano nelle fasi che li useranno (3b, 3c, ...).
+ *
+ * Alcuni valori del mirror sono in conflitto tra loro a causa dell'ordine di
+ * concatenazione dei blocchi <style> (build Vue/Nuxt con CSS scoped per
+ * componente): dove osservato, ho tenuto la dichiarazione "globale" canonica
+ * (la prima, semanticamente la fonte di verità per l'utility) e segnalato la
+ * discrepanza in un commento — non è materiale per la shell chrome (Fase 3a),
+ * andrà verificato quando la 3b userà quelle classi su una sezione reale.
+ */
+
+@layer components {
+  /* ------------------------------------------------------------------ */
+  /* Reset aggiuntivo (oltre al preflight di Tailwind v4)                */
+  /* ------------------------------------------------------------------ */
+
+  a {
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  ul,
+  ol {
+    list-style: none;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Layout primitives                                                   */
+  /* ------------------------------------------------------------------ */
+
+  .wrapper {
+    width: 100%;
+    height: 100%;
+  }
+  .wrapper.flex {
+    display: flex;
+  }
+  .wrapper.col {
+    flex-direction: column;
+  }
+
+  .container {
+    margin: 0 auto;
+    max-width: 2048px;
+    padding: 0 64px;
+  }
+  .container.flex {
+    display: flex;
+  }
+  @media (max-width: 900px) {
+    .container {
+      padding: 0 16px;
+    }
+  }
+
+  .h100 {
+    height: 100%;
+  }
+  .w100 {
+    width: 100%;
+  }
+
+  /*
+   * `.row` non ha, nel mirror, alcuna regola CSS globale propria: è un
+   * marker puramente strutturale (viene stilizzato solo dentro selettori
+   * scoped per-componente, es. `.module_list .list_content.row`). Lo
+   * teniamo qui solo come promemoria — nessuna regola da applicare a
+   * livello di fondazione.
+   */
+
+  .aic {
+    align-items: center;
+  }
+  .jcc {
+    justify-content: center;
+  }
+  .jsb {
+    justify-content: space-between;
+  }
+  .fdc {
+    flex-direction: column;
+  }
+
+  /*
+   * Nota: nel mirror `.flex` esiste solo in forma composta
+   * (`.wrapper.flex`, `.container.flex`) — non c'è un'utility `.flex`
+   * standalone, e la chrome Fase 3a non ne ha bisogno. Non lo inventiamo
+   * (fedeltà al mirror / "non migliorare la struttura").
+   */
+
+  /* ------------------------------------------------------------------ */
+  /* Tipografia                                                          */
+  /* ------------------------------------------------------------------ */
+
+  .heading_1 {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 8.05556vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.40278vw;
+    line-height: 90%;
+  }
+  @media (min-width: 1920px) {
+    .heading_1 {
+      font-size: 154.66667px;
+      letter-spacing: -7.73333px;
+    }
+  }
+  @media (max-width: 900px) {
+    .heading_1 {
+      font-size: 29.51654vw;
+      letter-spacing: -1.47583vw;
+    }
+  }
+
+  .heading_2 {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 4.09722vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.18056vw;
+    line-height: 100%;
+  }
+  @media (min-width: 1920px) {
+    .heading_2 {
+      font-size: 78.66667px;
+      letter-spacing: -3.46667px;
+    }
+  }
+  @media (max-width: 900px) {
+    .heading_2 {
+      font-size: 15.01272vw;
+      letter-spacing: -0.66158vw;
+    }
+  }
+
+  .body_1 {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 2.15278vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.08333vw;
+    line-height: 130%;
+  }
+  @media (min-width: 1920px) {
+    .body_1 {
+      font-size: 41.33333px;
+      letter-spacing: -1.6px;
+    }
+  }
+  @media (max-width: 900px) {
+    .body_1 {
+      font-size: 7.88804vw;
+      letter-spacing: -0.30534vw;
+    }
+  }
+
+  .body_2 {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 1.31944vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.04167vw;
+    line-height: 112%;
+  }
+  @media (min-width: 1920px) {
+    .body_2 {
+      font-size: 25.33333px;
+      letter-spacing: -0.8px;
+    }
+  }
+  @media (max-width: 900px) {
+    .body_2 {
+      font-size: 4.83461vw;
+      letter-spacing: -0.15267vw;
+    }
+  }
+
+  .body_3 {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 1.04167vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.04167vw;
+    line-height: 130%;
+  }
+  @media (min-width: 1920px) {
+    .body_3 {
+      font-size: 20px;
+      letter-spacing: -0.8px;
+    }
+  }
+  @media (max-width: 900px) {
+    .body_3 {
+      font-size: 3.81679vw;
+      letter-spacing: -0.15267vw;
+    }
+  }
+
+  .sub_l {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 1.31944vw;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.04167vw;
+    line-height: 112%;
+    text-transform: uppercase;
+  }
+  @media (min-width: 1920px) {
+    .sub_l {
+      font-size: 25.33333px;
+      letter-spacing: -0.8px;
+    }
+  }
+  @media (max-width: 900px) {
+    .sub_l {
+      font-size: 4.83461vw;
+      letter-spacing: -0.15267vw;
+    }
+  }
+
+  .sub_m {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 1.04167vw;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.04167vw;
+    line-height: 128%;
+    text-transform: uppercase;
+  }
+  @media (min-width: 1920px) {
+    .sub_m {
+      font-size: 20px;
+      letter-spacing: -0.8px;
+    }
+  }
+  @media (max-width: 900px) {
+    .sub_m {
+      font-size: 3.81679vw;
+      letter-spacing: -0.15267vw;
+    }
+  }
+
+  .sub_s {
+    color: var(--theme-text-color, var(--Black));
+    font-size: 0.83333vw;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.02083vw;
+    line-height: 128%;
+    text-transform: uppercase;
+  }
+  @media (min-width: 1920px) {
+    .sub_s {
+      font-size: 16px;
+      letter-spacing: -0.4px;
+    }
+  }
+  @media (max-width: 900px) {
+    .sub_s {
+      font-size: 3.05344vw;
+      letter-spacing: -0.07634vw;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Spacing                                                              */
+  /* ------------------------------------------------------------------ */
+
+  .pt104 {
+    padding-top: 7.22222vw;
+    padding-bottom: 7.22222vw;
+  }
+  @media (min-width: 1920px) {
+    .pt104 {
+      padding-top: 138.66667px;
+      padding-bottom: 138.66667px;
+    }
+  }
+  @media (max-width: 900px) {
+    .pt104 {
+      padding-top: 26.4631vw;
+      padding-bottom: 26.4631vw;
+    }
+  }
+
+  .pt88 {
+    padding-top: 6.11111vw;
+    padding-bottom: 6.11111vw;
+  }
+  @media (min-width: 1920px) {
+    .pt88 {
+      padding-top: 117.33333px;
+      padding-bottom: 117.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    .pt88 {
+      padding-top: 22.39186vw;
+      padding-bottom: 22.39186vw;
+    }
+  }
+
+  /*
+   * `.p_home` (classe sul <body>, vedi layout.tsx) non ha, nel mirror,
+   * alcuna regola CSS propria: è un marker di pagina usato da JS (es.
+   * `body.hasClass("p_archive")` negli scroll handler) e da selettori
+   * come `.p_about .hero ...` che alcune pagine useranno per override
+   * scoped. Nessuna regola da aggiungere qui per ora.
+   */
+
+  /* ------------------------------------------------------------------ */
+  /* Header (chrome)                                                     */
+  /* ------------------------------------------------------------------ */
+
+  header {
+    position: absolute;
+    top: 40px;
+    width: 100%;
+    z-index: 10;
+  }
+
+  /* Variante per hero scure: cambia --header-color (default in :root,
+     globals.css) senza toccare la struttura. Non ancora usata in Fase 3a
+     (nessuna pagina la applica), pronta per quando servirà. */
+  .header_light {
+    --header-color: #fff;
+  }
+  .header_light .logo_container svg path {
+    fill: var(--header-color);
+  }
+
+  header .logo_container {
+    opacity: 1;
+    transition: all 0.6s ease;
+    width: 3.37778vw;
+  }
+  @media (min-width: 1920px) {
+    header .logo_container {
+      width: 64.85333px;
+    }
+  }
+  @media (max-width: 900px) {
+    header .logo_container {
+      width: 12.37659vw;
+    }
+  }
+  header .logo_container a {
+    width: 100%;
+  }
+  header .logo_container a svg {
+    height: unset;
+    width: 100%;
+  }
+
+  header .header_right {
+    opacity: 1;
+    transition: all 0.6s ease;
+  }
+  header .header_right .clock_container {
+    align-items: center;
+    display: flex;
+    gap: 1.11111vw;
+    justify-content: center;
+    padding-right: 11.5rem;
+    position: relative;
+  }
+  @media (min-width: 1920px) {
+    header .header_right .clock_container {
+      gap: 21.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    header .header_right .clock_container {
+      gap: 4.07125vw;
+    }
+  }
+  @media screen and (max-width: 1500px) {
+    header .header_right .clock_container {
+      padding-right: 11rem;
+    }
+  }
+  @media screen and (max-width: 900px) {
+    header .header_right .clock_container {
+      padding-right: 32rem;
+    }
+  }
+  header .header_right .clock_container .splitter {
+    background-color: var(--header-color);
+    border-radius: 100%;
+    height: 0.55556vw;
+    width: 0.55556vw;
+  }
+  @media (min-width: 1920px) {
+    header .header_right .clock_container .splitter {
+      width: 10.66667px;
+      height: 10.66667px;
+    }
+  }
+  @media (max-width: 900px) {
+    header .header_right .clock_container .splitter {
+      width: 2.03562vw;
+      height: 2.03562vw;
+    }
+  }
+  header .header_right .clock_container span {
+    color: var(--header-color);
+    font-size: 1.04167vw;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.04167vw;
+    line-height: 128%;
+    text-transform: uppercase;
+  }
+  @media (min-width: 1920px) {
+    header .header_right .clock_container span {
+      font-size: 20px;
+      letter-spacing: -0.8px;
+    }
+  }
+  @media (max-width: 900px) {
+    header .header_right .clock_container span {
+      font-size: 3.81679vw;
+      letter-spacing: -0.15267vw;
+    }
+  }
+  header .header_right .clock_container span.gmt {
+    position: absolute;
+    right: 0;
+  }
+  header .header_right .clock_container span.gmt:after {
+    content: ' GMT+1';
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Page content wrapper (tra header e footer)                          */
+  /* ------------------------------------------------------------------ */
+
+  .page_content {
+    background-color: #fff;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Navbar (dentro <footer>, pill fluttuante sempre visibile)           */
+  /* ------------------------------------------------------------------ */
+
+  footer .navbar {
+    bottom: 40px;
+    display: flex;
+    justify-content: center;
+    opacity: 1;
+    position: fixed;
+    text-align: center;
+    transform: scale(1);
+    transition: all 0.6s ease;
+    width: 100%;
+    z-index: 99;
+  }
+  footer .navbar.has_hover li:not(.hover) a,
+  footer .navbar.has_hover li:not(.hover) span {
+    color: var(--Black);
+  }
+  footer .navbar ul {
+    -webkit-backdrop-filter: blur(13px);
+    backdrop-filter: blur(13px);
+    background: hsla(0, 0%, 93%, 0.7);
+    border-radius: 80px;
+    display: flex;
+    overflow: hidden;
+    padding: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  /*
+   * `.bg_border` è la pillola nera che evidenzia la voce attiva/in hover:
+   * nel mirror la sua `width`/`transform` vengono calcolate e impostate via
+   * JS on-mount + su mouseenter/mouseleave/resize/click-logo (vedi
+   * `_nuxt/DOWtmalN.js`, funzione dentro `Fd.setup`). In 3a resta a
+   * `width:0` (invisibile) perché non c'è ancora quel JS — è il gancio
+   * esplicito per la 3c.
+   */
+  footer .navbar ul .bg_border {
+    background: var(--Black);
+    border-radius: 44px;
+    height: 40px;
+    left: 0;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.3s ease;
+    width: 0;
+    z-index: -1;
+  }
+  /*
+   * `.close_menu` ("close") è nascosto di default (questo È già lo stato
+   * "chiuso" richiesto per la 3a) e diventa visibile solo con la classe
+   * `.active`, aggiunta via JS altrove (non sul toggle del nav principale:
+   * dal bundle risulta legata al click sul logo mentre si è su una vista
+   * "espansa" — verificare in 3c dove viene davvero attivata). Il nav
+   * principale (`.navbar`) stesso è SEMPRE visibile nel mirror (una pillola
+   * fissa in basso, non un hamburger apri/chiudi).
+   */
+  footer .navbar ul li.close_menu {
+    left: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.4s ease;
+    visibility: hidden;
+  }
+  footer .navbar ul li.close_menu.active {
+    opacity: 1;
+    pointer-events: unset;
+    visibility: visible;
+  }
+  footer .navbar ul li.hover a {
+    color: #fff;
+  }
+  footer .navbar ul li a,
+  footer .navbar ul li span {
+    border-radius: 44px;
+    cursor: pointer;
+    display: inline-block;
+    padding: 8px 16px;
+    transition: all 0.6s ease;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+  footer .navbar ul li a.router-link-active,
+  footer .navbar ul li span.router-link-active {
+    color: #fff;
+  }
+  footer .navbar ul li.hidden {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  @media screen and (max-width: 900px) {
+    footer .navbar ul li a {
+      font-size: 0.83333vw;
+      line-height: 1.04167vw;
+    }
+    footer .navbar ul li a,
+    footer .navbar ul li span {
+      padding: 8px 10px;
+    }
+    footer .navbar ul .bg_border {
+      height: 32px;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Footer section ("Let's talk" + contatti + watermark)                */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * Deviazione 3a (documentata): nel mirror `footer .footer` è
+   * `display:none` di default e diventa visibile solo come
+   * `footer.scroll_footer .footer{position:fixed; ...}`, innescato da uno
+   * scroll listener JS (`D(window).scroll(...)` in DOWtmalN.js) quando si
+   * raggiunge il fondo della pagina (`footer{padding-bottom:100vh}` riserva
+   * lo spazio di scroll per il reveal). Questo è comportamento di
+   * scroll/interazione, esplicitamente fuori scope 3a ("niente
+   * smooth-scroll"). Per la 3a lo rendiamo staticamente visibile in flusso
+   * normale (niente `display:none`, niente `position:fixed`, niente
+   * `footer{padding-bottom:100vh}`) così è verificabile nei Done-when; il
+   * pin/reveal via scroll va implementato in 3c insieme allo smooth-scroll.
+   */
+  footer .footer {
+    background-color: #eee;
+    padding-top: 6.94444vw;
+    padding-bottom: 6.94444vw;
+    position: relative;
+  }
+  @media (min-width: 1920px) {
+    footer .footer {
+      padding-top: 133.33333px;
+      padding-bottom: 133.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer {
+      padding-top: 25.44529vw;
+      padding-bottom: 25.44529vw;
+    }
+  }
+  footer .footer .container {
+    justify-content: space-between;
+  }
+  footer .footer .container .cta_area h2 {
+    margin-bottom: 1.66667vw;
+  }
+  @media (min-width: 1920px) {
+    footer .footer .container .cta_area h2 {
+      margin-bottom: 32px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer .container .cta_area h2 {
+      margin-bottom: 6.10687vw;
+    }
+  }
+  footer .footer .container .cta_area a {
+    align-items: center;
+    background: rgba(30, 30, 30, 0.08);
+    border-radius: 3.88889vw;
+    display: flex;
+    gap: 0.55556vw;
+    height: 3.88889vw;
+    justify-content: center;
+    padding: 0.55556vw 1.66667vw;
+  }
+  @media (min-width: 1920px) {
+    footer .footer .container .cta_area a {
+      padding: 10.66667px 32px;
+      height: 74.66667px;
+      gap: 10.66667px;
+      border-radius: 74.66667px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer .container .cta_area a {
+      padding: 2.03562vw 6.10687vw;
+      height: 14.24936vw;
+      gap: 2.03562vw;
+      border-radius: 14.24936vw;
+    }
+  }
+  footer .footer .container .menu {
+    display: flex;
+  }
+  footer .footer .container .menu ul {
+    width: 300px;
+  }
+  footer .footer .container .menu ul span {
+    display: inline-block;
+    padding-bottom: 0.83333vw;
+  }
+  @media (min-width: 1920px) {
+    footer .footer .container .menu ul span {
+      padding-bottom: 16px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer .container .menu ul span {
+      padding-bottom: 3.05344vw;
+    }
+  }
+  footer .footer .container .menu ul li a {
+    color: rgba(30, 30, 30, 0.4);
+    display: inline-block;
+    padding-bottom: 0.83333vw;
+  }
+  @media (min-width: 1920px) {
+    footer .footer .container .menu ul li a {
+      padding-bottom: 16px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer .container .menu ul li a {
+      padding-bottom: 3.05344vw;
+    }
+  }
+  footer .footer .container .vector {
+    bottom: 0;
+    position: absolute;
+  }
+  footer .footer .container .vector svg {
+    height: 50.8333333333vh;
+    width: 91.11111vw;
+  }
+  @media (min-width: 1920px) {
+    footer .footer .container .vector svg {
+      width: 1749.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    footer .footer .container .vector svg {
+      width: 333.84224vw;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Loading screen                                                       */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * Le regole sotto sono copiate verbatim dal mirror (incluse le classi di
+   * stato `.s1/.s2/.s3` e `body.loaded`) così la 3c può cablare la sequenza
+   * temporizzata (`body.i_l` -> wait 200ms -> `.s1` -> wait 700ms -> `.s2`
+   * -> wait 700ms -> `.s3` -> wait 700ms -> `body.loaded` -> wait 400ms ->
+   * `body` rimuove `.i_l` -> wait 2000ms -> `display:none`, vedi
+   * `_nuxt/DOWtmalN.js`) senza dover ritoccare il CSS. Il "non bloccante" di
+   * 3a è ottenuto nel componente (`LoadingScreen.tsx`, inline
+   * `style={{ display: 'none' }}`), non qui, per lasciare queste regole
+   * pulite e riusabili tali e quali in 3c.
+   */
+  .loading_screen {
+    align-items: center;
+    background-color: #1e1e1e;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    top: 0;
+    transition:
+      height 1.8s ease-in-out,
+      opacity 1s ease-in-out,
+      background-color 0.6s ease-in-out;
+    width: 100vw;
+    z-index: 100;
+  }
+  .loading_screen .loading_content,
+  .loading_screen .loading_content .loading_inner {
+    align-items: flex-end;
+    display: flex;
+    overflow: hidden;
+  }
+  .loading_screen .loading_content .loading_inner {
+    transform: translateY(100%);
+    transition: all 0.6s ease-in-out;
+  }
+  .loading_screen .loading_content span {
+    color: #fff;
+    display: block;
+    font-size: 46px;
+    font-weight: 500;
+    transition: all 0.6s ease-in-out;
+  }
+  .loading_screen.s1 .loading_content .loading_inner {
+    transform: translateY(0);
+  }
+  .loading_screen.s2 .loading_content span {
+    transform: translateY(-100%);
+  }
+  .loading_screen.s3 .loading_logo_container svg .tm_logo {
+    opacity: 1;
+  }
+  .loading_screen.s3 .loading_logo_container svg .hau_logo {
+    transform: translateX(5px);
+  }
+  .loading_screen .loading_logo_container {
+    width: 100px;
+  }
+  .loading_screen .loading_logo_container svg {
+    height: unset;
+    overflow: visible;
+    transform: translateX(10px);
+    width: 100%;
+  }
+  .loading_screen .loading_logo_container svg path {
+    fill: #fff;
+  }
+  .loading_screen .loading_logo_container svg .tm_logo {
+    opacity: 0;
+    transform: translateX(5px);
+    transition: all 0.6s ease-in-out;
+  }
+  .loading_screen .loading_logo_container svg .hau_logo {
+    transition: all 0.6s ease-in-out;
+  }
+  .end_span svg {
+    margin-left: 2px;
+    transform: translateY(3px);
+  }
+  @media screen and (max-width: 600px) {
+    .loading_screen .loading_content {
+      transform: scale(0.5);
+    }
+  }
+  body.loaded .loading_screen {
+    background-color: #fff;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Cursor custom                                                        */
+  /* ------------------------------------------------------------------ */
+
+  /*
+   * Nel mirror `*{cursor:none!important}` nasconde il cursore reale del
+   * sistema ovunque, sostituito da questo div (posizionato via
+   * `mousemove`). In 3a il follow non è cablato: NON applichiamo
+   * `cursor:none` globale (lasciato alla 3c, insieme al listener) per non
+   * lasciare l'utente senza alcun cursore visibile nel frattempo — vedi
+   * `Cursor.tsx` per il dettaglio del gancio.
+   */
+  .cursor {
+    align-items: center;
+    background-color: #000;
+    border-radius: 50%;
+    display: flex;
+    height: 24px;
+    justify-content: center;
+    overflow: hidden;
+    pointer-events: none;
+    position: fixed;
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.3s ease-in-out,
+      height 0.3s ease-in-out;
+    white-space: nowrap;
+    width: 24px;
+    z-index: 999;
+  }
+  .cursor[data-type='cta'] {
+    background-color: #fff;
+    height: 48px;
+    mix-blend-mode: difference;
+    width: 48px;
+  }
+  .cursor[data-type='text'] {
+    height: 120px;
+    width: 120px;
+  }
+  .cursor[data-type='text']:before {
+    color: #fff;
+    content: attr(data-text);
+    font-size: 15px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    line-height: 128%;
+    padding: 0 30px;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: break-spaces;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Rotate screen overlay (mobile/landscape)                             */
+  /* ------------------------------------------------------------------ */
+
+  /* Interamente CSS: nessun JS necessario, nessuna deviazione per 3a. */
+  .rotate_screen {
+    align-items: center;
+    background: #000;
+    color: #fff;
+    display: none;
+    flex-direction: column;
+    font-size: 20px;
+    font-weight: 700;
+    gap: 16px;
+    height: 100vh;
+    justify-content: center;
+    left: 0;
+    position: fixed;
+    text-align: center;
+    top: 0;
+    width: 100vw;
+    z-index: 10000;
+  }
+  .rotate_screen .icon-cont {
+    filter: invert(1);
+  }
+  .rotate_screen .icon-cont svg {
+    height: 50px;
+    width: 50px;
+  }
+  @media screen and (max-height: 500px) and (orientation: landscape) {
+    html {
+      overflow: hidden !important;
+    }
+    .rotate_screen {
+      display: flex !important;
+    }
+  }
+}

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './design-system.css';
 
 /* Design token reali di hau.studio, estratti dagli stili inline del mirror
    Nuxt (`apps/hau-nuxt-build/index.html`). Vedi Fase 2 della ricostruzione. */
