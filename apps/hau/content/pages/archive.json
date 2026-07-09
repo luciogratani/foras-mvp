@@ -1,0 +1,1215 @@
+{
+  "slug": "archive",
+  "title": "Archive",
+  "meta": {
+    "title": "Archive - Hau™",
+    "description": "Lars Hauschildt is an independent multidisciplinary creative director crafting premium brand experiences and visuals for start-ups, enterprises, and challenger brands."
+  },
+  "blocks": [
+    {
+      "acf_fc_layout": "archive",
+      "images": [
+        {
+          "archive_img": {
+            "id": 609,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4.jpg",
+            "filename": "4.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/4-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Poster design",
+          "archive_desc": "American Getaway"
+        },
+        {
+          "archive_img": {
+            "id": 796,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39.jpg",
+            "filename": "39.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/39-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Ortofon",
+          "archive_desc": "Concord Elite Product Shoot"
+        },
+        {
+          "archive_img": {
+            "id": 606,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7.jpg",
+            "filename": "7.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/7-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Hyperion Cloud",
+          "archive_desc": "Logo and identity"
+        },
+        {
+          "archive_img": {
+            "id": 612,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10.jpg",
+            "filename": "10.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/10-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Jasmin",
+          "archive_desc": "for Eva Masaki eyewear"
+        },
+        {
+          "archive_img": {
+            "id": 649,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a.jpg",
+            "filename": "31a.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/31a-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Poster design",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 610,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3.jpg",
+            "filename": "3.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/3-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Illustration from Skyward",
+          "archive_desc": "One of the illustrations from the boardgame"
+        },
+        {
+          "archive_img": {
+            "id": 608,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5.jpg",
+            "filename": "5.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/5-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Maja",
+          "archive_desc": "for ARKK Copenhagen"
+        },
+        {
+          "archive_img": {
+            "id": 787,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37.jpg",
+            "filename": "37.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/37-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "The A Collection",
+          "archive_desc": "Studio Amanda Lilholt"
+        },
+        {
+          "archive_img": {
+            "id": 621,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13.jpg",
+            "filename": "13.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/13-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Upfront",
+          "archive_desc": "AW24"
+        },
+        {
+          "archive_img": {
+            "id": 635,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26.jpg",
+            "filename": "26.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/26-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Offland",
+          "archive_desc": "Logo and identity"
+        },
+        {
+          "archive_img": {
+            "id": 798,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40.jpg",
+            "filename": "40.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/40-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Sneakyfox",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 614,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11.jpg",
+            "filename": "11.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/11-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Upfront",
+          "archive_desc": "AW23"
+        },
+        {
+          "archive_img": {
+            "id": 611,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01.jpg",
+            "filename": "01.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/01-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Urban Space Age Aesthetics",
+          "archive_desc": "Explorations"
+        },
+        {
+          "archive_img": {
+            "id": 685,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14.jpg",
+            "filename": "14.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/14-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Unused illustration concept",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 643,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28.jpg",
+            "filename": "28.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/28-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Unused logo concept",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 802,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41.jpg",
+            "filename": "41.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/41-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Echoes of Lilith",
+          "archive_desc": "Logo and identity for a rock band"
+        },
+        {
+          "archive_img": {
+            "id": 687,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19.jpg",
+            "filename": "19.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/19-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 625,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18.jpg",
+            "filename": "18.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/18-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 790,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38.jpg",
+            "filename": "38.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/38-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Poster design",
+          "archive_desc": "Cinematography, art direction and editing for an award-winning short film"
+        },
+        {
+          "archive_img": {
+            "id": 1043,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45.jpg",
+            "filename": "vinnys45.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/08/vinnys45-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Vinny's Readers Club",
+          "archive_desc": "Art Direction"
+        },
+        {
+          "archive_img": {
+            "id": 630,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21.jpg",
+            "filename": "21.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/21-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "ARKK Copenhagen",
+          "archive_desc": "Kanetyk"
+        },
+        {
+          "archive_img": {
+            "id": 632,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23.jpg",
+            "filename": "23.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/23-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "ARKK x Lærke Andersen",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 785,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36.jpg",
+            "filename": "36.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 986,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36-238x300.jpg",
+                "width": 238,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36-768x968.jpg",
+                "width": 768,
+                "height": 968
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36.jpg",
+                "width": 782,
+                "height": 986
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/02/36-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "Dear Denier",
+          "archive_desc": ""
+        },
+        {
+          "archive_img": {
+            "id": 631,
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22.jpg",
+            "filename": "22.jpg",
+            "alt": "",
+            "mimeType": "image/jpeg",
+            "width": 782,
+            "height": 978,
+            "sizes": {
+              "thumbnail": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22-150x150.jpg",
+                "width": 150,
+                "height": 150
+              },
+              "medium": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22-240x300.jpg",
+                "width": 240,
+                "height": 300
+              },
+              "medium_large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22-768x960.jpg",
+                "width": 768,
+                "height": 960
+              },
+              "large": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "1536x1536": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "2048x2048": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22.jpg",
+                "width": 782,
+                "height": 978
+              },
+              "customsize2": {
+                "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/11/22-700x800.jpg",
+                "width": 700,
+                "height": 800
+              }
+            }
+          },
+          "archive_title": "",
+          "archive_desc": ""
+        }
+      ]
+    }
+  ]
+}

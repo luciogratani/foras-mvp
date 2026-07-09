@@ -1,0 +1,175 @@
+{
+  "slug": "about",
+  "title": "About",
+  "meta": {
+    "title": "About - Hau™",
+    "description": "Lars Hauschildt is an independent multidisciplinary creative director crafting premium brand experiences and visuals for start-ups, enterprises, and challenger brands."
+  },
+  "blocks": [
+    {
+      "acf_fc_layout": "page_hero",
+      "title": "Lars<br />\r\nHauschildt",
+      "large_description": "I am a designer, brand strategist, and photographer crafting distinctive identities and visuals that tell meaningful stories. My work combines clarity, craft, and a focus on what makes each brand unique.",
+      "small_description": "With 15+ years of experience, I’ve worked with tech, enterprise, and lifestyle brands, from emerging names to global players.",
+      "small_description2": "Whether it’s shaping the big picture or refining the smallest detail, the goal is always the same: to create something that feels right and works hard.",
+      "video_thumbnale": {
+        "id": 68,
+        "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image.jpg",
+        "filename": "Image.jpg",
+        "alt": "",
+        "mimeType": "image/jpeg",
+        "width": 1441,
+        "height": 800,
+        "sizes": {
+          "thumbnail": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image-150x150.jpg",
+            "width": 150,
+            "height": 150
+          },
+          "medium": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image-300x167.jpg",
+            "width": 300,
+            "height": 167
+          },
+          "medium_large": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image-768x426.jpg",
+            "width": 768,
+            "height": 426
+          },
+          "large": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image-790x439.jpg",
+            "width": 790,
+            "height": 439
+          },
+          "1536x1536": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image.jpg",
+            "width": 1441,
+            "height": 800
+          },
+          "2048x2048": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image.jpg",
+            "width": 1441,
+            "height": 800
+          },
+          "customsize2": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2024/03/Image-700x800.jpg",
+            "width": 700,
+            "height": 800
+          }
+        }
+      },
+      "video": false,
+      "popup_video": false,
+      "double_row": true
+    },
+    {
+      "acf_fc_layout": "list",
+      "title": "Services",
+      "add_counter": true,
+      "description": "From first spark to final polish, I shape ideas with strategy and insight, then make them real through thoughtful design and execution. I’m here for the full journey, or just the part you need.",
+      "list_title_1": "shaping",
+      "list_title_2": "Making",
+      "list_1": [
+        "Creative Direction",
+        "Design Direction",
+        "Strategy",
+        "Identity",
+        "Conceptual Design",
+        "Prototyping"
+      ],
+      "list_2": [
+        "Brand Design",
+        "Design Systems",
+        "Cinematography",
+        "Photography",
+        "Motion Graphics",
+        "Graphic Design",
+        "Prototypes",
+        "Illustration",
+        "3D",
+        "Print"
+      ],
+      "background_color": "white",
+      "fade_out_list_items": true
+    },
+    {
+      "acf_fc_layout": "list",
+      "title": "Selected clients",
+      "add_counter": true,
+      "description": "I believe great work comes from curiosity, care, and long-term collaboration. I don’t just show up to create something good. I dig in, ask better questions, and push for the strongest possible result.\r\n\r\nClients stick around because I listen, I challenge when it counts, and I always follow through. I’ve waded into freezing water, rolled in dirt, and worked deep into the night. Not for the drama, but because I care when it matters.",
+      "list_title_1": "",
+      "list_title_2": "",
+      "list_1": [
+        "Air Greenland",
+        "ARKK Copenhagen",
+        "Bemakers",
+        "Carlsberg",
+        "COWI",
+        "Dear Denier",
+        "DFDS",
+        "Ebbefos Fonden",
+        "GN Hearing",
+        "Impact Commerce",
+        "Libertine Libertine",
+        "Microsoft",
+        "MP Denmark",
+        "Omnidocs",
+        "Ortofon",
+        "Precis Digital",
+        "s360",
+        "Signia",
+        "Siteimprove",
+        "Sneakyfox",
+        "Upfront",
+        "Velux",
+        "VINNYs",
+        "Vipp",
+        "Xolta"
+      ],
+      "list_2": false,
+      "background_color": "grey",
+      "fade_out_list_items": false
+    },
+    {
+      "acf_fc_layout": "text_module",
+      "text": "I don't just design—I create meaningful experiences. Strategy, visuals, and messaging that resonate with your customers, evoke emotions, inspire action, and ultimately, achieve tangible results."
+    },
+    {
+      "acf_fc_layout": "testimonials",
+      "title": "Testimonials",
+      "add_counter": true,
+      "testimonial": [
+        {
+          "description": "Lars Hauschildt is an exceptional art director with a rare ability to translate business and brand objectives into stunning visual experiences. Having worked with him for over a decade, I’ve seen firsthand how his expertise in art direction, animation, photography, and brand development elevates every project. His creativity, precision, and deep understanding of storytelling make him an invaluable asset to any team or brand.",
+          "name": "Rasmus Duerlund",
+          "position": "CCO",
+          "company": "We Design. We Code."
+        },
+        {
+          "description": "I had the pleasure of working closely with Lars over many years and I can honestly say that his talent as an art director and creative mastermind is unmatched. Lars has an incredible ability to transform concepts into visually stunning assets, blending creativity with strategic thinking. If you're looking for someone who brings both an artistic and a strategic mindset to the table, I can’t recommend Lars enough. His work speaks for itself, and his professionalism and dedication make him stand out to the many creative people I have ever worked with in the past decade.",
+          "name": "Thomas Refdahl",
+          "position": "CEO",
+          "company": "Butchers & Bicycles, formerly ARKK Copenhagen"
+        },
+        {
+          "description": "I’ve had the distinct pleasure of working with Lars across multiple companies, and I can confidently say that he is an exceptional talent in photography, motion design, and concept development. Lars consistently delivers work that far surpasses the highest expectations. His keen eye for detail, combined with his innovative approach, results in breathtaking visuals and compelling designs that resonate deeply with audiences. Lars approaches each project with a unique blend of creativity and precision, setting him apart from any agency I’ve ever worked with.",
+          "name": "Kamran Jamshidi",
+          "position": "Chief Product Officer",
+          "company": "Bauer Media"
+        },
+        {
+          "description": "In my career I have seen a lot of bad creative work. Having Lars in the team was a game-changer, as his creative thinking is excellent, but even more important - he brings the idea to life in a way that gives you goosebumps. That kind of skillset is invaluable, and I was fortunate enough to benefit from it on many occasions. Being in charge of the digital strategy, there is often a long way from creating a direction to carrying  out the strategy. However, Lars completely changed that.",
+          "name": "Jonas Emiliussen",
+          "position": "Head of Digital",
+          "company": "ARKK Copenhagen"
+        },
+        {
+          "description": "Lars possesses a remarkable aesthetic sense that consistently elevated the quality of our work, making sure we delivered exceptional results. As a Creative Director, he’s not only visionary (he’s a true catalyst  for creativity) but also structured and highly organized, which will  transform every project he touches into a resounding success. Moreover, he possesses the great ability to create a serene and positive atmosphere on set, which is a refreshing change in the corporate world where things  need to move fast. I would jump blindly at the chance to collaborate with him again in the future.",
+          "name": "Conny á Reynatrøð",
+          "position": "Global Brand Communications Strategist",
+          "company": "Siteimprove"
+        }
+      ]
+    }
+  ]
+}

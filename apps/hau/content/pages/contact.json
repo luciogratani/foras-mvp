@@ -1,0 +1,66 @@
+{
+  "slug": "contact",
+  "title": "Contact",
+  "meta": {
+    "title": "Contact - Hau™",
+    "description": ""
+  },
+  "blocks": [
+    {
+      "acf_fc_layout": "contact_hero",
+      "title": "Contact ",
+      "description": "Let’s start a conversation\r\nabout your project.",
+      "cta": {
+        "title": "get in touch",
+        "url": "mailto:lars@hau.studio",
+        "target": ""
+      },
+      "hero_image": {
+        "id": 814,
+        "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1.jpg",
+        "filename": "lars-1.jpg",
+        "alt": "",
+        "mimeType": "image/jpeg",
+        "width": 1500,
+        "height": 1999,
+        "sizes": {
+          "thumbnail": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-150x150.jpg",
+            "width": 150,
+            "height": 150
+          },
+          "medium": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-225x300.jpg",
+            "width": 225,
+            "height": 300
+          },
+          "medium_large": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-768x1023.jpg",
+            "width": 768,
+            "height": 1023
+          },
+          "large": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-790x1053.jpg",
+            "width": 790,
+            "height": 1053
+          },
+          "1536x1536": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-1153x1536.jpg",
+            "width": 1153,
+            "height": 1536
+          },
+          "2048x2048": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1.jpg",
+            "width": 1500,
+            "height": 1999
+          },
+          "customsize2": {
+            "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/lars-1-700x800.jpg",
+            "width": 700,
+            "height": 800
+          }
+        }
+      }
+    }
+  ]
+}

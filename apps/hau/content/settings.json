@@ -1,0 +1,26 @@
+{
+  "contact_details": [
+    {
+      "title": "lars@hau.studio",
+      "url": "mailto:lars@hau.studio",
+      "target": ""
+    },
+    {
+      "title": "0045 31337524",
+      "url": "tel:+4531337524",
+      "target": ""
+    }
+  ],
+  "social_links": [
+    {
+      "title": "Instagram",
+      "url": "https://www.instagram.com/haucph/",
+      "target": "_blank"
+    },
+    {
+      "title": "LinkedIn",
+      "url": "https://www.linkedin.com/in/larshauschildt/",
+      "target": "_blank"
+    }
+  ]
+}

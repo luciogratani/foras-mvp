@@ -1,0 +1,29 @@
+{
+  "main": [
+    {
+      "label": "Home",
+      "url": "https://offland.wedesignwecode.com/wp/",
+      "path": "/"
+    },
+    {
+      "label": "Work",
+      "url": "https://offland.wedesignwecode.com/wp/work/",
+      "path": "/work/"
+    },
+    {
+      "label": "Archive",
+      "url": "https://offland.wedesignwecode.com/wp/archive/",
+      "path": "/archive/"
+    },
+    {
+      "label": "About",
+      "url": "https://offland.wedesignwecode.com/wp/about/",
+      "path": "/about/"
+    },
+    {
+      "label": "Contact",
+      "url": "https://offland.wedesignwecode.com/wp/contact/",
+      "path": "/contact/"
+    }
+  ]
+}

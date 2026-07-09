@@ -1,0 +1,24 @@
+{
+  "slug": "work",
+  "title": "Work",
+  "meta": {
+    "title": "Work",
+    "description": "From art direction and brand design to photography, motion graphics, and filmmaking, below is a sampling of past and present work across disciplines."
+  },
+  "blocks": [
+    {
+      "acf_fc_layout": "page_hero",
+      "title": "Recent work",
+      "large_description": "",
+      "small_description": "From art direction and brand design to photography, motion graphics, and filmmaking, below is a sampling of past and present work across disciplines. ",
+      "small_description2": "",
+      "video_thumbnale": false,
+      "video": false,
+      "popup_video": false,
+      "double_row": false
+    },
+    {
+      "acf_fc_layout": "works_filter"
+    }
+  ]
+}

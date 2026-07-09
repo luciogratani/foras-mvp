@@ -1,0 +1,54 @@
+{
+  "slug": "home",
+  "title": "Home",
+  "meta": {
+    "title": "Full-package creative direction & production",
+    "description": "Lars Hauschildt is an independent multidisciplinary creative director crafting premium brand experiences and visuals for start-ups, enterprises, and challenger brands."
+  },
+  "blocks": [
+    {
+      "acf_fc_layout": "page_hero",
+      "title": "Full-package creative direction<br />\r\n& production",
+      "large_description": "",
+      "small_description": "Lars Hauschildt is an independent multidisciplinary creative director crafting premium brand experiences and visuals for ambitious brands and organisations, from start‑ups to established names.",
+      "small_description2": "",
+      "video_thumbnale": false,
+      "video": {
+        "id": 895,
+        "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/hau_showreel-4_web.mp4",
+        "filename": "hau_showreel-4_web.mp4",
+        "alt": "",
+        "mimeType": "video/mp4",
+        "width": 1920,
+        "height": 1080
+      },
+      "popup_video": {
+        "id": 895,
+        "url": "https://offland.wedesignwecode.com/wp/wp-content/uploads/2025/03/hau_showreel-4_web.mp4",
+        "filename": "hau_showreel-4_web.mp4",
+        "alt": "",
+        "mimeType": "video/mp4",
+        "width": 1920,
+        "height": 1080
+      },
+      "double_row": false
+    },
+    {
+      "acf_fc_layout": "selected_works",
+      "title": "Selected work",
+      "add_counter": true,
+      "cta": {
+        "title": "View all",
+        "url": "https://offland.wedesignwecode.com/wp/work/",
+        "target": ""
+      },
+      "selected_cases": [
+        "bang-olufsen",
+        "butchers-and-bicycles",
+        "skyward",
+        "hors-doeuvre",
+        "the-story-of-larza"
+      ]
+    }
+  ]
+}
