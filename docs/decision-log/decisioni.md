@@ -751,3 +751,22 @@ Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento t
 **Opzioni:** (a) resolver del grafo di riferimenti scritto a mano; (b) pacchetto npm **`devalue`** (`parse` + revivers), che è l'inverso esatto di ciò che Nuxt ha usato per serializzare.
 
 **Decisione (master, 2026-07-09): usare `devalue`.** È l'unica dipendenza approvata per la Fase 1. Rationale: è la stessa libreria che ha *prodotto* il payload → fedeltà di parsing garantita, zero rischio di divergenza dal formato reale; un resolver a mano dovrebbe reimplementare la gestione di cicli e tipi custom senza guadagno. È una devDep di tooling (script di estrazione one-shot in `apps/hau/scripts/`), non finisce nel bundle client → coerente con l'ethos standalone/minimal-deps di `apps/hau`. Output: JSON di contenuto tipizzato committato in `apps/hau/content/`, importato dall'app. Gli URL media restano quelli del CDN `offland.wedesignwecode.com` (il mirroring locale è la Fase 6).
+
+---
+
+### 2026-07-09 — Rebuild hau — `demo.js` NON guida la chrome; Fase 3 = riscrittura React di logica Vue
+
+**Contesto:** il handoff (§6, riga Fase 3) descriveva la Fase 3 come "boot `demo.js` (menu/preloader)", e il §4 fissava il riuso di `demo.js` così com'è (contratto `window.canvas_elem`). Ricognizione del master (2026-07-09) sul mirror `apps/hau-nuxt-build/`:
+- `demo.js` (726KB) **non tocca** loading screen, clock, cursore, showreel, swiper (grep = 0 su tutti). Referenzia solo `canvas_elem` (1), più qualche hook minore su `navbar`/`hero`. **`demo.js` è il motore WebGL della sola pagina `/archive/`.**
+- Tutta la chrome della home — **loading screen, clock live (Copenhagen/GMT), navbar/menu, cursore custom, hero, selected-works, hover effects** — vive in `_nuxt/DOWtmalN.js` (206KB, il bundle **Vue** dell'app). Nessun GSAP: animazioni fatte a mano con `requestAnimationFrame` + CSS. Smooth-scroll con **Lenis**; video showreel con **Plyr**; slider con **Swiper** (chunk separati).
+- Le classi del design-system (`heading_1/2`, `body_1/2`, `sub_l/m`, `container`, `wrapper`, `row`) stanno nei 18 blocchi `<style>` inline dell'HTML (168KB).
+
+**Decisione (master, 2026-07-09):**
+1. **Chiarimento del §4/§6:** `demo.js` si riusa così com'è **solo per l'archive (Fase 4)**. La chrome della Fase 3 **non** dipende da `demo.js`: è logica Vue che va **riscritta in React** (i chunk Vue non sono riutilizzabili). La frase del handoff "boot demo.js (menu/preloader)" è superata.
+2. **Animazioni:** riprodurre l'approccio originale — CSS transitions/animations + `requestAnimationFrame`/effetti React, **niente librerie pesanti** (no GSAP/framer-motion) salvo necessità puntuale. Smooth-scroll con **Lenis** (binding React ufficiale), coerente col mirror.
+3. **Split della Fase 3** in tre sotto-fasi sequenziali, riviste rispetto al "tutto insieme" del handoff (ogni pezzo resta revisionabile e de-riscato; il risultato finale è comunque loading+navbar+home):
+   - **3a (Sonnet 5)** — fondazione design-system (tipografia/layout dalle inline `<style>`) + shell chrome condivisa **statica**: header (logo + clock), navbar/menu, loading screen, footer; cablata a `content/menus.json`+`settings.json` e ai token Fase 2. Nessuna animazione, nessuna dep runtime nuova.
+   - **3b (Sonnet 5)** — pagina **home**: hero (titolo, descrizione, `<video>` showreel autoplay + markup overlay) + selected-works grid (5 card da `content/`), markup/stile fedele con la fondazione 3a. Ancora niente animazioni fini.
+   - **3c (Opus 4.8)** — layer boot/animazioni: sequenza di reveal della loading screen e timing, reveal del titolo hero, transizioni open/close del menu, cursore custom, hover effects (`hover_cta`/`hover_text` con `data-text`), Lenis. È qui il reverse-engineering del timing da `DOWtmalN.js`, il punto a più alta incertezza → Opus 4.8. Il player fullscreen **Plyr** del showreel resta rimandato alla Fase 7 (come da handoff).
+
+**Conseguenza:** il modello Opus 4.8 previsto dal handoff per la Fase 3 si concentra sulla 3c (timing/animazioni reverse-engineered), non sull'integrazione di `demo.js` (che è marginale in Fase 3). 3a/3b vanno su Sonnet 5.
