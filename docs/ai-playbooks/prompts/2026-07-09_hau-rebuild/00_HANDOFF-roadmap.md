@@ -127,10 +127,19 @@ sicurezza/auth admin, con gate esplicito da revisionare pre-merge).
 **Deciso (2026-07-09): passo indietro.** Il branch `chore/hau-rebuild-setup` è
 stato mergiato (fast-forward) in `main` e poi eliminato; il setup vive ora
 come commit diretto su `main`, coerente con la convenzione trunk-based del
-resto del progetto. **Il branch inizierà ad avere senso reale dalla Fase 0**
-(primo `package.json`/scaffold Next in `apps/hau`), dove può esserci uno stato
-"a metà" con build che fallisce — comparabile al precedente di
-`chore/stack-upgrade`. Fino ad allora, procedi con commit diretti su `main`.
+resto del progetto.
+
+**Aggiornamento (2026-07-09) — trunk-based confermato per tutte le fasi.** La
+Fase 0 era stata avviata su un branch `chore/hau-rebuild-scaffold`, ma alla
+prova la delega in worktree fa partire le sub-chat da `origin/main` (vedi
+[[feedback_agent-worktree-base]]): tenere una fase su un branch non-mergiato
+renderebbe invisibile il suo lavoro alla sub-chat della fase successiva. La
+Fase 0 (build verde) è stata quindi mergiata in fast-forward su `main` e il
+branch eliminato. **Decisione (Lucio): rebuild interamente trunk-based su
+`main`** — ogni fase committata diretta su `main` dopo review del master coi
+check verdi; un branch temporaneo si apre solo se una singola fase dovesse
+chiudersi in stato non-buildabile. Dettaglio in `decision-log/decisioni.md`
+(2026-07-09).
 
 ## 7. Come procedere (regole operative)
 

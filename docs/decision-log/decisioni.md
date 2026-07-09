@@ -729,3 +729,25 @@ Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento t
 **Sorpresa benigna:** il VPS live aveva GIÀ `EXECUTE` ad anon (probabilmente legacy Studio init mai droppato dal `REVOKE FROM PUBLIC` del provisioner) → il fix è no-op funzionale sul live, ma allinea CI + onboarding-futuro al comportamento già attivo in produzione. La 004 viene registrata in `public.tenant_migrations` per audit trail.
 
 **Idempotenza:** `GRANT` è idempotente per natura — la migrazione viene eseguita una volta per schema target (oggi solo `template`, in futuro N tenant) come no-op se già presente, ma marca `tenant_migrations` per tracciabilità.
+
+---
+
+### 2026-07-09 — Rebuild hau — branching trunk-based su `main`
+
+**Contesto:** l'iniziativa "ricostruzione hau" (mirror Nuxt → Next+React in `apps/hau`, vedi `docs/ai-playbooks/prompts/2026-07-09_hau-rebuild/00_HANDOFF-roadmap.md`) usa il workflow master/sub-chat con delega in worktree. Il §6b del handoff prevedeva un branch dedicato (`chore/hau-rebuild-scaffold`) a partire dalla Fase 0, per isolare un eventuale stato "a metà" con build rotta. Alla prova, però, la delega in worktree fa partire le sub-chat da **`origin/main`** ([[feedback_agent-worktree-base]]: pushare prima di delegare, altrimenti leggono forme stale): tenere lo scaffold su un branch non-mergiato renderebbe invisibile alla sub-chat della fase successiva il lavoro della fase precedente (es. Fase 1 non vedrebbe lo scaffold Fase 0).
+
+**Opzioni:**
+- (a) **Trunk-based su `main`**: ogni fase committata direttamente su `main` dopo review del master con check verdi; branch aperto solo se una fase resta genuinamente rotta.
+- (b) Tenere tutto su un branch di lungo corso e far partire le sub-chat da lì — va contro il default del tooling worktree e aggiunge attrito a ogni delega.
+
+**Decisione (Lucio, 2026-07-09): opzione (a), trunk-based su `main`.** Rationale: (1) è la convenzione già usata da ogni sprint/intermezzo precedente del repo (lo nota il §6b stesso); (2) è ciò che il modello di delega in worktree richiede per non leggere forme stale; (3) la build della Fase 0 è verde, quindi `main` resta sano — il rischio "build rotta su main" che motivava il branch non si è materializzato. La Fase 0 (`chore/hau-rebuild-scaffold`) è stata mergiata in fast-forward su `main` e il branch eliminato. Un branch temporaneo si apre solo se una singola fase dovesse chiudersi in stato non-buildabile.
+
+---
+
+### 2026-07-09 — Rebuild hau — decoder contenuto via pacchetto `devalue`
+
+**Contesto:** Fase 1 del rebuild = estrarre il contenuto strutturato del sito dal payload `__NUXT_DATA__` inline in ogni `index.html` del mirror (`apps/hau-nuxt-build/`). Il master ha accertato che il formato è la serializzazione **devalue** di Nuxt (array flat con puntatori-per-indice; unico tipo custom presente: `Reactive`, il wrapper root). Il contenuto vive in `parsed.state`: `$spages` (5), `$scases` (20), `$ssettings`, `$smenus`.
+
+**Opzioni:** (a) resolver del grafo di riferimenti scritto a mano; (b) pacchetto npm **`devalue`** (`parse` + revivers), che è l'inverso esatto di ciò che Nuxt ha usato per serializzare.
+
+**Decisione (master, 2026-07-09): usare `devalue`.** È l'unica dipendenza approvata per la Fase 1. Rationale: è la stessa libreria che ha *prodotto* il payload → fedeltà di parsing garantita, zero rischio di divergenza dal formato reale; un resolver a mano dovrebbe reimplementare la gestione di cicli e tipi custom senza guadagno. È una devDep di tooling (script di estrazione one-shot in `apps/hau/scripts/`), non finisce nel bundle client → coerente con l'ethos standalone/minimal-deps di `apps/hau`. Output: JSON di contenuto tipizzato committato in `apps/hau/content/`, importato dall'app. Gli URL media restano quelli del CDN `offland.wedesignwecode.com` (il mirroring locale è la Fase 6).
