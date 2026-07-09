@@ -1,7 +1,8 @@
 ---
-status: TODO
+status: DONE
 phase: 1
 created: 2026-07-09
+completed: 2026-07-09
 owner: master-chat
 model: Sonnet 5
 effort: high
