@@ -1,17 +1,52 @@
 @import 'tailwindcss';
 
+/* Design token reali di hau.studio, estratti dagli stili inline del mirror
+   Nuxt (`apps/hau-nuxt-build/index.html`). Vedi Fase 2 della ricostruzione. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Font: legato alla CSS variable esposta da next/font/local (fonts.ts). */
+  --font-display: var(--font-hnd), 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Palette brand.
+     #1e1e1e = testo/scuro primario (non nero puro); #fff = background. */
+  --color-black: #1e1e1e;
+  --color-white: #ffffff;
+
+  /* Header: due stati (navbar su chiaro / su scuro). Servira in Fase 3. */
+  --color-header-dark: #1e1e1e;
+  --color-header-light: #ffffff;
+
+  /* Gutter orizzontale di pagina (--p-l del mirror) come token spacing. */
+  --spacing-gutter: var(--p-l);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Root font-size fluida: meccanismo chiave del mirror. I `rem` scalano col
+     viewport fino a un cap di 12px; --size = larghezza di design (1440px). */
+  --size: 1440;
+
+  /* Gutter di pagina, valore grezzo fedele al mirror. */
+  --p-l: 64px;
+
+  /* Colore brand primario, nome fedele al mirror (var(--Black)). */
+  --Black: #1e1e1e;
+
+  /* Colore header, default = stato su chiaro. */
+  --header-color: #1e1e1e;
+}
+
+html {
+  /* Riprodotto tale e quale dal mirror. */
+  font-size: clamp(0px, 12px, 10 * 100vw / var(--size));
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground;
+    font-family: var(--font-display);
+    line-height: 1;
+    color: var(--Black);
+    background-color: var(--color-white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 }
