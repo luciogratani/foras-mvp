@@ -111,6 +111,27 @@ La fase 3 è quella con più incertezza (nessuna sourcemap, comportamento dedott
 solo osservando `demo.js`) — vale la pena spendere un modello più capace subito
 piuttosto che scoprire tardi che l'integrazione non regge.
 
+## 6b. Nota su branching (2026-07-09)
+
+Il setup iniziale (rename `hau`→`hau-nuxt-build`, creazione `apps/hau` vuota,
+questo file) è stato committato sul branch **`chore/hau-rebuild-setup`** invece
+che direttamente su `main`. A revisione, questa scelta era **prematura**: quel
+commit conteneva solo materiale inerte (rename di una cartella mai stata su
+main + un doc), zero rischio per `web`/`admin`, nessuna build che lo tocca
+(niente `package.json` in `apps/hau` ancora). Guardando la storia del repo,
+ogni sprint/intermezzo precedente è stato fatto con **commit diretti su
+`main`** (trunk-based) — l'unico branch pre-esistente, `chore/stack-upgrade`,
+isolava un caso genuinamente diverso (upgrade major che toccava codice di
+sicurezza/auth admin, con gate esplicito da revisionare pre-merge).
+
+**Deciso (2026-07-09): passo indietro.** Il branch `chore/hau-rebuild-setup` è
+stato mergiato (fast-forward) in `main` e poi eliminato; il setup vive ora
+come commit diretto su `main`, coerente con la convenzione trunk-based del
+resto del progetto. **Il branch inizierà ad avere senso reale dalla Fase 0**
+(primo `package.json`/scaffold Next in `apps/hau`), dove può esserci uno stato
+"a metà" con build che fallisce — comparabile al precedente di
+`chore/stack-upgrade`. Fino ad allora, procedi con commit diretti su `main`.
+
 ## 7. Come procedere (regole operative)
 
 - Un prompt `.md` per fase (o sotto-fase) in
