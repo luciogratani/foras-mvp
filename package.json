@@ -6,6 +6,7 @@
     "dev:web": "pnpm --filter web dev",
     "dev:admin": "pnpm --filter admin dev",
     "dev:hau": "pnpm --filter hau dev",
+    "dev:view": "pnpm --filter view dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r tsc --noEmit",
