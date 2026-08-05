@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { isTimeWithinRange, isOvernightRange } from '../lib/timeRange'
+import { isTimeWithinRange, isTimeWithinWindow, isOvernightRange } from '../lib/timeRange'
 
 describe('isOvernightRange', () => {
   it('riconosce una fascia normale', () => {
@@ -85,6 +85,51 @@ describe('isTimeWithinRange — fascia oltre la mezzanotte', () => {
 
     expect(vecchiaLogica).toHaveLength(0)
     expect(nuovaLogica).toEqual(orari)
+  })
+})
+
+describe('isTimeWithinWindow — finestra di prenotazione (estremo finale incluso)', () => {
+  // Caso reale di University: si prenota dalle 19:00 alle 23:00, 23:00 comprese.
+  const start = '19:00'
+  const end = '23:00'
+
+  it('include l’ultimo arrivo dichiarato dal gestore', () => {
+    expect(isTimeWithinWindow('23:00', start, end)).toBe(true)
+  })
+
+  it('include l’orario di inizio e gli orari interni', () => {
+    expect(isTimeWithinWindow('19:00', start, end)).toBe(true)
+    expect(isTimeWithinWindow('21:15', start, end)).toBe(true)
+  })
+
+  it('esclude ciò che sta fuori', () => {
+    expect(isTimeWithinWindow('18:59', start, end)).toBe(false)
+    expect(isTimeWithinWindow('23:01', start, end)).toBe(false)
+    expect(isTimeWithinWindow('02:00', start, end)).toBe(false)
+  })
+
+  it('differisce da isTimeWithinRange solo sull’estremo finale', () => {
+    expect(isTimeWithinRange('23:00', start, end)).toBe(false) // fascia: chiuso
+    expect(isTimeWithinWindow('23:00', start, end)).toBe(true) // finestra: ultimo arrivo
+    for (const t of ['19:00', '20:30', '22:59', '18:00', '23:30']) {
+      expect(isTimeWithinWindow(t, start, end)).toBe(isTimeWithinRange(t, start, end))
+    }
+  })
+
+  it('include l’estremo finale anche su finestra che scavalca la mezzanotte', () => {
+    expect(isTimeWithinWindow('01:00', '22:00', '01:00')).toBe(true)
+    expect(isTimeWithinWindow('23:30', '22:00', '01:00')).toBe(true)
+    expect(isTimeWithinWindow('01:01', '22:00', '01:00')).toBe(false)
+    expect(isTimeWithinWindow('21:59', '22:00', '01:00')).toBe(false)
+  })
+
+  it('estremi coincidenti descrivono un istante solo', () => {
+    expect(isTimeWithinWindow('19:00', '19:00', '19:00')).toBe(true)
+    expect(isTimeWithinWindow('19:01', '19:00', '19:00')).toBe(false)
+  })
+
+  it('normalizza HH:MM:SS', () => {
+    expect(isTimeWithinWindow('23:00:00', '19:00:00', '23:00:00')).toBe(true)
   })
 })
 

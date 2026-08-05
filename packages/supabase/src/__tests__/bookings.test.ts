@@ -475,6 +475,28 @@ describe('createBooking', () => {
     }
   })
 
+  it('accepts an arrival exactly at end_time (last arrival, inclusive)', async () => {
+    // Caso reale University: turno 19:00–23:00, "fino alle 23" incluse.
+    const slotId = await insertSlot('InclusiveEnd', '19:00', 20, '23:00')
+    const testDate = '2099-12-13'
+
+    try {
+      const result = await createBooking(client, {
+        time_slot_id: slotId,
+        date: testDate,
+        name: 'Ultimo arrivo',
+        email: 'ultimo@test.example',
+        covers: 2,
+        gdpr_consent: true,
+        preferred_time: '23:00',
+      })
+      expect(result.id).toBeTruthy()
+    } finally {
+      await clearBookings(slotId, testDate)
+      await removeSlot(slotId)
+    }
+  })
+
   it('accepts an arrival after midnight when the slot window crosses midnight', async () => {
     // Turno 22:00–01:00: l'arrivo alle 00:30 è dentro la finestra.
     // Prima del fix era rifiutato, e il turno stesso non era nemmeno salvabile.

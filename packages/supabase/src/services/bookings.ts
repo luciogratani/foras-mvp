@@ -7,7 +7,7 @@ import {
   type CreateBookingInput,
 } from '../schemas/bookings'
 import { localToday, localNow, localDateOffset } from '../lib/clock'
-import { isTimeWithinRange } from '../lib/timeRange'
+import { isTimeWithinRange, isTimeWithinWindow } from '../lib/timeRange'
 
 export type TimeSlot = Tables<{ schema: 'template' }, 'time_slots'>
 export type Booking = Tables<{ schema: 'template' }, 'bookings'>
@@ -152,8 +152,9 @@ export async function createBooking(
   }
 
   // Enforcement finestra oraria: quando il turno ha end_time, preferred_time è obbligatorio
-  // e deve cadere dentro [time, end_time). Normalizza entrambi i lati a HH:MM (il DB
-  // ritorna "HH:MM:SS"; parsed.preferred_time è già "HH:MM" da Zod).
+  // e deve cadere dentro [time, end_time] — estremo finale INCLUSO, perché end_time è
+  // "ultimo arrivo accettato" e non un orario di chiusura. Normalizza entrambi i lati a
+  // HH:MM (il DB ritorna "HH:MM:SS"; parsed.preferred_time è già "HH:MM" da Zod).
   // La finestra può scavalcare la mezzanotte (turno 22:00–01:00): isTimeWithinRange
   // se ne accorge da sola confrontando i due estremi.
   const winStart = slot.time.substring(0, 5)
@@ -163,7 +164,7 @@ export async function createBooking(
       throw new BookingWindowError(
         `Per questo turno indica l'orario di arrivo (tra ${winStart} e ${winEnd}).`
       )
-    } else if (!isTimeWithinRange(parsed.preferred_time, winStart, winEnd)) {
+    } else if (!isTimeWithinWindow(parsed.preferred_time, winStart, winEnd)) {
       throw new BookingWindowError(
         `L'orario di arrivo deve essere tra ${winStart} e ${winEnd}.`
       )

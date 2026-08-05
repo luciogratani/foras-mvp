@@ -149,6 +149,36 @@ gli orari.
 diventano rossi**; con il fix sono 34/34 verdi. I test falliscono per la ragione
 giusta.
 
+## Aggiornamento — estremo finale della finestra di prenotazione
+
+*(stesso giorno, commit separato)*
+
+Configurando il turno reale di University — *"prenotazioni dalle 19:00 alle
+23:00"* — è emerso che i due estremi **non significano la stessa cosa** a
+seconda di cosa descrivono:
+
+| | `close` / `end` significa | Intervallo |
+|---|---|---|
+| Fascia di apertura | "abbassiamo la saracinesca" | semiaperto `[open, close)` |
+| Finestra di prenotazione | "ultimo arrivo accettato" | chiuso `[start, end]` |
+
+Un locale aperto 15:00–02:00 **alle 02:00 è chiuso**: giusto escludere
+l'estremo. Ma un turno 19:00–23:00 **accetta** chi arriva alle 23:00 — usare il
+semiaperto rifiutava l'orario che il gestore aveva appena dichiarato valido, e
+faceva scivolare l'ultimo arrivo utile alle 22:59. Un cliente che digita `23:00`
+riceveva un errore di validazione: l'attrito che fa abbandonare una prenotazione.
+
+Aggiunta quindi `isTimeWithinWindow(time, start, end)` — identica a
+`isTimeWithinRange` ma con l'estremo finale incluso, overnight compreso
+(`22:00–01:00` accetta l'arrivo all'01:00). Usata nel solo enforcement della
+finestra in `createBooking`; il filtro delle fasce di apertura resta semiaperto.
+
+Gli attributi `min`/`max` di `<input type="time">` erano già coerenti: `max` in
+HTML è inclusivo.
+
+**Test:** 7 nuovi (6 puri + 1 d'integrazione con arrivo esattamente alle 23:00).
+Verificato che con il semiaperto **5 diventano rossi**. Totale suite: 42 verdi.
+
 ## Cosa resta aperto
 
 **Il modello `data + ora` non regge le prenotazioni a durata.** Per le
