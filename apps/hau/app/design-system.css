@@ -287,10 +287,18 @@
       padding-bottom: 138.66667px;
     }
   }
+  /*
+   * Verifica 3b (la discrepanza segnalata dalla 3a): a ≤900px il mirror ha
+   * DUE dichiarazioni `@media(max-width:900px) .pt104` concatenate — la prima
+   * (26.4631vw, che la 3a aveva tenuto come "canonica") e una successiva
+   * (10.17812vw) che, a parità di specificità, vince nel cascade. Il valore
+   * EFFETTIVO sul mirror a mobile è quindi 10.17812vw (misurato: 39.7px @390):
+   * riallineato qui perché la 3b usa `.pt104` sulla sezione selected_works.
+   */
   @media (max-width: 900px) {
     .pt104 {
-      padding-top: 26.4631vw;
-      padding-bottom: 26.4631vw;
+      padding-top: 10.17812vw;
+      padding-bottom: 10.17812vw;
     }
   }
 
@@ -453,6 +461,364 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Home — Hero (Fase 3b)                                                */
+  /* ------------------------------------------------------------------ */
+  /*
+   * Estratto fedele dal mirror (blocco <style> component-scoped, tutto sotto
+   * `.hero ...`). Dove il mirror ha più dichiarazioni concatenate per lo
+   * stesso selettore a ≤900px (build Nuxt), qui teniamo il valore EFFETTIVO
+   * che vince nel cascade (misurato contro il mirror a 390px) e lo segnalo.
+   */
+
+  .hero .wrapper {
+    gap: 72px;
+  }
+
+  .hero .hero_content {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 19.86111vw;
+  }
+  @media (min-width: 1920px) {
+    .hero .hero_content {
+      padding-top: 381.33333px;
+    }
+  }
+  /* Mobile: colonna, gap ridotto, padding-top effettivo 49.36387vw (il mirror
+     concatena 72.77354vw poi 49.36387vw a ≤900 — vince il secondo). */
+  @media (max-width: 900px) {
+    .hero .hero_content {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 4.07125vw;
+      padding-top: 49.36387vw;
+    }
+  }
+
+  .hero .title_container {
+    max-width: 59.79167vw;
+  }
+  @media (min-width: 1920px) {
+    .hero .title_container {
+      max-width: 1148px;
+    }
+  }
+  @media (max-width: 900px) {
+    .hero .title_container {
+      max-width: 219.08397vw;
+    }
+  }
+
+  .hero .title_container .single_line {
+    display: flex;
+    margin-bottom: -30px;
+    overflow: hidden;
+  }
+  .hero .title_container .single_line:nth-child(2) i {
+    transition-delay: 0.1s;
+  }
+  .hero .title_container .single_line:nth-child(3) i {
+    transition-delay: 0.2s;
+  }
+  .hero .title_container .single_line:nth-child(4) i {
+    transition-delay: 0.3s;
+  }
+  .hero .title_container .single_line i {
+    display: flex;
+    padding-bottom: 30px;
+    padding-right: 20px;
+    transform: translateY(0);
+    transition: all 0.6s ease;
+  }
+  @media (min-width: 1920px) {
+    .hero .title_container .single_line i {
+      font-size: 62.66667px;
+      letter-spacing: -3.73333px;
+      line-height: 60px;
+    }
+  }
+  @media (max-width: 900px) {
+    .hero .title_container .single_line i {
+      font-size: 11.95929vw;
+      letter-spacing: -0.71247vw;
+      line-height: 11.45038vw;
+    }
+  }
+  /* Stato nascosto pre-reveal, agganciato al loading (`body.i_l`) → Fase 3c.
+     Inerte finché il body non ha `.i_l` (loading disabilitato in 3a). */
+  .i_l .hero .title_container .single_line i {
+    transform: translateY(100%);
+  }
+
+  .hero .description_container {
+    opacity: 1;
+    transition: all 0.6s ease;
+  }
+  .hero .description_container .small_text {
+    max-width: 20.83333vw;
+  }
+  @media (min-width: 1920px) {
+    .hero .description_container .small_text {
+      max-width: 400px;
+    }
+  }
+  /* Mobile effettivo 83.96947vw (il mirror concatena 76.33588vw poi
+     83.96947vw a ≤900 — vince il secondo). */
+  @media (max-width: 900px) {
+    .hero .description_container .small_text {
+      max-width: 83.96947vw;
+    }
+  }
+
+  .hero .hero_player {
+    width: 100%;
+  }
+  .hero .hero_player .showreel_player {
+    height: 100vh;
+  }
+  @media (min-width: 1920px) {
+    .hero .hero_player .showreel_player {
+      height: 490.66667px;
+    }
+  }
+  /* Mobile effettivo 93.63868vw (seed 25.55556vw → override annidato). */
+  @media (max-width: 900px) {
+    .hero .hero_player .showreel_player {
+      height: 93.63868vw;
+    }
+  }
+  .hero .hero_player .showreel_player img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  .hero .hero_player.showreel_thumb {
+    cursor: pointer;
+    overflow: hidden;
+  }
+  .hero .hero_player.showreel_thumb video {
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    width: 100%;
+  }
+  @media (max-width: 900px) {
+    .hero .showreel_player.is_video {
+      pointer-events: none;
+    }
+  }
+
+  /*
+   * `.video_overlay`: markup statico dell'overlay fullscreen. A riposo è
+   * invisibile e non interattivo (opacity:0; pointer-events:none;
+   * transform:scale(.75)) — diventa attivo solo con `.active_player` (Fase 7,
+   * col player Plyr). I selettori interni Plyr (`.plyr__controls`, ...) NON
+   * sono inclusi: arriveranno con Plyr in Fase 7.
+   */
+  .hero .video_overlay {
+    height: 100vh;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    transform: scale(0.75);
+    transition: all 0.6s ease;
+    width: 100vw;
+    z-index: 101;
+  }
+  .hero .video_overlay .close_video_overlay {
+    background-color: #fff;
+    border-radius: 100%;
+    height: 50px;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 50px;
+    z-index: 1;
+  }
+  .hero .video_overlay .video_overlay_inner {
+    height: 100%;
+    width: 100%;
+  }
+  .hero .video_overlay .video_overlay_inner video {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Home — Selected works (Fase 3b)                                      */
+  /* ------------------------------------------------------------------ */
+
+  .selected_works .container {
+    gap: 6.11111vw;
+  }
+  @media (min-width: 1920px) {
+    .selected_works .container {
+      gap: 117.33333px;
+    }
+  }
+  /* Mobile effettivo 14.75827vw (seed 4.02778vw → override annidato). */
+  @media (max-width: 900px) {
+    .selected_works .container {
+      gap: 14.75827vw;
+    }
+  }
+
+  .selected_works .selected_works_top {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .selected_works .selected_works_top .heading_2 {
+    position: relative;
+  }
+  @media (min-width: 1920px) {
+    .selected_works .selected_works_top .heading_2 {
+      font-size: 33.33333px;
+      letter-spacing: -1.2px;
+      line-height: 33.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    .selected_works .selected_works_top .heading_2 {
+      font-size: 6.36132vw;
+      letter-spacing: -0.22901vw;
+      line-height: 6.36132vw;
+    }
+  }
+  .selected_works .selected_works_top .heading_2.counter:after {
+    color: var(--Black, #1e1e1e);
+    content: '( ' attr(data-count) ' )';
+    display: inline-block;
+    font-feature-settings: 'sups' on;
+    font-size: 4.09722vw;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: -0.02778vw;
+    line-height: 100%;
+    transform: translate(20%, 20%);
+  }
+  @media (min-width: 1920px) {
+    .selected_works .selected_works_top .heading_2.counter:after {
+      font-size: 78.66667px;
+      letter-spacing: -0.53333px;
+    }
+  }
+  @media (max-width: 900px) {
+    .selected_works .selected_works_top .heading_2.counter:after {
+      font-size: 6.36132vw;
+      letter-spacing: -0.10178vw;
+      line-height: 6.36132vw;
+    }
+  }
+
+  /* "View all" / titolo-case dentro selected_works: a ≤900px il mirror li
+     rimpicciolisce sotto la scala base di `.sub_l`. */
+  @media (min-width: 1920px) {
+    .selected_works .sub_l {
+      font-size: 20px;
+      line-height: 26.66667px;
+    }
+  }
+  @media (max-width: 900px) {
+    .selected_works .sub_l {
+      font-size: 3.81679vw;
+      line-height: 5.08906vw;
+    }
+  }
+
+  .works.grid {
+    column-gap: 2.77778vw;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    justify-items: flex-end;
+    row-gap: 7.22222vw;
+  }
+  @media (min-width: 1920px) {
+    .works.grid {
+      column-gap: 53.33333px;
+      row-gap: 138.66667px;
+    }
+  }
+  @media (max-width: 900px) {
+    .works.grid {
+      column-gap: 10.17812vw;
+      grid-template-columns: repeat(1, 1fr);
+      row-gap: 26.4631vw;
+    }
+  }
+  .works.grid .single_case {
+    display: flex;
+    flex-direction: column;
+    gap: 1.66667vw;
+    width: 100%;
+  }
+  @media (min-width: 1920px) {
+    .works.grid .single_case {
+      gap: 32px;
+    }
+  }
+  @media (max-width: 900px) {
+    .works.grid .single_case {
+      gap: 6.10687vw;
+    }
+  }
+  .works.grid .single_case .case_details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .works.grid .single_case .case_image {
+    position: relative;
+    width: 100%;
+  }
+  .works.grid .single_case .case_image img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  /*
+   * `.case_showreel` (video hover-reveal su alcuni case) è OMESSO: il payload
+   * estratto in `cases.json` non porta i video dei case (solo `image`), quindi
+   * la card mostra la sola immagine. Il markup/CSS `.case_showreel` andrà con
+   * i video dei case (Fase 6) + la hover-reveal (3c).
+   */
+  .works.grid .single_case:nth-child(3n + 3) {
+    grid-column: 1 / -1;
+    max-width: 75.48611vw;
+    width: 100%;
+  }
+  @media (min-width: 1920px) {
+    .works.grid .single_case:nth-child(3n + 3) {
+      max-width: 1449.33333px;
+    }
+  }
+  @media (max-width: 900px) {
+    .works.grid .single_case:nth-child(3n + 3) {
+      max-width: 276.59033vw;
+    }
+  }
+  .works.grid .single_case:nth-child(3n - 2) .case_image {
+    height: 57.77778vw;
+  }
+  @media (min-width: 1920px) {
+    .works.grid .single_case:nth-child(3n - 2) .case_image {
+      height: 1109.33333px;
+    }
+  }
+  /* Mobile effettivo 93.63868vw (seed 25.55556vw → override annidato). */
+  @media (max-width: 900px) {
+    .works.grid .single_case:nth-child(3n - 2) .case_image {
+      height: 93.63868vw;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Navbar (dentro <footer>, pill fluttuante sempre visibile)           */
   /* ------------------------------------------------------------------ */
 
@@ -569,20 +935,22 @@
   /* ------------------------------------------------------------------ */
 
   /*
-   * Deviazione 3a (documentata): nel mirror `footer .footer` è
-   * `display:none` di default e diventa visibile solo come
-   * `footer.scroll_footer .footer{position:fixed; ...}`, innescato da uno
-   * scroll listener JS (`D(window).scroll(...)` in DOWtmalN.js) quando si
-   * raggiunge il fondo della pagina (`footer{padding-bottom:100vh}` riserva
-   * lo spazio di scroll per il reveal). Questo è comportamento di
-   * scroll/interazione, esplicitamente fuori scope 3a ("niente
-   * smooth-scroll"). Per la 3a lo rendiamo staticamente visibile in flusso
-   * normale (niente `display:none`, niente `position:fixed`, niente
-   * `footer{padding-bottom:100vh}`) così è verificabile nei Done-when; il
-   * pin/reveal via scroll va implementato in 3c insieme allo smooth-scroll.
+   * Fedeltà ripristinata in 3b: nel mirror `footer .footer` è `display:none`
+   * di default e diventa visibile solo come `footer.scroll_footer .footer`
+   * (position:fixed; height:100vh), innescato da uno scroll listener JS
+   * (`D(window).scroll(...)` in DOWtmalN.js) quando si raggiunge il fondo
+   * della pagina (`footer{padding-bottom:100vh}` riserva lo spazio di scroll
+   * per il reveal). Questo è comportamento di scroll/interazione, fuori scope
+   * qui: teniamo il footer NON visibile a riposo (`display:none`) come nel
+   * mirror. Il pin/reveal via scroll (classe `.scroll_footer`, position:fixed,
+   * `footer{padding-bottom:100vh}`) va implementato in 3c con lo smooth-scroll.
+   *
+   * La 3a lo aveva reso staticamente visibile (senza `display:none`) solo per
+   * verificarlo nei propri Done-when: quella deviazione è ora annullata.
    */
   footer .footer {
     background-color: #eee;
+    display: none;
     padding-top: 6.94444vw;
     padding-bottom: 6.94444vw;
     position: relative;
@@ -797,12 +1165,17 @@
 
   /*
    * Nel mirror `*{cursor:none!important}` nasconde il cursore reale del
-   * sistema ovunque, sostituito da questo div (posizionato via
-   * `mousemove`). In 3a il follow non è cablato: NON applichiamo
-   * `cursor:none` globale (lasciato alla 3c, insieme al listener) per non
-   * lasciare l'utente senza alcun cursore visibile nel frattempo — vedi
-   * `Cursor.tsx` per il dettaglio del gancio.
+   * sistema ovunque, sostituito da questo div (posizionato via `mousemove`).
+   * In 3b il follow è cablato (vedi `Cursor.tsx`): il `cursor:none` globale è
+   * gated dietro `html.cursor-active`, classe che `Cursor.tsx` aggiunge SOLO
+   * al mount del listener — così senza JS l'utente non resta mai senza
+   * puntatore. Gli hover-state (`data-type`) del cursore sono in 3c.
    */
+  html.cursor-active,
+  html.cursor-active * {
+    cursor: none !important;
+  }
+
   .cursor {
     align-items: center;
     background-color: #000;
