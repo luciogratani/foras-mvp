@@ -2,7 +2,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import type { AvailableTimeSlot } from '@repo/supabase'
-import { localToday } from '@repo/supabase'
+import { localToday, isOvernightRange } from '@repo/supabase'
 import { createBookingAction, type BookingActionState } from '../actions'
 
 const initialState: BookingActionState = { status: 'idle' }
@@ -18,6 +18,11 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
   const winStart = selected ? selected.time.substring(0, 5) : ''
   const winEnd = selected?.end_time ? selected.end_time.substring(0, 5) : null
   const hasWindow = winEnd !== null
+  // Finestra che scavalca la mezzanotte (es. 22:00–01:00): min/max nativi
+  // dell'input escluderebbero ogni orario, perché il browser li interpreta
+  // sulla stessa giornata. Si lasciano cadere e resta la validazione server.
+  const isOvernightWindow = hasWindow && isOvernightRange(winStart, winEnd)
+  const clampWindow = hasWindow && !isOvernightWindow
 
   if (state.status === 'success') {
     return (
@@ -108,15 +113,17 @@ export function BookingForm({ slots, date }: { slots: AvailableTimeSlot[]; date:
               type="time"
               name="preferred_time"
               required={hasWindow}
-              min={hasWindow ? winStart : undefined}
-              max={hasWindow ? winEnd : undefined}
+              min={clampWindow ? winStart : undefined}
+              max={clampWindow ? winEnd : undefined}
               defaultValue={v?.preferred_time}
               aria-describedby={fe?.preferred_time ? 'preferred_time-error' : 'preferred_time-hint'}
             />
             <p id="preferred_time-hint">
               <small>
                 {hasWindow
-                  ? `Scegli un orario tra ${winStart} e ${winEnd}.`
+                  ? isOvernightWindow
+                    ? `Scegli un orario tra ${winStart} e ${winEnd} del giorno successivo.`
+                    : `Scegli un orario tra ${winStart} e ${winEnd}.`
                   : 'Indicaci a che ora vorresti sederti. Sarà mostrato al gestore come preferenza.'}
               </small>
             </p>

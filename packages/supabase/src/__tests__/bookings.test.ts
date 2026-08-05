@@ -239,6 +239,44 @@ describe('getAvailableTimeSlots', () => {
     }
   })
 
+  it('keeps slots inside an opening-hours range that crosses midnight', async () => {
+    // Regressione: con orari tipo 15:00–02:00 il confronto diretto
+    // `time >= open && time < close` è insoddisfacibile e svuotava la lista.
+    // Caso reale: University, aperto 15:00–02:00 tutti i giorni.
+    // Vedi docs/fixes/2026-08-05-fasce-oltre-mezzanotte.md
+    const afternoonSlot = await insertSlot('OvernightAfternoon', '14:00', 10) // fuori
+    const eveningSlot = await insertSlot('OvernightEvening', '20:00', 10) // dentro, pre-mezzanotte
+    const nightSlot = await insertSlot('OvernightNight', '01:00', 10) // dentro, post-mezzanotte
+
+    const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+    const testDate = '2099-09-06'
+    const rangeDay = DAY_NAMES[new Date(testDate).getUTCDay()]
+    const overnight: Record<string, unknown> = {}
+    for (const day of DAY_NAMES) {
+      overnight[day] = day === rangeDay
+        ? { closed: false, ranges: [{ open: '15:00', close: '02:00' }] }
+        : { closed: false, ranges: [] }
+    }
+    await setOpeningHours(overnight)
+
+    try {
+      const result = await getAvailableTimeSlots(client, testDate)
+      const ids = result.map((s) => s.time_slot_id)
+      expect(ids).toContain(eveningSlot) // 20:00 → dentro 15:00–02:00
+      expect(ids).toContain(nightSlot) // 01:00 → dentro, dopo la mezzanotte
+      expect(ids).not.toContain(afternoonSlot) // 14:00 → locale ancora chiuso
+    } finally {
+      await removeSlot(afternoonSlot)
+      await removeSlot(eveningSlot)
+      await removeSlot(nightSlot)
+      const allOpen: Record<string, unknown> = {}
+      for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) {
+        allOpen[day] = { closed: false, ranges: [] }
+      }
+      await setOpeningHours(allOpen)
+    }
+  })
+
   it('returns available_covers accounting for existing confirmed bookings', async () => {
     const slotId = await insertSlot('CapacityTest', '19:00', 10)
     const testDate = '2099-08-20'
@@ -431,6 +469,51 @@ describe('createBooking', () => {
         preferred_time: '19:30',
       })
       expect(result.id).toBeTruthy()
+    } finally {
+      await clearBookings(slotId, testDate)
+      await removeSlot(slotId)
+    }
+  })
+
+  it('accepts an arrival after midnight when the slot window crosses midnight', async () => {
+    // Turno 22:00–01:00: l'arrivo alle 00:30 è dentro la finestra.
+    // Prima del fix era rifiutato, e il turno stesso non era nemmeno salvabile.
+    const slotId = await insertSlot('OvernightWindow', '22:00', 20, '01:00')
+    const testDate = '2099-12-11'
+
+    try {
+      const result = await createBooking(client, {
+        time_slot_id: slotId,
+        date: testDate,
+        name: 'Arrivo notturno',
+        email: 'notte@test.example',
+        covers: 2,
+        gdpr_consent: true,
+        preferred_time: '00:30',
+      })
+      expect(result.id).toBeTruthy()
+    } finally {
+      await clearBookings(slotId, testDate)
+      await removeSlot(slotId)
+    }
+  })
+
+  it('rejects an arrival outside a slot window that crosses midnight', async () => {
+    const slotId = await insertSlot('OvernightWindowReject', '22:00', 20, '01:00')
+    const testDate = '2099-12-12'
+
+    try {
+      await expect(
+        createBooking(client, {
+          time_slot_id: slotId,
+          date: testDate,
+          name: 'Arrivo fuori finestra',
+          email: 'fuori@test.example',
+          covers: 2,
+          gdpr_consent: true,
+          preferred_time: '03:00', // il turno è già finito alle 01:00
+        })
+      ).rejects.toThrow(BookingWindowError)
     } finally {
       await clearBookings(slotId, testDate)
       await removeSlot(slotId)

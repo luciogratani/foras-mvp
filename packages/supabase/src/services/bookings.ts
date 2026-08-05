@@ -7,6 +7,7 @@ import {
   type CreateBookingInput,
 } from '../schemas/bookings'
 import { localToday, localNow, localDateOffset } from '../lib/clock'
+import { isTimeWithinRange } from '../lib/timeRange'
 
 export type TimeSlot = Tables<{ schema: 'template' }, 'time_slots'>
 export type Booking = Tables<{ schema: 'template' }, 'bookings'>
@@ -97,8 +98,10 @@ export async function getAvailableTimeSlots(
     if (date === today && slot.time < currentTime) return false
     // se ranges è vuoto e il giorno non è closed, nessuna restrizione oraria
     if (ranges.length === 0) return true
-    // il turno deve cadere all'interno di almeno una fascia
-    return ranges.some((r) => slot.time >= r.open && slot.time < r.close)
+    // il turno deve cadere all'interno di almeno una fascia.
+    // isTimeWithinRange gestisce anche le fasce che scavalcano la mezzanotte
+    // (es. 15:00–02:00): con il confronto diretto non ne passava nessuna.
+    return ranges.some((r) => isTimeWithinRange(slot.time, r.open, r.close))
   })
 
   const bookedBySlot = new Map<string, number>()
@@ -151,6 +154,8 @@ export async function createBooking(
   // Enforcement finestra oraria: quando il turno ha end_time, preferred_time è obbligatorio
   // e deve cadere dentro [time, end_time). Normalizza entrambi i lati a HH:MM (il DB
   // ritorna "HH:MM:SS"; parsed.preferred_time è già "HH:MM" da Zod).
+  // La finestra può scavalcare la mezzanotte (turno 22:00–01:00): isTimeWithinRange
+  // se ne accorge da sola confrontando i due estremi.
   const winStart = slot.time.substring(0, 5)
   const winEnd = slot.end_time ? slot.end_time.substring(0, 5) : null
   if (winEnd !== null) {
@@ -158,7 +163,7 @@ export async function createBooking(
       throw new BookingWindowError(
         `Per questo turno indica l'orario di arrivo (tra ${winStart} e ${winEnd}).`
       )
-    } else if (!(parsed.preferred_time >= winStart && parsed.preferred_time < winEnd)) {
+    } else if (!isTimeWithinRange(parsed.preferred_time, winStart, winEnd)) {
       throw new BookingWindowError(
         `L'orario di arrivo deve essere tra ${winStart} e ${winEnd}.`
       )

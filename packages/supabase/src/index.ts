@@ -85,6 +85,7 @@ export { NewsSlideCreateSchema, NewsSlideUpdateSchema } from './schemas/news'
 export type { NewsSlideCreate, NewsSlideUpdate } from './schemas/news'
 
 export { localToday, localNow, localDateOffset } from './lib/clock'
+export { isTimeWithinRange, isOvernightRange } from './lib/timeRange'
 
 export { getTimeSlotsAdmin, createTimeSlot, updateTimeSlot, deleteTimeSlot, setTimeSlotArchived, updateSiteSettings, getClosedDates, addClosedDate, removeClosedDate } from './services/site-admin'
 export type { TimeSlotAdmin, ClosedDate } from './services/site-admin'

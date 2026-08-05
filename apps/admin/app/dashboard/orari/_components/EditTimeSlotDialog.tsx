@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useActionState } from 'react'
 import type { TimeSlotAdmin } from '@repo/supabase'
+import { isOvernightRange } from '@repo/supabase'
 import {
   Button,
   Dialog,
@@ -94,6 +95,11 @@ export function EditTimeSlotDialog({
               >
                 + Aggiungi fine turno
               </Button>
+            )}
+            {endTime && isOvernightRange(slot.time.substring(0, 5), endTime) && (
+              <p className="text-xs text-muted-foreground">
+                Il turno finisce alle {endTime} del giorno successivo.
+              </p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
               {endTime

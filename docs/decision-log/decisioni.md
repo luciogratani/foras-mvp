@@ -770,3 +770,26 @@ Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento t
    - **3c (Opus 4.8)** — layer boot/animazioni: sequenza di reveal della loading screen e timing, reveal del titolo hero, transizioni open/close del menu, cursore custom, hover effects (`hover_cta`/`hover_text` con `data-text`), Lenis. È qui il reverse-engineering del timing da `DOWtmalN.js`, il punto a più alta incertezza → Opus 4.8. Il player fullscreen **Plyr** del showreel resta rimandato alla Fase 7 (come da handoff).
 
 **Conseguenza:** il modello Opus 4.8 previsto dal handoff per la Fase 3 si concentra sulla 3c (timing/animazioni reverse-engineered), non sull'integrazione di `demo.js` (che è marginale in Fase 3). 3a/3b vanno su Sonnet 5.
+
+---
+
+### 2026-08-05 — Fasce orarie oltre la mezzanotte: dedotte, non configurate
+
+**Contesto:** durante l'onboarding del cliente #1 (University, aperto 15:00–02:00 tutti i giorni) `/booking` restituiva sempre "nessun turno disponibile". Causa: gli orari sono stringhe `"HH:MM"` confrontate con `time >= open && time < close`, condizione **insoddisfacibile** quando la chiusura è lessicograficamente minore dell'apertura. Fallimento silenzioso — lista vuota, nessun errore. Lo stesso confronto era replicato in tre punti, e `endTimeAfterTime` impediva a monte perfino di *creare* un turno `22:00 → 01:00`.
+
+**Opzioni considerate:**
+- Spezzare le fasce nei dati (`00:00–02:00` + `15:00–23:59`) — nessun codice da toccare, ma raddoppia le righe nel gestionale e costringe il gestore a ragionare per giornate solari invece che per serate.
+- Aggiungere un campo esplicito `overnight` / un flag per tenant — configurazione in più da spiegare, e uno stato in più che può divergere dai dati che descrive.
+- Dedurre la condizione dai due valori già presenti.
+
+**Decisione:** dedurla. Un helper unico `isTimeWithinRange` in `packages/supabase/src/lib/timeRange.ts`: se `close < open` la fascia scavalca la mezzanotte e la congiunzione diventa disgiunzione. `end_time < time` diventa lecito e significa "il giorno successivo"; resta invalida solo la coincidenza dei due estremi.
+
+**Rationale:** i due numeri contengono già l'informazione — un flag sarebbe stato uno stato ridondante, sincronizzabile male. Nel gestionale le caselle restano due (`in` e `out`), che era il requisito esplicito: il gestore scrive `15:00` e `02:00` e vede una nota di conferma *"chiude alle 02:00 del giorno dopo"*. Per i clienti che non scavalcano la mezzanotte il comportamento è identico a prima, perché il ramo overnight non si attiva mai: è ciò che rende il fix appartenente al core e non a un fork.
+
+**Conseguenze:**
+- Nessuna modifica allo schema DB, nessuna migrazione.
+- Copertura test: 14 test puri (senza DB) + 3 d'integrazione. La regressione era sfuggita perché le fasce erano testate solo *dentro la stessa giornata*.
+- Su `<input type="time">` gli attributi `min`/`max` vanno omessi per le finestre overnight: il browser li interpreta sulla stessa giornata e bloccherebbero ogni inserimento. La validazione autoritativa resta server-side.
+- **Aperta per il biliardo:** il modello `data + ora` rende ambigua la data di fine per le prenotazioni a durata. Per le tabelle del biliardo usare due `timestamptz` invece di `date` + `time`.
+
+Dettaglio completo in [`docs/fixes/2026-08-05-fasce-oltre-mezzanotte.md`](../fixes/2026-08-05-fasce-oltre-mezzanotte.md).

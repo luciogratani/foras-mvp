@@ -2,6 +2,7 @@
 import { useEffect, useReducer } from 'react'
 import { useActionState } from 'react'
 import type { OpeningHours } from '@repo/supabase'
+import { isOvernightRange } from '@repo/supabase'
 import { Button, Input, Label, Switch } from '@repo/ui'
 import { updateOpeningHoursAction, type SettingsActionState } from '../actions'
 
@@ -159,6 +160,11 @@ export function OpeningHoursForm({ initialHours }: { initialHours: OpeningHours 
                       value={range.close}
                       onChange={(e) => updateRange(day, i, 'close', e.target.value)}
                     />
+                    {range.open && range.close && isOvernightRange(range.open, range.close) && (
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        chiude alle {range.close} del giorno dopo
+                      </span>
+                    )}
                     {i === 0 && dayState.ranges.length < 2 && (
                       <Button
                         type="button"

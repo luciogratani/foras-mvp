@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useActionState } from 'react'
+import { isOvernightRange } from '@repo/supabase'
 import {
   Button,
   Dialog,
@@ -73,7 +74,13 @@ export function CreateTimeSlotDialog({ onClose }: { onClose: () => void }) {
                   Rimuovi
                 </Button>
               </div>
-            ) : (
+            ) : null}
+            {time && endTime && isOvernightRange(time, endTime) && (
+              <p className="text-xs text-muted-foreground">
+                Il turno finisce alle {endTime} del giorno successivo.
+              </p>
+            )}
+            {!endTime && (
               <Button
                 type="button"
                 variant="outline"

@@ -26,15 +26,22 @@ const timeSlotBase = z.object({
   is_active: z.boolean().optional(),
 })
 
-const endTimeAfterTime = (v: { time?: string; end_time?: string | null }) =>
-  v.end_time == null || v.time == null || v.end_time > v.time
+/**
+ * `end_time` minore di `time` NON è un errore: significa che il turno finisce
+ * il giorno successivo (es. 22:00–01:00, per un locale aperto oltre la
+ * mezzanotte). L'unico caso davvero invalido è la coincidenza dei due estremi,
+ * che darebbe un turno di durata zero.
+ * Vedi `docs/fixes/2026-08-05-fasce-oltre-mezzanotte.md`.
+ */
+const endTimeNotEqualToTime = (v: { time?: string; end_time?: string | null }) =>
+  v.end_time == null || v.time == null || v.end_time !== v.time
 
-export const TimeSlotCreateSchema = timeSlotBase.refine(endTimeAfterTime, {
-  message: 'La fine deve essere dopo l\'inizio',
+export const TimeSlotCreateSchema = timeSlotBase.refine(endTimeNotEqualToTime, {
+  message: 'La fine non può coincidere con l\'inizio',
   path: ['end_time'],
 })
-export const TimeSlotUpdateSchema = timeSlotBase.partial().refine(endTimeAfterTime, {
-  message: 'La fine deve essere dopo l\'inizio',
+export const TimeSlotUpdateSchema = timeSlotBase.partial().refine(endTimeNotEqualToTime, {
+  message: 'La fine non può coincidere con l\'inizio',
   path: ['end_time'],
 })
 export type TimeSlotCreate = z.infer<typeof TimeSlotCreateSchema>
