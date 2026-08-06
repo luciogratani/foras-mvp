@@ -7,7 +7,7 @@ import {
   type CreateBookingInput,
 } from '../schemas/bookings'
 import { localToday, localNow, localDateOffset } from '../lib/clock'
-import { isTimeWithinRange, isTimeWithinWindow, isSlotStillOpenToday } from '../lib/timeRange'
+import { isTimeWithinRange, isTimeWithinWindow, isSlotStillOpenToday, hhmm } from '../lib/timeRange'
 
 export type TimeSlot = Tables<{ schema: 'template' }, 'time_slots'>
 export type Booking = Tables<{ schema: 'template' }, 'bookings'>
@@ -144,6 +144,12 @@ export async function createBooking(
   const today = localToday()
   if (parsed.date < today) throw new Error('Non è possibile prenotare per una data passata')
 
+  // NB: questa non è solo una lettura, è un CONTROLLO. getAvailableTimeSlots
+  // ha già scartato i turni chiusi per oggi (isSlotStillOpenToday), i giorni di
+  // chiusura straordinaria e i turni fuori dalle fasce di apertura: se il turno
+  // non è in questo elenco, la prenotazione non si fa. Chi un domani sostituisse
+  // questa chiamata con una SELECT diretta su time_slots riaprirebbe tutti e tre
+  // i buchi in una volta, senza che nessun test lo segnali.
   const slots = await getAvailableTimeSlots(client, parsed.date)
   const slot = slots.find((s) => s.time_slot_id === parsed.time_slot_id)
   if (!slot) throw new Error('time_slot non disponibile')
@@ -170,6 +176,24 @@ export async function createBooking(
       throw new BookingWindowError(
         `L'orario di arrivo deve essere tra ${winStart} e ${winEnd}.`
       )
+    } else if (parsed.date === today) {
+      // Per OGGI la finestra utile non è quella dichiarata ma quella RESIDUA:
+      // [adesso, end_time]. Senza questo controllo, alle 22:00 si potrebbe
+      // prenotare dichiarando un arrivo alle 19:30 — un orario già passato.
+      //
+      // Il buco esisteva anche prima, ma era mascherato: il turno spariva
+      // dall'elenco al proprio inizio, quindi non si arrivava mai qui. Rendere
+      // il turno visibile per tutta la finestra lo scopre, e va chiuso insieme.
+      //
+      // isTimeWithinWindow gira intorno alla mezzanotte da sola: su un turno
+      // 22:00–01:00, alle 23:30 un arrivo alle 00:30 resta valido, mentre uno
+      // alle 22:30 viene rifiutato perché è passato.
+      const adesso = hhmm(localNow())
+      if (!isTimeWithinWindow(parsed.preferred_time, adesso, winEnd)) {
+        throw new BookingWindowError(
+          `L'orario di arrivo è già passato: per oggi indica un orario tra le ${adesso} e le ${winEnd}.`
+        )
+      }
     }
   }
 

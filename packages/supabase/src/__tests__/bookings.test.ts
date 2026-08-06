@@ -27,6 +27,7 @@ import {
   DuplicateBookingError,
   BookingWindowError,
 } from '../services/bookings'
+import { localNow, localToday } from '../lib/clock'
 import type { TenantClient } from '../index'
 import { createPgMockClient } from './helpers/pg-mock-client'
 import {
@@ -554,6 +555,80 @@ describe('createBooking', () => {
         gdpr_consent: true,
       })
     ).rejects.toThrow(/passata/)
+  })
+})
+
+describe('createBooking — arrivo nel passato, per la data odierna', () => {
+  // Questi sono i PRIMI test della suite che esercitano `date === today`.
+  // Tutti gli altri usano il 2099: il ramo "oggi" di getAvailableTimeSlots non
+  // era mai stato eseguito, ed è il motivo per cui il bug della finestra è
+  // sopravvissuto a due fix consecutivi sugli orari.
+  //
+  // La finestra 00:00–23:59 è scelta per essere stabile a qualunque ora giri il
+  // test: il turno è sempre visibile e ogni orario del giorno cade dentro la
+  // finestra dichiarata, così l'unica cosa sotto esame è il confronto con adesso.
+
+  const adesso = () => localNow()
+
+  it('rifiuta un orario di arrivo già passato', async () => {
+    if (adesso() === '00:00') return // unico minuto in cui non esiste un "prima"
+    const slotId = await insertSlot('OggiPassato', '00:00', 10, '23:59')
+    const oggi = localToday()
+    try {
+      await expect(
+        createBooking(client, {
+          time_slot_id: slotId,
+          date: oggi,
+          name: 'Test Passato',
+          email: 'passato@example.com',
+          phone: null,
+          covers: 2,
+          notes: null,
+          preferred_time: '00:00',
+          gdpr_consent: true,
+        })
+      ).rejects.toThrow(BookingWindowError)
+    } finally {
+      await clearBookings(slotId, oggi)
+      await removeSlot(slotId)
+    }
+  })
+
+  it('accetta un orario di arrivo ancora da venire', async () => {
+    if (adesso() >= '23:59') return
+    const slotId = await insertSlot('OggiFuturo', '00:00', 10, '23:59')
+    const oggi = localToday()
+    try {
+      const res = await createBooking(client, {
+        time_slot_id: slotId,
+        date: oggi,
+        name: 'Test Futuro',
+        email: 'futuro@example.com',
+        phone: null,
+        covers: 2,
+        notes: null,
+        preferred_time: '23:59',
+        gdpr_consent: true,
+      })
+      expect(res.id).toBeTruthy()
+    } finally {
+      await clearBookings(slotId, oggi)
+      await removeSlot(slotId)
+    }
+  })
+
+  it('un turno-finestra resta prenotabile oggi anche dopo il suo inizio', async () => {
+    // La regressione osservata in produzione: prima del fix questo turno
+    // spariva dall'elenco e createBooking falliva con "time_slot non disponibile".
+    if (adesso() === '00:00' || adesso() >= '23:59') return
+    const slotId = await insertSlot('OggiIniziato', '00:00', 10, '23:59')
+    const oggi = localToday()
+    try {
+      const disponibili = await getAvailableTimeSlots(client, oggi)
+      expect(disponibili.some((s) => s.time_slot_id === slotId)).toBe(true)
+    } finally {
+      await removeSlot(slotId)
+    }
   })
 })
 
