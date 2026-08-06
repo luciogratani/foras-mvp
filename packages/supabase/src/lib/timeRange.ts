@@ -33,7 +33,7 @@
  */
 
 /** Normalizza "HH:MM:SS" o "HH:MM" a "HH:MM" per confronti esatti. */
-function hhmm(time: string): string {
+export function hhmm(time: string): string {
   return time.slice(0, 5)
 }
 
@@ -99,4 +99,54 @@ export function isTimeWithinWindow(time: string, start: string, end: string): bo
 
   if (e === s) return t === s
   return e < s ? t >= s || t <= e : t >= s && t <= e
+}
+
+/**
+ * True se il turno accetta ancora prenotazioni **oggi**, all'ora `now`.
+ *
+ * È l'unico punto in cui si decide. Vale solo per la data odierna: per le date
+ * future non c'è niente da scadere, per quelle passate decide `date < today`.
+ *
+ * PERCHÉ ESISTE
+ * `time_slots` descrive due cose diverse con lo stesso record, e la regola
+ * cambia di conseguenza:
+ *
+ * - `end_time` NULL → **orario fisso**. Il turno è un istante: passato quello
+ *   non si prenota più. Comportamento storico, invariato.
+ * - `end_time` valorizzato → **finestra di arrivo** `[time, end_time]`, ultimo
+ *   arrivo incluso. Il turno resta prenotabile finché la finestra è aperta.
+ * - finestra che scavalca la mezzanotte (22:00–01:00) → dentro la giornata non
+ *   scade mai, perché l'ultimo arrivo cade il giorno dopo.
+ *
+ * Prima che questa funzione esistesse il confronto era `slot.time < now`, cioè
+ * l'**inizio** del turno contro l'ora corrente, e ignorava `end_time`. Effetto:
+ * un turno 19:00–23:00 spariva alle 19:01 e il sito dichiarava il locale chiuso
+ * per il resto della serata — in silenzio, con una lista vuota indistinguibile
+ * da un giorno di chiusura. Quella riga era stata scritta il 22 maggio 2026,
+ * tre giorni prima che `end_time` esistesse, e nessuno l'ha più riletta.
+ *
+ *     isSlotStillOpenToday({ time: '19:00:00', end_time: '23:00:00' }, '19:21') // true
+ *     isSlotStillOpenToday({ time: '19:00:00', end_time: '23:00:00' }, '23:01') // false
+ *     isSlotStillOpenToday({ time: '19:00:00', end_time: null      }, '19:01') // false
+ *
+ * `hhmm` su entrambi i lati non è cosmetico: il DB ritorna "19:00:00" e il
+ * clock "19:21", e con `<=` il confronto grezzo direbbe che "19:00:00" viene
+ * **dopo** "19:00". È lo stesso scivolone che ha generato i bug precedenti.
+ */
+export function isSlotStillOpenToday(
+  slot: { time: string; end_time: string | null },
+  now: string
+): boolean {
+  const start = hhmm(slot.time)
+  const adesso = hhmm(now)
+
+  // Orario fisso: prenotabile fino all'istante del turno, incluso.
+  if (slot.end_time == null) return adesso <= start
+
+  const end = hhmm(slot.end_time)
+
+  // La finestra finisce domani: oggi non può essere scaduta.
+  if (isOvernightRange(start, end)) return true
+
+  return adesso <= end
 }

@@ -7,7 +7,7 @@ import {
   type CreateBookingInput,
 } from '../schemas/bookings'
 import { localToday, localNow, localDateOffset } from '../lib/clock'
-import { isTimeWithinRange, isTimeWithinWindow } from '../lib/timeRange'
+import { isTimeWithinRange, isTimeWithinWindow, isSlotStillOpenToday } from '../lib/timeRange'
 
 export type TimeSlot = Tables<{ schema: 'template' }, 'time_slots'>
 export type Booking = Tables<{ schema: 'template' }, 'bookings'>
@@ -95,7 +95,9 @@ export async function getAvailableTimeSlots(
   const dayHours = hours?.[dayKey]
   const ranges = dayHours?.ranges ?? []
   const slots = (slotsRes.data ?? []).filter((slot) => {
-    if (date === today && slot.time < currentTime) return false
+    // Un turno-finestra resta prenotabile finché la finestra è aperta, non
+    // fino al suo inizio: vedi isSlotStillOpenToday.
+    if (date === today && !isSlotStillOpenToday(slot, currentTime)) return false
     // se ranges è vuoto e il giorno non è closed, nessuna restrizione oraria
     if (ranges.length === 0) return true
     // il turno deve cadere all'interno di almeno una fascia.

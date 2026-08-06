@@ -10,7 +10,12 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { isTimeWithinRange, isTimeWithinWindow, isOvernightRange } from '../lib/timeRange'
+import {
+  isTimeWithinRange,
+  isTimeWithinWindow,
+  isOvernightRange,
+  isSlotStillOpenToday,
+} from '../lib/timeRange'
 
 describe('isOvernightRange', () => {
   it('riconosce una fascia normale', () => {
@@ -148,5 +153,75 @@ describe('isTimeWithinRange — casi limite', () => {
   it('fascia che copre quasi tutte le 24 ore', () => {
     expect(isTimeWithinRange('12:00', '06:00', '05:59')).toBe(true)
     expect(isTimeWithinRange('05:59', '06:00', '05:59')).toBe(false)
+  })
+})
+
+describe('isSlotStillOpenToday', () => {
+  const fisso = (time: string) => ({ time, end_time: null })
+  const finestra = (time: string, end_time: string) => ({ time, end_time })
+
+  describe('turno a orario fisso (end_time null) — comportamento storico', () => {
+    it('è prenotabile prima del turno', () => {
+      expect(isSlotStillOpenToday(fisso('20:00:00'), '18:30')).toBe(true)
+    })
+
+    it('è prenotabile nell istante esatto del turno', () => {
+      expect(isSlotStillOpenToday(fisso('20:00:00'), '20:00')).toBe(true)
+    })
+
+    it('NON è più prenotabile un minuto dopo', () => {
+      expect(isSlotStillOpenToday(fisso('20:00:00'), '20:01')).toBe(false)
+    })
+  })
+
+  describe('turno a finestra di arrivo — la regressione', () => {
+    // Il caso reale osservato in produzione il 2026-08-06 alle 19:21:
+    // il sito dichiarava il locale chiuso perché il turno era "già iniziato".
+    it('resta prenotabile DOPO l inizio, finché la finestra è aperta', () => {
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '19:21')).toBe(true)
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '22:59')).toBe(true)
+    })
+
+    it('è prenotabile fino all ultimo arrivo INCLUSO', () => {
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '23:00')).toBe(true)
+    })
+
+    it('non è più prenotabile un minuto dopo l ultimo arrivo', () => {
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '23:01')).toBe(false)
+    })
+
+    it('è prenotabile molto prima che la finestra si apra', () => {
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '09:00')).toBe(true)
+    })
+  })
+
+  describe('finestra che scavalca la mezzanotte', () => {
+    // L ultimo arrivo cade il giorno dopo: dentro la giornata non scade mai.
+    it('è prenotabile a metà giornata', () => {
+      expect(isSlotStillOpenToday(finestra('22:00:00', '01:00:00'), '12:00')).toBe(true)
+    })
+
+    it('è prenotabile dentro la finestra, prima di mezzanotte', () => {
+      expect(isSlotStillOpenToday(finestra('22:00:00', '01:00:00'), '23:30')).toBe(true)
+    })
+
+    it('è prenotabile anche dopo la chiusura di ieri, per la finestra di stasera', () => {
+      expect(isSlotStillOpenToday(finestra('22:00:00', '01:00:00'), '02:00')).toBe(true)
+    })
+  })
+
+  describe('normalizzazione degli orari', () => {
+    // Il DB ritorna "HH:MM:SS", il clock "HH:MM". Senza hhmm su ENTRAMBI i lati
+    // il confronto direbbe che "20:00:00" viene dopo "20:00", e il turno
+    // sparirebbe nel suo stesso istante di inizio.
+    it('tratta "20:00:00" e "20:00" come lo stesso istante', () => {
+      expect(isSlotStillOpenToday(fisso('20:00:00'), '20:00')).toBe(true)
+      expect(isSlotStillOpenToday({ time: '20:00', end_time: null }, '20:00')).toBe(true)
+    })
+
+    it('normalizza anche end_time', () => {
+      expect(isSlotStillOpenToday(finestra('19:00', '23:00'), '23:00')).toBe(true)
+      expect(isSlotStillOpenToday(finestra('19:00:00', '23:00:00'), '23:00:00')).toBe(true)
+    })
   })
 })
