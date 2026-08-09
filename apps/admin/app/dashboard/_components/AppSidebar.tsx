@@ -4,8 +4,10 @@ import { usePathname } from 'next/navigation'
 import {
   CalendarDays,
   Clock,
+  CreditCard,
   ExternalLink,
   LayoutDashboard,
+  Lock,
   LogOut,
   Newspaper,
   Settings,
@@ -24,6 +26,8 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from '@repo/ui'
+import { rottaConsentita } from '../../../lib/billing/rotte'
+import type { StatoAbbonamento } from '../../../lib/billing/stato'
 import { logoutAction } from '../actions'
 
 const navLinks = [
@@ -33,15 +37,21 @@ const navLinks = [
   { label: 'Novità', href: '/dashboard/news', icon: Newspaper, exact: false },
   { label: 'Orari & coperti', href: '/dashboard/orari', icon: Clock, exact: false },
   { label: 'Impostazioni', href: '/dashboard/impostazioni', icon: Settings, exact: false },
+  // Account resta cliccabile anche ad abbonamento sospeso: è l'unica via
+  // d'uscita dal blocco. L'elenco delle rotte superstiti sta in
+  // `lib/billing/rotte.ts`, condiviso con `proxy.ts`.
+  { label: 'Account', href: '/dashboard/account', icon: CreditCard, exact: false },
 ]
 
 type Props = {
   email: string | undefined
   siteUrl: string | undefined
+  statoAbbonamento: StatoAbbonamento
 }
 
-export function AppSidebar({ email, siteUrl }: Props) {
+export function AppSidebar({ email, siteUrl, statoAbbonamento }: Props) {
   const pathname = usePathname()
+  const sospeso = statoAbbonamento === 'sospeso'
 
   return (
     <Sidebar collapsible="icon">
@@ -59,6 +69,30 @@ export function AppSidebar({ email, siteUrl }: Props) {
                 const isActive = link.exact
                   ? pathname === link.href
                   : pathname.startsWith(link.href)
+                const bloccata = sospeso && !rottaConsentita(link.href)
+
+                if (bloccata) {
+                  // Niente <Link>: la voce resta visibile ma non è più un
+                  // bersaglio. Nascondere le voci sarebbe peggio — il gestore
+                  // penserebbe di aver perso delle funzioni, non di doverle
+                  // sbloccare.
+                  return (
+                    <SidebarMenuItem key={link.href}>
+                      <SidebarMenuButton
+                        aria-disabled
+                        tabIndex={-1}
+                        tooltip={`${link.label} — bloccato, abbonamento sospeso`}
+                        className="cursor-not-allowed opacity-50 hover:bg-transparent hover:text-sidebar-foreground active:bg-transparent"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <link.icon />
+                        <span>{link.label}</span>
+                        <Lock className="ml-auto size-3.5 opacity-70" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                }
+
                 return (
                   <SidebarMenuItem key={link.href}>
                     <SidebarMenuButton asChild isActive={isActive} tooltip={link.label}>

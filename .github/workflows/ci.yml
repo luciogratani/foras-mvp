@@ -54,6 +54,13 @@ jobs:
       - name: Lint
         run: pnpm -r lint
 
+      # I test del gestionale sono logica pura e NON vogliono un database:
+      # stanno qui, accanto a tsc e lint, invece che nel job pesante che deve
+      # prima tirare su Postgres. Un test che ha bisogno di un database e' un
+      # test che prima o poi qualcuno salta.
+      - name: Test (gestionale — logica abbonamento e rotte)
+        run: pnpm --filter admin test
+
       - name: Build
         run: pnpm -r build
 

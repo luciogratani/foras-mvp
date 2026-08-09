@@ -793,3 +793,45 @@ Il gap è fra modello **dichiarato** nei docs ("schema-per-tenant = isolamento t
 - **Aperta per il biliardo:** il modello `data + ora` rende ambigua la data di fine per le prenotazioni a durata. Per le tabelle del biliardo usare due `timestamptz` invece di `date` + `time`.
 
 Dettaglio completo in [`docs/fixes/2026-08-05-fasce-oltre-mezzanotte.md`](../fixes/2026-08-05-fasce-oltre-mezzanotte.md).
+
+---
+
+### 2026-08-05 — Abbonamento — lo stato di pagamento vive in `public`, il blocco in `proxy.ts`
+
+**Contesto:** i clienti foras pagano un abbonamento mensile; se non pagano, il **gestionale** si blocca — il **sito pubblico** no, mai. Serve un posto in cui il gestionale legga «questo cliente ha pagato?» senza interrogare Stripe a ogni richiesta.
+
+**Opzioni considerate:**
+- Una tabella nello schema del tenant, accanto ai suoi dati.
+- Una tabella in `public`, come `public.tenants`.
+- Nessuna tabella: interrogare Stripe quando serve.
+
+**Decisione:** `public.tenant_subscriptions`, con PK `schema_name` e FK verso `public.tenants`. RLS abilitata e **zero policy**: l'unico accesso è `service_role`, che ha `BYPASSRLS`. L'enforcement sta in `proxy.ts`, innestato dove `getVerifiedTenantClient()` già valida lo schema.
+
+**Rationale:** nello schema del tenant il gestore ne sarebbe proprietario via RLS — potrebbe leggere il proprio stato di morosità e, con un permesso dato per comodità in futuro, **sbloccarsi da solo**. È un dato di business di foras, non del cliente, e sta dove stanno gli altri: accanto a `public.tenants`, con lo stesso pattern deny-by-default. Interrogare Stripe a ogni richiesta sarebbe lento e renderebbe il gestionale dipendente dalla raggiungibilità di un servizio esterno per una domanda a cui si risponde con una riga.
+
+**Conseguenze:**
+- La riga **assente** significa «non ancora configurato», **non** «non ha pagato»: nessun cliente viene bloccato perché nessuno gli ha ancora creato la riga. È la scelta che tiene dentro i clienti esistenti il giorno in cui il codice viene deployato.
+- Si sbaglia sempre dalla parte del cliente: utente sconosciuto, tenant senza schema, database irraggiungibile → non bloccato.
+- Il claim nei metadati dell'utente è una **copia** per il middleware, non la verità: se divergono vince la tabella.
+- ⚠️ La migrazione `005` è **globale camuffata da per-schema**: il runner la esegue una volta per tenant ma gli oggetti creati sono uno solo, condiviso. Ogni statement è idempotente per questo.
+
+---
+
+### 2026-08-09 — Abbonamento — di chi è un evento Stripe: tre strade, in quest'ordine
+
+**Contesto:** il webhook riceve un evento e deve capire a quale tenant appartiene, anche la **prima volta**, quando sul database non c'è ancora niente che colleghi il customer al cliente.
+
+**Opzioni considerate:**
+- I metadati dell'oggetto che arriva nell'evento.
+- La riga già collegata, cercata per `stripe_customer_id`.
+- Chiedere il Customer a Stripe e leggerne i metadati.
+
+**Decisione:** tutte e tre, in quest'ordine, in `apps/admin/lib/billing/tenant.ts`. Le ricerche che toccano rete e database sono **iniettate**, così la logica resta provabile senza né l'una né l'altro.
+
+**Rationale:** la prima strada è gratis ma copre pochi casi; la seconda è una query locale ed è la via normale dal secondo evento in poi; la terza costa una chiamata di rete e serve **solo** al primo evento di un cliente nuovo. Metterla per ultima significa pagarla una volta nella vita di un tenant invece che a ogni rinnovo.
+
+**Il difetto che ha portato a questa decisione:** con le sole prime due strade, `schema_name` nei metadati del **Customer** non veniva letto per cinque eventi su sei. Nei payload dei webhook Stripe **non espande mai i riferimenti**: `sub.customer` e `fattura.customer` sono stringhe, non oggetti. L'unico evento che vedeva davvero i metadati del cliente era `customer.updated`. Seguendo il runbook alla lettera — metadati sul Customer, poi si crea l'abbonamento — il primo evento non atterrava da nessuna parte, e lo diceva con la stessa riga di log che il runbook insegna a considerare normale con `stripe trigger`. Trovato il 2026-08-09 al primo collaudo con eventi veri; typecheck, lint, audit e 55 test non l'avevano visto.
+
+**Conseguenze:**
+- I tre esiti negativi sono distinti e trattati diversamente: evento malformato → 200; cliente che non ci appartiene → 200; **impossibile chiedere a Stripe → 500**, perché il fallimento è passeggero e il ritentativo è il rimedio. L'evento che si perderebbe è proprio quello che crea il collegamento.
+- ⚠️ **Non** rendere il codice indulgente sul nome della chiave: accettare `schema` oltre a `schema_name` nasconderebbe l'errore invece di segnalarlo.
